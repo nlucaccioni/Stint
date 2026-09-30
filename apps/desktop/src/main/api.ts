@@ -13,9 +13,10 @@ import {
   type ChangeContext,
 } from '@stint/core'
 import type { AppInfo, ApiMethod, StintApi } from '../shared/api'
-import type { Db } from './db/connection'
+import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getProject, insertProject, listProjects, updateProject } from './db/projects'
+import { projectIdsWithTime } from './db/sessions'
 
 export interface ApiDeps {
   db: Db
@@ -61,6 +62,11 @@ const projectEdits = z.strictObject({
 export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   const { db } = deps
   const ctx = (): ChangeContext => ({ now: (deps.now ?? Date.now)(), deviceId: deps.deviceId })
+
+  function stamp() {
+    const { now, deviceId } = ctx()
+    return { updatedAt: now, deviceId }
+  }
 
   function existingClient(clientId: string) {
     const client = getClient(db, clientId)
@@ -111,5 +117,39 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       updateProject(db, projectId, projectPatch(edits, ctx()))
       return existingProject(projectId)
     },
+
+    listProjectIdsWithTime: () => projectIdsWithTime(db),
+
+    // Deleting is only for mistakes: anything with recorded time must be archived
+    // instead, so no time is ever left pointing at a missing project.
+    deleteProject: (...args) => {
+      const [projectId] = z.tuple([id]).parse(args)
+      existingProject(projectId)
+      transaction(db, () => {
+        if (projectIdsWithTime(db).includes(projectId)) throw hasTime('project')
+        updateProject(db, projectId, { deletedAt: ctx().now, ...stamp() })
+      })
+    },
+
+    /** Also deletes the client's projects, which must all be empty. */
+    deleteClient: (...args) => {
+      const [clientId] = z.tuple([id]).parse(args)
+      existingClient(clientId)
+      transaction(db, () => {
+        const withTime = new Set(projectIdsWithTime(db))
+        const projects = listProjects(db).filter((p) => p.clientId === clientId)
+        if (projects.some((p) => withTime.has(p.id))) throw hasTime('client')
+        const now = ctx().now
+        for (const p of projects) updateProject(db, p.id, { deletedAt: now, ...stamp() })
+        updateClient(db, clientId, { deletedAt: now, ...stamp() })
+      })
+    },
   }
+}
+
+function hasTime(kind: 'client' | 'project'): StintError {
+  return new StintError(
+    'has-recorded-time',
+    `This ${kind} has recorded time, so it can't be deleted. Archive it instead.`,
+  )
 }

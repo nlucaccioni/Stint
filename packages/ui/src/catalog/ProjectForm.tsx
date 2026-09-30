@@ -11,6 +11,7 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { Checkbox, Field } from '../components/Field'
+import { DeleteAction, type Deletion } from './DeleteAction'
 import styles from './Form.module.css'
 import { useSubmit } from './useSubmit'
 
@@ -22,9 +23,11 @@ export interface ProjectFormProps {
   project?: Project
   onSubmit: (values: ProjectValues) => Promise<void>
   onClose: () => void
+  /** Only when editing. */
+  deletion?: Deletion
 }
 
-export function ProjectForm({ client, project, onSubmit, onClose }: ProjectFormProps) {
+export function ProjectForm({ client, project, onSubmit, onClose, deletion }: ProjectFormProps) {
   const [name, setName] = useState(project?.name ?? '')
   const [useClientColor, setUseClientColor] = useState(project ? project.color === null : true)
   const [color, setColor] = useState(project?.color ?? client.color)
@@ -32,7 +35,7 @@ export function ProjectForm({ client, project, onSubmit, onClose }: ProjectFormP
     project?.hourlyRateCents != null ? toMoneyInput(project.hourlyRateCents, client.currency) : '',
   )
   const [billable, setBillable] = useState(project?.billableByDefault ?? true)
-  const { saving, error, run } = useSubmit()
+  const { saving, error, setError, run } = useSubmit()
 
   const clientRate =
     client.hourlyRateCents === null
@@ -85,6 +88,7 @@ export function ProjectForm({ client, project, onSubmit, onClose }: ProjectFormP
           checked={billable}
           onChange={(e) => setBillable(e.target.checked)}
         />
+        {deletion && <DeleteAction deletion={deletion} kind="project" onError={setError} />}
         {error && (
           <p className={styles.error} role="alert">
             {error}

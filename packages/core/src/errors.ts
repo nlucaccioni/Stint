@@ -15,6 +15,7 @@ export type StintErrorCode =
   | 'invalid-currency'
   | 'invalid-amount'
   | 'not-found'
+  | 'has-recorded-time'
 
 /** An action was rejected by a business rule. `code` is stable; `message` is for humans. */
 export class StintError extends Error {

@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApiHandlers, type ApiHandlers } from './api'
-import { openDatabase } from './db/connection'
+import { start } from '@stint/core'
+import { openDatabase, type Db } from './db/connection'
+import { applySessionChanges } from './db/sessions'
 import { toResult } from './result'
 
 const NOW = Date.UTC(2026, 2, 10, 9)
 let api: ApiHandlers
+let db: Db
 
 beforeEach(() => {
+  db = openDatabase(':memory:')
   api = createApiHandlers({
-    db: openDatabase(':memory:'),
+    db,
     deviceId: 'dev-test',
     appInfo: { version: '0.0.0', platform: 'win32' },
     now: () => NOW,
@@ -75,6 +79,60 @@ describe('projects', () => {
       }),
     )
     expect(result).toMatchObject({ ok: false, error: { code: 'not-found' } })
+  })
+})
+
+describe('deleting', () => {
+  const projectFields = { name: 'P', color: null, hourlyRateCents: null, billableByDefault: true }
+
+  function setup() {
+    const client = api.createClient(acme)
+    const empty = api.createProject({ ...projectFields, clientId: client.id, name: 'Empty' })
+    const used = api.createProject({ ...projectFields, clientId: client.id, name: 'Used' })
+    applySessionChanges(db, start(null, used, { now: NOW, deviceId: 'dev-test' }))
+    return { client, empty, used }
+  }
+
+  it('reports which projects have recorded time', () => {
+    const { used } = setup()
+    expect(api.listProjectIdsWithTime()).toEqual([used.id])
+  })
+
+  it('deletes a project with no recorded time', () => {
+    const { empty, used } = setup()
+    api.deleteProject(empty.id)
+    expect(api.listProjects().map((p) => p.id)).toEqual([used.id])
+  })
+
+  it('refuses to delete a project with recorded time', () => {
+    const { used } = setup()
+    expect(toResult(() => api.deleteProject(used.id))).toMatchObject({
+      ok: false,
+      error: { code: 'has-recorded-time' },
+    })
+  })
+
+  it('refuses to delete a client when any of its projects has time', () => {
+    const { client } = setup()
+    expect(toResult(() => api.deleteClient(client.id))).toMatchObject({
+      ok: false,
+      error: { code: 'has-recorded-time' },
+    })
+    expect(api.listProjects()).toHaveLength(2)
+  })
+
+  it('deletes a client and its empty projects together', () => {
+    const client = api.createClient(acme)
+    api.createProject({ ...projectFields, clientId: client.id })
+    api.deleteClient(client.id)
+    expect(api.listClients()).toEqual([])
+    expect(api.listProjects()).toEqual([])
+  })
+
+  it('counts deleted time as no time', () => {
+    const { used } = setup()
+    db.exec('UPDATE sessions SET deleted_at = 1')
+    expect(() => api.deleteProject(used.id)).not.toThrow()
   })
 })
 

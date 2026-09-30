@@ -18,5 +18,5 @@ export function useSubmit() {
     }
   }
 
-  return { saving, error, run }
+  return { saving, error, setError, run }
 }

@@ -6,6 +6,14 @@ import { sessionsTable as t } from './tables'
 
 export const getSession = (db: Db, id: string) => getById(db, t, id)
 
+/** IDs of projects that have any (non-deleted) recorded time. */
+export function projectIdsWithTime(db: Db): string[] {
+  return db
+    .prepare('SELECT DISTINCT project_id FROM sessions WHERE deleted_at IS NULL')
+    .all()
+    .map((row) => row['project_id'] as string)
+}
+
 /** The running timer, if any. The database guarantees there is at most one. */
 export function getRunningSession(db: Db): Session | null {
   const row = db

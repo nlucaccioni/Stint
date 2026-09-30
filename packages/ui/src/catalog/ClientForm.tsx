@@ -4,6 +4,7 @@ import { parseMoney, toMoneyInput, type Client, type ClientInput } from '@stint/
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { Field } from '../components/Field'
+import { DeleteAction, type Deletion } from './DeleteAction'
 import styles from './Form.module.css'
 import { useSubmit } from './useSubmit'
 
@@ -28,6 +29,8 @@ export interface ClientFormProps {
   defaultCurrency: string
   onSubmit: (values: ClientInput) => Promise<void>
   onClose: () => void
+  /** Only when editing. */
+  deletion?: Deletion
 }
 
 export function ClientForm({
@@ -36,6 +39,7 @@ export function ClientForm({
   defaultCurrency,
   onSubmit,
   onClose,
+  deletion,
 }: ClientFormProps) {
   const [name, setName] = useState(client?.name ?? '')
   const [color, setColor] = useState(client?.color ?? defaultColor)
@@ -43,7 +47,7 @@ export function ClientForm({
   const [rate, setRate] = useState(
     client?.hourlyRateCents != null ? toMoneyInput(client.hourlyRateCents, client.currency) : '',
   )
-  const { saving, error, run } = useSubmit()
+  const { saving, error, setError, run } = useSubmit()
 
   const currencies = COMMON_CURRENCIES.includes(currency)
     ? COMMON_CURRENCIES
@@ -92,6 +96,7 @@ export function ClientForm({
             </select>
           </Field>
         </div>
+        {deletion && <DeleteAction deletion={deletion} kind="client" onError={setError} />}
         {error && (
           <p className={styles.error} role="alert">
             {error}

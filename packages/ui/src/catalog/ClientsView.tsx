@@ -33,11 +33,15 @@ const PALETTE = [
 export interface ClientsViewProps {
   clients: readonly Client[]
   projects: readonly Project[]
+  /** Projects with recorded time: these (and their clients) can't be deleted. */
+  projectIdsWithTime: ReadonlySet<string>
   defaultCurrency: string
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
   onCreateProject: (input: ProjectInput) => Promise<unknown>
   onUpdateProject: (id: string, edits: ProjectEdits) => Promise<unknown>
+  onDeleteClient: (id: string) => Promise<unknown>
+  onDeleteProject: (id: string) => Promise<unknown>
 }
 
 type Editing =
@@ -54,6 +58,22 @@ export function ClientsView(props: ClientsViewProps) {
   const hasArchived = clients.some((c) => c.archived) || projects.some((p) => p.archived)
   const visibleClients = clients.filter((c) => showArchived || !c.archived)
   const close = () => setEditing(null)
+
+  function clientDeletion(client: Client) {
+    const own = projects.filter((p) => p.clientId === client.id)
+    const n = own.length
+    return {
+      allowed: !own.some((p) => props.projectIdsWithTime.has(p.id)),
+      question:
+        n === 0
+          ? `Delete "${client.name}"?`
+          : `Delete "${client.name}" and its ${n} project${n === 1 ? '' : 's'}?`,
+      onDelete: async () => {
+        await props.onDeleteClient(client.id)
+        close()
+      },
+    }
+  }
 
   /** For actions taken straight from the list (no form to show the error in). */
   function act(action: Promise<unknown>) {
@@ -118,6 +138,7 @@ export function ClientsView(props: ClientsViewProps) {
             else await props.onCreateClient(values)
           }}
           onClose={close}
+          deletion={editing.client && clientDeletion(editing.client)}
         />
       )}
       {editing?.kind === 'project' && (
@@ -129,6 +150,16 @@ export function ClientsView(props: ClientsViewProps) {
             else await props.onCreateProject({ ...values, clientId: editing.client.id })
           }}
           onClose={close}
+          deletion={
+            editing.project && {
+              allowed: !props.projectIdsWithTime.has(editing.project.id),
+              question: `Delete "${editing.project.name}"?`,
+              onDelete: async () => {
+                await props.onDeleteProject(editing.project!.id)
+                close()
+              },
+            }
+          }
         />
       )}
     </section>

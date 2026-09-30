@@ -28,6 +28,12 @@ export interface StintApi {
   listProjects(): Promise<Project[]>
   createProject(input: ProjectInput): Promise<Project>
   updateProject(id: string, edits: ProjectEdits): Promise<Project>
+  /** Projects that have recorded time (and so can't be deleted). */
+  listProjectIdsWithTime(): Promise<string[]>
+  /** Only allowed when the project has no recorded time. */
+  deleteProject(id: string): Promise<void>
+  /** Only allowed when none of the client's projects have recorded time. */
+  deleteClient(id: string): Promise<void>
 }
 
 export const apiMethods = [
@@ -38,6 +44,9 @@ export const apiMethods = [
   'listProjects',
   'createProject',
   'updateProject',
+  'listProjectIdsWithTime',
+  'deleteProject',
+  'deleteClient',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.

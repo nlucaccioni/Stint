@@ -33,11 +33,14 @@ export function App() {
           <ClientsView
             clients={catalog.clients}
             projects={catalog.projects}
+            projectIdsWithTime={catalog.projectIdsWithTime}
             defaultCurrency={DEFAULT_CURRENCY}
             onCreateClient={catalog.createClient}
             onUpdateClient={catalog.updateClient}
             onCreateProject={catalog.createProject}
             onUpdateProject={catalog.updateProject}
+            onDeleteClient={catalog.deleteClient}
+            onDeleteProject={catalog.deleteProject}
           />
         )}
       </main>

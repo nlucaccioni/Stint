@@ -13,16 +13,33 @@ import { api } from './api'
 interface CatalogState {
   clients: Client[]
   projects: Project[]
+  projectIdsWithTime: ReadonlySet<string>
   loaded: boolean
   loadError: string | null
 }
 
-const initial: CatalogState = { clients: [], projects: [], loaded: false, loadError: null }
+const initial: CatalogState = {
+  clients: [],
+  projects: [],
+  projectIdsWithTime: new Set(),
+  loaded: false,
+  loadError: null,
+}
 
 async function fetchCatalog(): Promise<CatalogState> {
   try {
-    const [clients, projects] = await Promise.all([api.listClients(), api.listProjects()])
-    return { clients, projects, loaded: true, loadError: null }
+    const [clients, projects, withTime] = await Promise.all([
+      api.listClients(),
+      api.listProjects(),
+      api.listProjectIdsWithTime(),
+    ])
+    return {
+      clients,
+      projects,
+      projectIdsWithTime: new Set(withTime),
+      loaded: true,
+      loadError: null,
+    }
   } catch (e) {
     return { ...initial, loaded: true, loadError: e instanceof Error ? e.message : String(e) }
   }
@@ -53,5 +70,7 @@ export function useCatalog() {
     updateClient: (id: string, edits: ClientEdits) => mutate(api.updateClient(id, edits)),
     createProject: (input: ProjectInput) => mutate(api.createProject(input)),
     updateProject: (id: string, edits: ProjectEdits) => mutate(api.updateProject(id, edits)),
+    deleteClient: (id: string) => mutate(api.deleteClient(id)),
+    deleteProject: (id: string) => mutate(api.deleteProject(id)),
   }
 }
