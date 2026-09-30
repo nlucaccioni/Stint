@@ -28,11 +28,13 @@ export function parseMoney(text: string, currency: string): number | null {
     if (text.trim() === '') return null
     throw invalid(text)
   }
-  if (s.includes('.') && s.includes(','))
-    s = s.replaceAll(',', '') // 1,250.00
-  else if (/^\d+,\d{1,2}$/.test(s))
-    s = s.replace(',', '.') // 85,50 (decimal comma)
-  else s = s.replaceAll(',', '') // 1,250
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replaceAll(',', '') // "1,250.00": commas are thousands separators
+  } else if (/^\d+,\d{1,2}$/.test(s)) {
+    s = s.replace(',', '.') // "85,50": decimal comma
+  } else {
+    s = s.replaceAll(',', '') // "1,250"
+  }
 
   const match = /^(\d+)(?:\.(\d*))?$/.exec(s)
   if (!match) throw invalid(text)
