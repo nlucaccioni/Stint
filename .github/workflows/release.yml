@@ -37,6 +37,8 @@ jobs:
     name: Build (${{ matrix.os }})
     needs: create-release
     strategy:
+      # One platform at a time (macOS, then Windows) so the two never upload at once.
+      max-parallel: 1
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]
