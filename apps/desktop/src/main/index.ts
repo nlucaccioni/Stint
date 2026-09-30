@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Electron main process: the Node.js side of the app. It owns windows and (later)
-// the database and timer engine. The UI runs in a separate, sandboxed renderer
+// Electron main process: the Node.js side of the app. It owns windows, the
+// database, and (later) the timer engine. The UI runs in a separate, sandboxed renderer
 // process and can only reach this code through the preload bridge.
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron'
-import { IpcChannel, type AppInfo } from '../shared/api'
+import { app, BrowserWindow, dialog, session, shell } from 'electron'
+import type { AppInfo } from '../shared/api'
+import { createApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
-import { loadDeviceSettings, type DeviceSettings } from './device'
+import { loadDeviceSettings } from './device'
+import { registerIpc } from './ipc'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
 // never touches real time data. This must be set before anything else reads it.
@@ -21,7 +23,6 @@ if (!app.requestSingleInstanceLock()) {
 
 let mainWindow: BrowserWindow | null = null
 let db: Db | null = null
-let device: DeviceSettings | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -68,13 +69,6 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
-function registerIpcHandlers(): void {
-  ipcMain.handle(IpcChannel.getAppInfo, (): AppInfo => ({
-    version: app.getVersion(),
-    platform: process.platform as AppInfo['platform'],
-  }))
-}
-
 app.on('second-instance', () => {
   if (!mainWindow) return
   if (mainWindow.isMinimized()) mainWindow.restore()
@@ -90,16 +84,21 @@ void app.whenReady().then(() => {
 
   try {
     const dataDir = app.getPath('userData')
-    device = loadDeviceSettings(dataDir)
+    const device = loadDeviceSettings(dataDir)
     db = openDatabase(join(dataDir, 'stint.db'))
     if (!app.isPackaged) console.log(`[stint] data: ${dataDir}  device: ${device.deviceId}`)
+
+    const appInfo: AppInfo = {
+      version: app.getVersion(),
+      platform: process.platform as AppInfo['platform'],
+    }
+    registerIpc(createApiHandlers({ db, deviceId: device.deviceId, appInfo }))
   } catch (error) {
     dialog.showErrorBox('Stint could not open its data', String(error))
     app.exit(1)
     return
   }
 
-  registerIpcHandlers()
   mainWindow = createMainWindow()
   mainWindow.on('closed', () => (mainWindow = null))
 
