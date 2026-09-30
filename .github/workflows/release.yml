@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Builds installers and uploads them to a draft GitHub Release.
+#
+# To release:
+#   1. Bump "version" in apps/desktop/package.json (e.g. 0.2.0) and commit.
+#   2. git tag v0.2.0 && git push origin v0.2.0
+#   3. When both jobs finish, review the draft on the Releases page and publish it.
+#      The app's update check only sees published (non-draft) releases.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # needed to create the release and upload files
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Check tag matches app version
+        shell: bash
+        run: |
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match apps/desktop version $version" >&2
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+      - name: Build and upload installers
+        run: pnpm --filter @stint/desktop build --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
