@@ -16,8 +16,26 @@ permissions:
   contents: write # needed to create the release and upload files
 
 jobs:
+  # Create the draft release once, up front. If each build job created its own,
+  # the macOS and Windows jobs would race and produce two separate drafts.
+  create-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create draft (skip if it already exists)
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists"
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --draft --title "${GITHUB_REF_NAME#v}" --generate-notes
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     name: Build (${{ matrix.os }})
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
