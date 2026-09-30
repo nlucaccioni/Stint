@@ -111,3 +111,15 @@
   background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--color-danger);
 }
+
+.projectRow[data-running] {
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.toggle {
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}

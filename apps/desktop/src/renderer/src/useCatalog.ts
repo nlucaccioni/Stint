@@ -8,7 +8,7 @@ import type {
   ProjectEdits,
   ProjectInput,
 } from '@stint/core'
-import { api } from './api'
+import { api, onEvent } from './api'
 
 interface CatalogState {
   clients: Client[]
@@ -51,9 +51,13 @@ export function useCatalog() {
 
   useEffect(() => {
     let active = true
-    void fetchCatalog().then((next) => active && setState(next))
+    const load = () => void fetchCatalog().then((next) => active && setState(next))
+    load()
+    // A timer change can add recorded time to a project (which affects deletability).
+    const unsubscribe = onEvent('timerChanged', load)
     return () => {
       active = false
+      unsubscribe()
     }
   }, [])
 

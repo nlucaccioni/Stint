@@ -14,6 +14,7 @@ import {
 } from '@stint/core'
 import { Button } from '../components/Button'
 import { Checkbox } from '../components/Field'
+import { PlayIcon, StopIcon } from '../components/icons'
 import { ClientForm } from './ClientForm'
 import { ProjectForm } from './ProjectForm'
 import styles from './ClientsView.module.css'
@@ -36,6 +37,9 @@ export interface ClientsViewProps {
   /** Projects with recorded time: these (and their clients) can't be deleted. */
   projectIdsWithTime: ReadonlySet<string>
   defaultCurrency: string
+  /** Project whose timer is running, if any. */
+  runningProjectId: string | null
+  onToggleTimer: (projectId: string) => Promise<unknown>
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
   onCreateProject: (input: ProjectInput) => Promise<unknown>
@@ -120,6 +124,8 @@ export function ClientsView(props: ClientsViewProps) {
               onArchive={() => act(props.onUpdateClient(client.id, { archived: !client.archived }))}
               onAddProject={() => setEditing({ kind: 'project', client })}
               onEditProject={(project) => setEditing({ kind: 'project', client, project })}
+              runningProjectId={props.runningProjectId}
+              onToggleTimer={(project) => act(props.onToggleTimer(project.id))}
               onArchiveProject={(project) =>
                 act(props.onUpdateProject(project.id, { archived: !project.archived }))
               }
@@ -169,6 +175,8 @@ export function ClientsView(props: ClientsViewProps) {
 interface ClientCardProps {
   client: Client
   projects: readonly Project[]
+  runningProjectId: string | null
+  onToggleTimer: (project: Project) => void
   onEdit: () => void
   onArchive: () => void
   onAddProject: () => void
@@ -176,7 +184,7 @@ interface ClientCardProps {
   onArchiveProject: (project: Project) => void
 }
 
-function ClientCard({ client, projects, ...on }: ClientCardProps) {
+function ClientCard({ client, projects, runningProjectId, ...on }: ClientCardProps) {
   return (
     <li className={styles.card} data-archived={client.archived || undefined}>
       <div className={styles.clientRow}>
@@ -200,7 +208,15 @@ function ClientCard({ client, projects, ...on }: ClientCardProps) {
             key={project.id}
             className={styles.projectRow}
             data-archived={project.archived || undefined}
+            data-running={project.id === runningProjectId || undefined}
           >
+            <TimerToggle
+              project={project}
+              running={project.id === runningProjectId}
+              // Archived projects can't be started (but a running one can be stopped).
+              disabled={(project.archived || client.archived) && project.id !== runningProjectId}
+              onClick={() => on.onToggleTimer(project)}
+            />
             <Swatch color={projectColor(project, client)} />
             <span className={styles.projectName}>{project.name}</span>
             {project.archived && <span className={styles.tag}>Archived</span>}
@@ -228,6 +244,30 @@ function ClientCard({ client, projects, ...on }: ClientCardProps) {
         </Button>
       )}
     </li>
+  )
+}
+
+function TimerToggle(props: {
+  project: Project
+  running: boolean
+  disabled: boolean
+  onClick: () => void
+}) {
+  const label = props.running
+    ? `Stop timer for ${props.project.name}`
+    : `Start timer for ${props.project.name}`
+  return (
+    <Button
+      size="sm"
+      variant={props.running ? 'primary' : 'ghost'}
+      className={styles.toggle}
+      aria-label={label}
+      title={label}
+      disabled={props.disabled}
+      onClick={props.onClick}
+    >
+      {props.running ? <StopIcon /> : <PlayIcon />}
+    </Button>
   )
 }
 
