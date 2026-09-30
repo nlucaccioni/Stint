@@ -232,6 +232,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@date-fns/tz':
+        specifier: ^1.5.0
+        version: 1.5.0
+      date-fns:
+        specifier: ^4.4.0
+        version: 4.4.0
       uuid:
         specifier: ^14.0.2
         version: 14.0.2
@@ -351,6 +357,9 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@date-fns/tz@1.5.0':
+    resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
 
   '@electron-internal/extract-zip@1.0.5':
     resolution: {integrity: sha512-+bqFCP98pLI0Tt0XQo1TmlXtwjWchISndDOxCkEcIuUgXWpBnLyRI+2DU+mesvnMMX6L1XDqYNA0lXNDHd/yiA==}
@@ -1439,6 +1448,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  date-fns@4.4.0:
+    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -2848,6 +2860,8 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
+  '@date-fns/tz@1.5.0': {}
+
   '@electron-internal/extract-zip@1.0.5': {}
 
   '@electron/asar@3.4.1':
@@ -3791,6 +3805,8 @@ snapshots:
       which: 2.0.2
 
   csstype@3.2.3: {}
+
+  date-fns@4.4.0: {}
 
   debug@4.4.3(supports-color@7.2.0):
     dependencies:
