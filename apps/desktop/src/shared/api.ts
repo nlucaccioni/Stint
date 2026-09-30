@@ -6,6 +6,8 @@
 //   `apiMethods` exist; the renderer can do nothing that isn't listed here.
 // - Across IPC, results travel as ApiResult so error codes survive the trip;
 //   the renderer's `api` wrapper turns failures back into thrown ApiErrors.
+// - Main can also push events (StintEvents) to the renderer, e.g. when the timer
+//   changes from somewhere other than the window (tray, hotkeys, Keypad).
 import type {
   Client,
   ClientEdits,
@@ -13,11 +15,17 @@ import type {
   Project,
   ProjectEdits,
   ProjectInput,
+  Session,
 } from '@stint/core'
 
 export interface AppInfo {
   version: string
   platform: 'darwin' | 'win32' | 'linux'
+}
+
+export interface TimerState {
+  /** The running session, or null when no timer is running. */
+  running: Session | null
 }
 
 export interface StintApi {
@@ -34,6 +42,15 @@ export interface StintApi {
   deleteProject(id: string): Promise<void>
   /** Only allowed when none of the client's projects have recorded time. */
   deleteClient(id: string): Promise<void>
+
+  getTimerState(): Promise<TimerState>
+  /** Start/switch to a project, or stop it if it's the one running. */
+  toggleTimer(projectId: string): Promise<TimerState>
+  /** Start/switch to a project; does nothing if it's already running. */
+  startTimer(projectId: string): Promise<TimerState>
+  stopTimer(): Promise<TimerState>
+  /** End the running timer at an earlier time (epoch ms). */
+  stopTimerAt(at: number): Promise<TimerState>
 }
 
 export const apiMethods = [
@@ -47,6 +64,11 @@ export const apiMethods = [
   'listProjectIdsWithTime',
   'deleteProject',
   'deleteClient',
+  'getTimerState',
+  'toggleTimer',
+  'startTimer',
+  'stopTimer',
+  'stopTimerAt',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -68,9 +90,26 @@ export interface ApiErrorInfo {
 
 export type ApiResult<T> = { ok: true; value: T } | { ok: false; error: ApiErrorInfo }
 
+/** Events main pushes to the renderer, and their payloads. */
+export interface StintEvents {
+  timerChanged: TimerState
+}
+
+export const eventNames = ['timerChanged'] as const satisfies readonly (keyof StintEvents)[]
+
+export type EventName = keyof StintEvents
+
+export function eventChannel(name: EventName): string {
+  return `stint:event:${name}`
+}
+
+export type Unsubscribe = () => void
+
 /** What the preload script exposes as `window.stintBridge`. */
 export type BridgeApi = {
   [K in ApiMethod]: (
     ...args: Parameters<StintApi[K]>
   ) => Promise<ApiResult<Awaited<ReturnType<StintApi[K]>>>>
+} & {
+  on<E extends EventName>(event: E, listener: (payload: StintEvents[E]) => void): Unsubscribe
 }

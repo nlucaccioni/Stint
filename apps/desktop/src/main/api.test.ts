@@ -5,18 +5,25 @@ import { start } from '@stint/core'
 import { openDatabase, type Db } from './db/connection'
 import { applySessionChanges } from './db/sessions'
 import { toResult } from './result'
+import type { TimerState } from '../shared/api'
 
 const NOW = Date.UTC(2026, 2, 10, 9)
+const MIN = 60_000
 let api: ApiHandlers
 let db: Db
+let clock: number
+let timerEvents: TimerState[]
 
 beforeEach(() => {
   db = openDatabase(':memory:')
+  clock = NOW
+  timerEvents = []
   api = createApiHandlers({
     db,
     deviceId: 'dev-test',
     appInfo: { version: '0.0.0', platform: 'win32' },
-    now: () => NOW,
+    now: () => clock,
+    onTimerChanged: (state) => timerEvents.push(state),
   })
 })
 
@@ -133,6 +140,77 @@ describe('deleting', () => {
     const { used } = setup()
     db.exec('UPDATE sessions SET deleted_at = 1')
     expect(() => api.deleteProject(used.id)).not.toThrow()
+  })
+})
+
+describe('timer', () => {
+  const getSessionEnd = () =>
+    (db.prepare('SELECT ended_at FROM sessions').get() as { ended_at: number }).ended_at
+
+  const fields = { color: null, hourlyRateCents: null, billableByDefault: true }
+  function setup() {
+    const client = api.createClient(acme)
+    const a = api.createProject({ ...fields, clientId: client.id, name: 'A' })
+    const b = api.createProject({ ...fields, clientId: client.id, name: 'B' })
+    return { client, a, b }
+  }
+
+  it('starts with no timer running', () => {
+    expect(api.getTimerState()).toEqual({ running: null })
+  })
+
+  it('toggle starts, switches, and stops, notifying each time', () => {
+    const { a, b } = setup()
+    expect(api.toggleTimer(a.id).running).toMatchObject({ projectId: a.id, startedAt: NOW })
+
+    clock = NOW + 30 * MIN
+    expect(api.toggleTimer(b.id).running).toMatchObject({ projectId: b.id, startedAt: clock })
+
+    clock = NOW + 45 * MIN
+    expect(api.toggleTimer(b.id)).toEqual({ running: null })
+
+    expect(timerEvents.map((e) => e.running?.projectId ?? null)).toEqual([a.id, b.id, null])
+  })
+
+  it('start does nothing (and sends no event) if the project is already running', () => {
+    const { a } = setup()
+    api.startTimer(a.id)
+    const before = api.getTimerState()
+    expect(api.startTimer(a.id)).toEqual(before)
+    expect(timerEvents).toHaveLength(1)
+  })
+
+  it('stop at an earlier time', () => {
+    const { a } = setup()
+    api.startTimer(a.id)
+    clock = NOW + 60 * MIN
+    expect(api.stopTimerAt(NOW + 20 * MIN)).toEqual({ running: null })
+    expect(toResult(() => api.stopTimerAt(NOW))).toMatchObject({
+      ok: false,
+      error: { code: 'not-running' },
+    })
+  })
+
+  it('refuses to start archived projects or projects of archived clients', () => {
+    const { client, a, b } = setup()
+    api.updateProject(a.id, { archived: true })
+    expect(toResult(() => api.toggleTimer(a.id))).toMatchObject({ error: { code: 'archived' } })
+    api.updateClient(client.id, { archived: true })
+    expect(toResult(() => api.startTimer(b.id))).toMatchObject({ error: { code: 'archived' } })
+  })
+
+  it('can still stop a project that was archived while running', () => {
+    const { a } = setup()
+    api.startTimer(a.id)
+    api.updateProject(a.id, { archived: true })
+    clock = NOW + 10 * MIN
+    expect(api.toggleTimer(a.id)).toEqual({ running: null })
+    expect(getSessionEnd()).toBe(NOW + 10 * MIN)
+  })
+
+  it('stopping with nothing running is a no-op', () => {
+    expect(api.stopTimer()).toEqual({ running: null })
+    expect(timerEvents).toEqual([])
   })
 })
 

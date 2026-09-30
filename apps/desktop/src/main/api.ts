@@ -9,14 +9,20 @@ import {
   newClient,
   newProject,
   projectPatch,
+  start,
+  stop,
+  stopAt,
   StintError,
+  toggle,
   type ChangeContext,
+  type Project,
+  type SessionChange,
 } from '@stint/core'
-import type { AppInfo, ApiMethod, StintApi } from '../shared/api'
+import type { AppInfo, ApiMethod, StintApi, TimerState } from '../shared/api'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getProject, insertProject, listProjects, updateProject } from './db/projects'
-import { projectIdsWithTime } from './db/sessions'
+import { applySessionChanges, getRunningSession, projectIdsWithTime } from './db/sessions'
 
 export interface ApiDeps {
   db: Db
@@ -24,6 +30,8 @@ export interface ApiDeps {
   appInfo: AppInfo
   /** Injectable clock for tests. */
   now?: () => number
+  /** Called after any change to the running timer, so every window can update. */
+  onTimerChanged?: (state: TimerState) => void
 }
 
 /** Each handler takes raw arguments and returns the unwrapped value (or throws). */
@@ -66,6 +74,33 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   function stamp() {
     const { now, deviceId } = ctx()
     return { updatedAt: now, deviceId }
+  }
+
+  function timerState(): TimerState {
+    return { running: getRunningSession(db) }
+  }
+
+  /**
+   * Read the running timer, decide what changes (core), and save them, all inside
+   * one transaction so nothing can change the timer in between.
+   */
+  function changeTimer(decide: (running: TimerState['running']) => SessionChange[]): TimerState {
+    const changes = transaction(db, () => {
+      const changes = decide(getRunningSession(db))
+      applySessionChanges(db, changes)
+      return changes
+    })
+    const state = timerState()
+    if (changes.length > 0) deps.onTimerChanged?.(state)
+    return state
+  }
+
+  /** Archived projects (or projects of archived clients) can't be started. */
+  function assertStartable(project: Project): void {
+    const client = existingClient(project.clientId)
+    if (project.archived || client.archived) {
+      throw new StintError('archived', 'Unarchive this project to track time on it.')
+    }
   }
 
   function existingClient(clientId: string) {
@@ -119,6 +154,37 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     listProjectIdsWithTime: () => projectIdsWithTime(db),
+
+    getTimerState: () => timerState(),
+
+    toggleTimer: (...args) => {
+      const [projectId] = z.tuple([id]).parse(args)
+      const project = existingProject(projectId)
+      return changeTimer((running) => {
+        // Stopping is always allowed, even if the project was archived while running.
+        if (running?.projectId !== project.id) assertStartable(project)
+        return toggle(running, project, ctx())
+      })
+    },
+
+    startTimer: (...args) => {
+      const [projectId] = z.tuple([id]).parse(args)
+      const project = existingProject(projectId)
+      return changeTimer((running) => {
+        if (running?.projectId !== project.id) assertStartable(project)
+        return start(running, project, ctx())
+      })
+    },
+
+    stopTimer: (...args) => {
+      z.tuple([]).parse(args)
+      return changeTimer((running) => stop(running, ctx()))
+    },
+
+    stopTimerAt: (...args) => {
+      const [at] = z.tuple([z.number().int()]).parse(args)
+      return changeTimer((running) => stopAt(running, at, ctx()))
+    },
 
     // Deleting is only for mistakes: anything with recorded time must be archived
     // instead, so no time is ever left pointing at a missing project.
