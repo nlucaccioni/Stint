@@ -42,7 +42,7 @@ Tooling:
 | --------------- | ----------------------------------------------------------------------- |
 | Package manager | pnpm workspaces                                                         |
 | Build           | electron-vite                                                           |
-| Database        | better-sqlite3 + Drizzle ORM (schema in TS, generated migrations)       |
+| Database        | Built-in `node:sqlite` (no native module), hand-written SQL migrations  |
 | IPC validation  | zod (main process validates every renderer request)                     |
 | Dates           | date-fns + @date-fns/tz                                                 |
 | IDs             | `uuid` v7                                                               |

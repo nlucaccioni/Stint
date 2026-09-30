@@ -3,8 +3,15 @@
 // the database and timer engine. The UI runs in a separate, sandboxed renderer
 // process and can only reach this code through the preload bridge.
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, session, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron'
 import { IpcChannel, type AppInfo } from '../shared/api'
+import { openDatabase, type Db } from './db/connection'
+import { loadDeviceSettings, type DeviceSettings } from './device'
+
+// Where the database and settings live. Dev runs use a separate folder so testing
+// never touches real time data. This must be set before anything else reads it.
+// macOS: ~/Library/Application Support/Stint   Windows: %APPDATA%\Stint
+app.setPath('userData', join(app.getPath('appData'), app.isPackaged ? 'Stint' : 'Stint Dev'))
 
 // Two copies of Stint writing to one database would conflict, so only allow one.
 // A second launch just focuses the existing window.
@@ -13,6 +20,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let mainWindow: BrowserWindow | null = null
+let db: Db | null = null
+let device: DeviceSettings | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -79,6 +88,17 @@ void app.whenReady().then(() => {
   // Stint never needs camera, mic, location, etc.
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, callback) => callback(false))
 
+  try {
+    const dataDir = app.getPath('userData')
+    device = loadDeviceSettings(dataDir)
+    db = openDatabase(join(dataDir, 'stint.db'))
+    if (!app.isPackaged) console.log(`[stint] data: ${dataDir}  device: ${device.deviceId}`)
+  } catch (error) {
+    dialog.showErrorBox('Stint could not open its data', String(error))
+    app.exit(1)
+    return
+  }
+
   registerIpcHandlers()
   mainWindow = createMainWindow()
   mainWindow.on('closed', () => (mainWindow = null))
@@ -87,6 +107,11 @@ void app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow()
   })
+})
+
+app.on('will-quit', () => {
+  db?.close()
+  db = null
 })
 
 // macOS apps usually stay running when their last window closes; Windows apps quit.

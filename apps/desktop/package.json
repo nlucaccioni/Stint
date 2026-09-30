@@ -11,7 +11,7 @@
     "dev": "node scripts/electron-vite.mjs dev",
     "build": "electron-vite build && electron-builder",
     "build:unpacked": "electron-vite build && electron-builder --dir",
-    "test": "echo \"no desktop tests yet\"",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json"
   },
   "devDependencies": {
@@ -27,6 +27,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "~6.0.3",
-    "vite": "^7.3.6"
+    "vite": "^7.3.6",
+    "vitest": "^5.0.2"
   }
 }

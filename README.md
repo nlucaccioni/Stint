@@ -26,8 +26,8 @@ Requirements:
 
 - [Node.js](https://nodejs.org/) 24 or newer
 - [pnpm](https://pnpm.io/) (`npm install -g --allow-scripts=pnpm pnpm`)
-- **macOS:** Xcode Command Line Tools (`xcode-select --install`)
-- **Windows:** if the SQLite module fails to install, add [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the "Desktop development with C++" workload
+
+No C++ toolchain is needed: Stint uses the SQLite built into Electron.
 
 ```sh
 pnpm install
@@ -35,6 +35,8 @@ pnpm dev          # run the app in development mode
 pnpm test         # run unit tests
 pnpm build        # build installers for the current platform
 ```
+
+Your data lives in `stint.db` in the app data folder: `~/Library/Application Support/Stint` on macOS, `%APPDATA%\Stint` on Windows. `pnpm dev` uses a separate `Stint Dev` folder so development never touches real data.
 
 ## Repository layout
 

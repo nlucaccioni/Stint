@@ -10,7 +10,7 @@ Local-first desktop time tracker for freelance work (macOS + Windows). Full spec
 
 ## Stack
 
-- Electron + TypeScript + React, SQLite (better-sqlite3 + Drizzle) in the main process, pnpm workspaces monorepo.
+- Electron + TypeScript + React, SQLite (built-in `node:sqlite`, hand-written SQL in `apps/desktop/src/main/db`) in the main process, pnpm workspaces monorepo.
 - `packages/core`: all business logic (time math, totals, billing, timer transitions). No UI, Electron, or DB imports.
 - `packages/ui`: shared React components and design tokens (CSS variables). Placeholder visual style only; Nicholas will supply the design.
 - `apps/desktop`: Electron. `apps/web`: PWA (later). `plugins/logi-keypad`: C# Logi Actions SDK plugin (later).
@@ -31,6 +31,8 @@ Local-first desktop time tracker for freelance work (macOS + Windows). Full spec
 - Only one timer runs at a time. A running timer is a session with `endedAt = null`.
 - Sessions in a billing batch are read-only until explicitly unlocked.
 - Device-local settings (deviceId, API token/port) never sync and never go in git.
+- Schema changes: append a new migration to `apps/desktop/src/main/db/migrations.ts`. Never edit one that has shipped.
+- Data changes from core actions are saved with `applySessionChanges` inside `transaction()`.
 - Electron security: contextIsolation on, nodeIntegration off, sandboxed renderer, narrow typed preload bridge, zod-validated IPC.
 - Local API binds to 127.0.0.1 and requires a token. `docs/protocol.md` is the source of truth for its messages.
 - Must work on both macOS and Windows (Cmd/Option vs Ctrl/Alt shortcuts, menu bar vs system tray).

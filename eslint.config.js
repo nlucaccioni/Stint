@@ -29,7 +29,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['electron', 'react', 'react-dom', 'better-sqlite3', 'drizzle-orm*', 'node:*'],
+              group: ['electron', 'react', 'react-dom', 'node:*'],
               message: 'packages/core must not depend on Electron, React, Node, or the database.',
             },
           ],
