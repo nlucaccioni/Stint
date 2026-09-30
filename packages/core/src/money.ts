@@ -18,6 +18,12 @@ export function formatMoney(cents: number, currency: string, locale?: string): s
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 10 ** digits)
 }
 
+/** Minor units → plain text for an input field: 8550, "USD" → "85.50". */
+export function toMoneyInput(cents: number, currency: string): string {
+  const digits = currencyDigits(currency)
+  return (cents / 10 ** digits).toFixed(digits)
+}
+
 /**
  * Parse what someone typed into a rate field into minor units.
  * "85", "85.5", "$1,250.00", "85,50" → cents. Empty → null. Anything else throws.

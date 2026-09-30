@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Shared React components are exported from here. Import design tokens separately:
+// Shared React components. Import design tokens separately:
 //   import '@stint/ui/tokens.css'
-export {}
+export { Button, type ButtonProps } from './components/Button'
+export { Checkbox, Field, type FieldProps } from './components/Field'
+export { Dialog, type DialogProps } from './components/Dialog'
+export { ClientForm, type ClientFormProps } from './catalog/ClientForm'
+export { ProjectForm, type ProjectFormProps, type ProjectValues } from './catalog/ProjectForm'
+export { ClientsView, type ClientsViewProps } from './catalog/ClientsView'

@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { currencyDigits, formatMoney, isSupportedCurrency, parseMoney } from '../src/money'
+import {
+  currencyDigits,
+  formatMoney,
+  isSupportedCurrency,
+  parseMoney,
+  toMoneyInput,
+} from '../src/money'
 
 describe('parseMoney', () => {
   it.each([
@@ -36,6 +42,14 @@ describe('formatMoney', () => {
   it('formats minor units in the given locale', () => {
     expect(formatMoney(8550, 'USD', 'en-US')).toBe('$85.50')
     expect(formatMoney(8500, 'JPY', 'en-US')).toBe('¥8,500')
+  })
+})
+
+describe('toMoneyInput', () => {
+  it('round-trips with parseMoney', () => {
+    expect(toMoneyInput(8550, 'USD')).toBe('85.50')
+    expect(toMoneyInput(8500, 'JPY')).toBe('8500')
+    expect(parseMoney(toMoneyInput(123_456, 'EUR'), 'EUR')).toBe(123_456)
   })
 })
 
