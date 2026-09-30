@@ -21,6 +21,8 @@ Local-first desktop time tracker for freelance work (macOS + Windows). Full spec
 - `pnpm dev` — run the desktop app in dev mode
 - `pnpm test` / `pnpm typecheck` / `pnpm lint` — run across all packages
 - `pnpm license-check` — verify dependency licenses are GPL-compatible
+- Terminals inside VS Code set `ELECTRON_RUN_AS_NODE=1`, which makes Electron run as plain Node. `pnpm dev` clears it; unset it before launching a packaged build from that terminal.
+- New dependencies with install scripts must be approved (`pnpm approve-builds <pkg>`), recorded under `allowBuilds` in `pnpm-workspace.yaml`. pnpm also refuses versions published in the last day; use a slightly older version rather than adding exclusions.
 
 ## Rules that must not be broken
 

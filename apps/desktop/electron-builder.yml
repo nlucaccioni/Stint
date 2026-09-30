@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# electron-builder packages the built app (out/) into installers.
+# Release builds run in GitHub Actions (.github/workflows/release.yml).
+appId: com.nlucaccioni.stint
+productName: Stint
+copyright: Copyright © nlucaccioni. Licensed under GPL-3.0-or-later.
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+extraResources:
+  - from: ../../LICENSE
+    to: LICENSE
+
+mac:
+  category: public.app-category.productivity
+  # Not notarized yet (SPEC.md §11). "-" = ad-hoc signature, which Apple Silicon
+  # requires to launch at all; without it macOS reports the app as "damaged".
+  identity: '-'
+  target:
+    # The zip is what the update check reads (latest-mac.yml); users download the DMG.
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  oneClick: true
+  perMachine: false
+
+publish:
+  provider: github
+  owner: nlucaccioni
+  repo: stint
+  releaseType: draft
