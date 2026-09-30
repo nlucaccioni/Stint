@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+out/
+release/
+*.tsbuildinfo
+
+# Test output
+coverage/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases (never commit user data)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# C# plugin (later) — never commit build output or Logitech SDK binaries
+plugins/**/bin/
+plugins/**/obj/
+PluginApi.dll
