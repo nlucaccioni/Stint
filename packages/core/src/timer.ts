@@ -42,9 +42,15 @@ export function toggle(
   return start(running, project, ctx)
 }
 
-/** Stop the running timer now. Does nothing if nothing is running. */
+/**
+ * Stop the running timer now. Does nothing if nothing is running.
+ * A timer stopped in the same instant it started (a double press, or the clock
+ * stepping backwards) recorded no time, so it's deleted rather than saved empty.
+ */
 export function stop(running: Session | null, ctx: ChangeContext): SessionChange[] {
-  return running ? [update(ctx, running.id, { endedAt: ctx.now })] : []
+  if (!running) return []
+  if (ctx.now <= running.startedAt) return [update(ctx, running.id, { deletedAt: ctx.now })]
+  return [update(ctx, running.id, { endedAt: ctx.now })]
 }
 
 /** "Stop at…": end the running timer at an earlier time. */

@@ -83,6 +83,23 @@ describe('stop', () => {
   it('does nothing when idle', () => {
     expect(stop(null, ctx(now))).toEqual([])
   })
+
+  it('deletes a timer stopped in the same instant it started', () => {
+    const justStarted = { ...running, startedAt: now }
+    expect(stop(justStarted, ctx(now))).toMatchObject([{ id: 'run', patch: { deletedAt: now } }])
+  })
+
+  it('deletes rather than saving a negative duration if the clock went backwards', () => {
+    const future = { ...running, startedAt: now + 5_000 }
+    expect(stop(future, ctx(now))).toMatchObject([{ patch: { deletedAt: now } }])
+  })
+
+  it('switching in the same instant replaces the empty session', () => {
+    const justStarted = { ...running, startedAt: now }
+    const changes = start(justStarted, p2, ctx(now))
+    expect(changes[0]).toMatchObject({ patch: { deletedAt: now } })
+    expect(changes[1]).toMatchObject({ kind: 'insert', session: { projectId: 'p2' } })
+  })
 })
 
 describe('stopAt', () => {
