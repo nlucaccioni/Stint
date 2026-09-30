@@ -38,13 +38,13 @@ pnpm build        # build installers for the current platform
 
 ## Repository layout
 
-| Path | Contents |
-|---|---|
-| `packages/core` | Business logic: time math, totals, billing. No UI or Electron. |
-| `packages/ui` | Shared React components and design tokens. |
-| `apps/desktop` | The Electron app. |
-| `apps/web` | PWA companion (planned). |
-| `plugins/logi-keypad` | MX Keypad plugin (planned). |
+| Path                  | Contents                                                       |
+| --------------------- | -------------------------------------------------------------- |
+| `packages/core`       | Business logic: time math, totals, billing. No UI or Electron. |
+| `packages/ui`         | Shared React components and design tokens.                     |
+| `apps/desktop`        | The Electron app.                                              |
+| `apps/web`            | PWA companion (planned).                                       |
+| `plugins/logi-keypad` | MX Keypad plugin (planned).                                    |
 
 ## License
 

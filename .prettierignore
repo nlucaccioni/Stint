@@ -1,0 +1,6 @@
+LICENSE
+pnpm-lock.yaml
+**/out/
+**/dist/
+**/release/
+**/migrations/

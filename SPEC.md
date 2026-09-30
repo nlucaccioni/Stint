@@ -27,31 +27,31 @@ Owner: Nicholas (designer; strong in HTML/CSS/JS/React, new to C#).
 
 ## 3. Platforms & stack
 
-| Area | Choice |
-|---|---|
-| Desktop app | Electron (macOS + Windows), TypeScript |
-| UI | React, shared between desktop and future web app |
-| Local storage | SQLite in the Electron main process |
-| Keypad plugin | C# via Logi Actions SDK (Logi Plugin Service, installed with Logi Options+) |
-| Future web/mobile | PWA using the same shared React UI |
-| Future sync | Backend TBD (hosted Postgres + auth, or a local-first sync engine) |
+| Area              | Choice                                                                      |
+| ----------------- | --------------------------------------------------------------------------- |
+| Desktop app       | Electron (macOS + Windows), TypeScript                                      |
+| UI                | React, shared between desktop and future web app                            |
+| Local storage     | SQLite in the Electron main process                                         |
+| Keypad plugin     | C# via Logi Actions SDK (Logi Plugin Service, installed with Logi Options+) |
+| Future web/mobile | PWA using the same shared React UI                                          |
+| Future sync       | Backend TBD (hosted Postgres + auth, or a local-first sync engine)          |
 
 Tooling:
 
-| Concern | Choice |
-|---|---|
-| Package manager | pnpm workspaces |
-| Build | electron-vite |
-| Database | better-sqlite3 + Drizzle ORM (schema in TS, generated migrations) |
-| IPC validation | zod (main process validates every renderer request) |
-| Dates | date-fns + @date-fns/tz |
-| IDs | `uuid` v7 |
-| Styling | CSS Modules + CSS variables (design tokens in `packages/ui`) |
-| Tests | Vitest |
-| Packaging | electron-builder (DMG per arch on macOS, NSIS on Windows) |
-| Updates | electron-updater on Windows; update-available prompt on macOS (see §11) |
-| CI / releases | GitHub Actions on hosted macOS + Windows runners |
-| License check | `pnpm licenses list` + allowlist script in CI |
+| Concern         | Choice                                                                  |
+| --------------- | ----------------------------------------------------------------------- |
+| Package manager | pnpm workspaces                                                         |
+| Build           | electron-vite                                                           |
+| Database        | better-sqlite3 + Drizzle ORM (schema in TS, generated migrations)       |
+| IPC validation  | zod (main process validates every renderer request)                     |
+| Dates           | date-fns + @date-fns/tz                                                 |
+| IDs             | `uuid` v7                                                               |
+| Styling         | CSS Modules + CSS variables (design tokens in `packages/ui`)            |
+| Tests           | Vitest                                                                  |
+| Packaging       | electron-builder (DMG per arch on macOS, NSIS on Windows)               |
+| Updates         | electron-updater on Windows; update-available prompt on macOS (see §11) |
+| CI / releases   | GitHub Actions on hosted macOS + Windows runners                        |
+| License check   | `pnpm licenses list` + allowlist script in CI                           |
 
 ### Repository layout (monorepo)
 
@@ -100,29 +100,35 @@ If the Keypad plugin or Logi Options+ is not running, nothing is lost; the plugi
 All synced records are designed for future sync from day one.
 
 **Sync-ready rules (every synced table):**
+
 - `id`: UUIDv7 generated on the device. No autoincrement IDs.
 - `createdAt`, `updatedAt`: UTC.
 - `deviceId`: which device last modified the record. Generated once on first launch and stored in device-local settings.
 - `deletedAt`: soft delete. Never hard-delete synced records.
 
 **Storage conventions:**
+
 - Timestamps are stored as integer UTC epoch milliseconds. Format to local time only in the UI.
 - Money is stored as integer minor units (cents), never floats. Field names end in `Cents`.
 - Currency is an ISO 4217 code.
 
 ### Client
+
 - `id`, `name`, `color`, `hourlyRateCents` (nullable), `currency` (defaults to the default-currency setting), `archived`, sync fields.
 
 ### Project
+
 - `id`, `clientId`, `name`, `color` (optional, falls back to client color), `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, sync fields.
 
 ### Session
+
 - `id`, `projectId`, `startedAt`, `endedAt` (null = currently running), `note`, `billable` (defaults from the project's `billableByDefault`), `billingBatchId` (nullable), `source` (`timer` | `manual` | `split`), sync fields.
 - Duration is derived: `endedAt - startedAt` (or `now - startedAt` if running).
 - A unique partial index guarantees at most one running session: unique on a constant where `endedAt IS NULL AND deletedAt IS NULL`.
 - Phase 3 adds `billedRateCents` (nullable): the effective rate recorded when the session joins a billing batch. This is input data, not a stored total — it keeps past invoices from changing when a rate changes later.
 
 ### BillingBatch
+
 - `id`, `clientId`, `rangeStart`, `rangeEnd`, `reference` (free text: invoice number, tool name, "PDF", etc.), `billedAt`, `paidAt` (nullable), `note`, sync fields.
 - Status is derived: `paidAt` set → paid; otherwise → billed.
 
@@ -131,13 +137,16 @@ All synced records are designed for future sync from day one.
 Settings are split by whether they belong to the user or to one machine.
 
 **Synced preferences** (a table with sync fields):
+
 - Favorites: up to 9 project slots (shared by hotkeys and Keypad).
 - Idle threshold, long-running-timer nudge threshold, week start day, default currency.
 
 **Device-local settings** (JSON file in the app data folder; never synced):
+
 - `deviceId`, local API port and token, window position, hotkey registration results.
 
 ### Derived billing status of a session
+
 - `billingBatchId` null → **unbilled**
 - In a batch without `paidAt` → **billed**
 - In a batch with `paidAt` → **paid**
@@ -147,6 +156,7 @@ Settings are split by whether they belong to the user or to one machine.
 ## 6. Behavior rules
 
 ### Timers
+
 - Only one timer runs at a time (enforced by the unique index in §5 as well as in the engine).
 - Starting a project while another is running stops the current one at that same instant and starts the new one, in one transaction.
 - Starting the project that is already running stops it (toggle behavior).
@@ -157,7 +167,9 @@ Settings are split by whether they belong to the user or to one machine.
 - **Conflict rule (for later sync):** if two devices each have a running session, close the earlier one at the start time of the later one, or prompt the user.
 
 ### Editing
+
 All editing is allowed on unbilled sessions:
+
 - Change start/end times (validate end > start; warn on overlaps with other sessions).
 - Move a session to another project/client.
 - Split a session into two at a chosen time.
@@ -165,10 +177,12 @@ All editing is allowed on unbilled sessions:
 - Delete (soft delete).
 
 ### Locking
+
 - Sessions in a billing batch are locked and read-only.
 - A deliberate "Unlock" action (with confirmation) removes a session from its batch so it can be edited.
 
 ### Billing batches
+
 - Create: pick a client and date range. Stint gathers all unbilled, billable sessions in that range; the user can deselect individual sessions before confirming.
 - Record a free-text `reference` for where it was invoiced.
 - Mark paid: set `paidAt` (date picker, defaults to today). Can be un-marked.
@@ -176,6 +190,7 @@ All editing is allowed on unbilled sessions:
 - Partial payments are out of scope for v1 (see open questions).
 
 ### Totals & reporting
+
 - Totals for today, this week, custom range; grouped by client and by project.
 - Sessions that cross a range boundary (e.g. midnight, week start) are clipped to the range when totaling. Day/week boundaries use the local time zone.
 - Amounts = hours × effective rate (project rate, else client rate).
@@ -189,11 +204,13 @@ All editing is allowed on unbilled sessions:
 **Main window:** running timer at the top; client/project list with start buttons; session log (grouped by day) with inline editing; totals; billing view.
 
 **Tray / menu bar:**
+
 - macOS: menu bar icon (template image for light/dark) with the running time shown as text next to it.
 - Windows: system tray icon with tooltip showing running project and time.
 - Menu: running timer + stop, favorites, "Open Stint," quick switcher, quit.
 
 **Global hotkeys (user-configurable):**
+
 - Favorite slots 1–9: `Cmd+Option+1…9` (macOS) / `Ctrl+Alt+1…9` (Windows). Press to start/switch; press the running one to stop.
 - Stop: `Cmd+Option+0` / `Ctrl+Alt+0`.
 - Quick switcher: `Cmd+Option+Space` / `Ctrl+Alt+Space` — small always-on-top palette; type to fuzzy-search client/project, Enter to start.
@@ -210,6 +227,7 @@ All editing is allowed on unbilled sessions:
 - JSON messages. Keep the canonical definition in `docs/protocol.md` and version it (`"v": 1`).
 
 **Client → app commands**
+
 - `hello { token, client: "logi-keypad", v }`
 - `start { projectId }`
 - `stop {}`
@@ -218,6 +236,7 @@ All editing is allowed on unbilled sessions:
 - `getState {}`
 
 **App → client events**
+
 - `state { running: { sessionId, projectId, clientId, startedAt } | null, favorites: [...], totals: { todaySeconds, weekSeconds, unbilledSeconds, unbilledAmounts: [{ currency, cents }] } }`
 - Sent on connect, on any change, and at least once per minute. Clients compute live elapsed time from `startedAt` themselves; the app does not push every second.
 - `projects { list: [{ id, clientId, name, clientName, color }] }` for plugin configuration pickers.
@@ -230,6 +249,7 @@ All editing is allowed on unbilled sessions:
 Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client over the Local API.
 
 **Actions (assignable to keys in Logi Options+):**
+
 - **Project timer** (parameter: which project, chosen from the list the app provides). Idle: project name + color. Running: distinct running style + live elapsed time. Press: toggle.
 - **Favorite slot** (parameter: 1–9). Mirrors the hotkey slot so key N and hotkey N always match.
 - **Stop.**
@@ -238,6 +258,7 @@ Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client
 - **Quick switcher** (opens the palette in the app).
 
 **Rendering & behavior:**
+
 - Redraw the running key once per second; totals keys once per minute; others only on state change.
 - If the app is not reachable: show a clear "Stint offline" key state and retry the connection with backoff.
 - Target the .NET version that matches the installed Logi Plugin Service; verify at build time.
@@ -277,6 +298,7 @@ The C# plugin should stay small. Include clear comments, since the owner is new 
 6. **PWA web app.**
 
 ### Phase 1 acceptance criteria
+
 - Installs and runs on both macOS and Windows, from installers built by GitHub Actions.
 - Can create clients and projects, start/stop/switch timers, and only one timer ever runs.
 - A running timer survives quitting and reopening the app.
