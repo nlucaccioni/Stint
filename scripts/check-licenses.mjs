@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Fails if any production dependency (code that ships inside Stint) has a license
-// that isn't on the GPL-3.0-compatible allowlist. Dev-only tools aren't distributed,
-// so they aren't checked. To approve a new license, add it here in a reviewed commit.
+// Fails if any dependency has a license that isn't on the GPL-3.0-compatible
+// allowlist. Every package is checked, not just "dependencies": the app bundles
+// code from devDependencies (React, zod, …), so that split doesn't say what ships.
+// To approve a new license, add it here in a reviewed commit.
 import { execSync } from 'node:child_process'
 
 const ALLOWED = new Set([
@@ -10,6 +11,7 @@ const ALLOWED = new Set([
   'BlueOak-1.0.0',
   'BSD-2-Clause',
   'BSD-3-Clause',
+  'CC-BY-4.0', // browser-support data used by build tools (caniuse-lite)
   'CC0-1.0',
   'GPL-3.0-or-later',
   'ISC',
@@ -18,6 +20,7 @@ const ALLOWED = new Set([
   'MPL-2.0',
   'Python-2.0',
   'Unlicense',
+  'WTFPL', // GPL-compatible per the FSF; small helpers inside electron-builder
   'Zlib',
 ])
 
@@ -30,7 +33,7 @@ function isAllowed(expr) {
   return ALLOWED.has(clean)
 }
 
-const raw = execSync('pnpm licenses list --prod --json --recursive', { encoding: 'utf8' })
+const raw = execSync('pnpm licenses list --json --recursive', { encoding: 'utf8' })
 const byLicense = JSON.parse(raw)
 
 const problems = []
@@ -47,4 +50,4 @@ if (problems.length) {
 }
 
 const count = Object.values(byLicense).reduce((n, pkgs) => n + pkgs.length, 0)
-console.log(`License check passed (${count} production packages).`)
+console.log(`License check passed (${count} packages).`)
