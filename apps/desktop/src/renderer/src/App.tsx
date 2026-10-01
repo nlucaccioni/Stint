@@ -111,6 +111,7 @@ export function App() {
                 projectIdsWithTime={catalog.projectIdsWithTime}
                 defaultCurrency={prefs.preferences.defaultCurrency}
                 runningProjectId={timer.running?.projectId ?? null}
+                favorites={prefs.preferences.favorites}
                 onToggleTimer={timer.toggle}
                 onCreateClient={catalog.createClient}
                 onUpdateClient={catalog.updateClient}
@@ -151,7 +152,12 @@ export function App() {
               />
             )}
             {tab === 'settings' && (
-              <SettingsView preferences={prefs.preferences} onSave={prefs.update} />
+              <SettingsView
+                preferences={prefs.preferences}
+                projects={catalog.projects}
+                clients={catalog.clients}
+                onSave={prefs.update}
+              />
             )}
           </>
         )}

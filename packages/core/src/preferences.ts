@@ -14,13 +14,21 @@ export interface Preferences {
   weekStartsOn: WeekStartDay
   /** Currency for new clients. */
   defaultCurrency: string
+  /**
+   * Nine favorite slots (index 0 = slot 1), each a project id or null. Shared by
+   * hotkeys, the tray menu, and the Keypad.
+   */
+  favorites: (string | null)[]
 }
+
+export const FAVORITE_SLOTS = 9
 
 export const defaultPreferences: Preferences = {
   idleMinutes: 15,
   nudgeHours: 4,
   weekStartsOn: 1,
   defaultCurrency: 'USD',
+  favorites: Array.from({ length: 9 }, () => null),
 }
 
 export const preferenceKeys = Object.keys(defaultPreferences) as (keyof Preferences)[]
@@ -51,7 +59,35 @@ export function validatePreferences(edits: Partial<Preferences>): Partial<Prefer
     }
     out.defaultCurrency = edits.defaultCurrency
   }
+  if (edits.favorites !== undefined) {
+    const favs = edits.favorites
+    if (!Array.isArray(favs) || favs.length !== FAVORITE_SLOTS) {
+      throw new StintError('invalid-preference', `Favorites must have ${FAVORITE_SLOTS} slots.`)
+    }
+    const used = favs.filter((id): id is string => id !== null)
+    if (new Set(used).size !== used.length) {
+      throw new StintError('invalid-preference', 'A project can only be in one favorite slot.')
+    }
+    out.favorites = [...favs]
+  }
   return out
+}
+
+/** The 1-based favorite slot a project is in, or null. */
+export function favoriteSlot(
+  favorites: readonly (string | null)[],
+  projectId: string,
+): number | null {
+  const i = favorites.indexOf(projectId)
+  return i === -1 ? null : i + 1
+}
+
+/** Favorites with the given projects removed (e.g. after they're deleted). */
+export function withoutFavorites(
+  favorites: readonly (string | null)[],
+  projectIds: readonly string[],
+): (string | null)[] {
+  return favorites.map((id) => (id !== null && projectIds.includes(id) ? null : id))
 }
 
 function wholeNumber(value: number, min: number, max: number, message: string): number {

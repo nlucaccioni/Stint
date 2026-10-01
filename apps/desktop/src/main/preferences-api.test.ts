@@ -53,3 +53,44 @@ describe('preferences', () => {
     expect(migrations.length).toBeGreaterThanOrEqual(2)
   })
 })
+
+describe('favorites', () => {
+  const slots = (...ids: (string | null)[]) => [...ids, ...Array(9 - ids.length).fill(null)]
+
+  function project(name: string) {
+    const client = api.createClient({
+      name: 'C',
+      color: '#000000',
+      hourlyRateCents: null,
+      currency: 'USD',
+    })
+    return api.createProject({
+      clientId: client.id,
+      name,
+      color: null,
+      hourlyRateCents: null,
+      billableByDefault: true,
+    })
+  }
+
+  it('saves favorite slots', () => {
+    const a = project('A')
+    expect(api.updatePreferences({ favorites: slots(null, a.id) }).favorites).toEqual(
+      slots(null, a.id),
+    )
+  })
+
+  it('refuses unknown projects', () => {
+    expect(toResult(() => api.updatePreferences({ favorites: slots('nope') }))).toMatchObject({
+      error: { code: 'not-found' },
+    })
+  })
+
+  it('clears a deleted project from its slot', () => {
+    const a = project('A')
+    const b = project('B')
+    api.updatePreferences({ favorites: slots(a.id, b.id) })
+    api.deleteProject(a.id)
+    expect(api.getPreferences().favorites).toEqual(slots(null, b.id))
+  })
+})

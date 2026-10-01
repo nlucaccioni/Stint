@@ -22,6 +22,7 @@ import {
   StintError,
   toLocalParts,
   validatePreferences,
+  withoutFavorites,
   toggle,
   type ChangeContext,
   type Preferences,
@@ -123,6 +124,7 @@ const preferenceEdits = z.strictObject({
   nudgeHours: z.number().optional(),
   weekStartsOn: z.number().optional(),
   defaultCurrency: z.string().max(3).optional(),
+  favorites: z.array(id.nullable()).max(20).optional(),
 })
 const timeZone = z.string().refine(isTimeZone, 'Unknown time zone')
 
@@ -148,6 +150,20 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   // Only the file Stint itself just exported can be revealed, never a path from the UI.
   let lastExportPath: string | null = null
   const ctx = (): ChangeContext => ({ now: (deps.now ?? Date.now)(), deviceId: deps.deviceId })
+
+  function savePreferences(values: Partial<Preferences>): Preferences {
+    setPreferences(db, values, ctx())
+    const prefs = getPreferences(db)
+    deps.onPreferencesChanged?.(prefs)
+    return prefs
+  }
+
+  /** Deleted projects can't stay in favorite slots. */
+  function dropFavorites(projectIds: string[]): void {
+    const { favorites } = getPreferences(db)
+    const next = withoutFavorites(favorites, projectIds)
+    if (next.some((id, i) => id !== favorites[i])) savePreferences({ favorites: next })
+  }
 
   function stamp() {
     const { now, deviceId } = ctx()
@@ -353,10 +369,8 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     updatePreferences: (...args) => {
       const [edits] = z.tuple([preferenceEdits]).parse(args)
       const valid = validatePreferences(edits as Partial<Preferences>)
-      setPreferences(db, valid, ctx())
-      const prefs = getPreferences(db)
-      deps.onPreferencesChanged?.(prefs)
-      return prefs
+      for (const projectId of valid.favorites ?? []) if (projectId) existingProject(projectId)
+      return savePreferences(valid)
     },
 
     getPendingIdle: () => deps.pendingIdle?.get() ?? null,
@@ -387,6 +401,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       transaction(db, () => {
         if (projectIdsWithTime(db).includes(projectId)) throw hasTime('project')
         updateProject(db, projectId, { deletedAt: ctx().now, ...stamp() })
+        dropFavorites([projectId])
       })
     },
 
@@ -401,6 +416,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
         const now = ctx().now
         for (const p of projects) updateProject(db, p.id, { deletedAt: now, ...stamp() })
         updateClient(db, clientId, { deletedAt: now, ...stamp() })
+        dropFavorites(projects.map((p) => p.id))
       })
     },
   }

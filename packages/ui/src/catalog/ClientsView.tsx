@@ -3,6 +3,7 @@
 // callbacks as props, so desktop and (later) web can both use it.
 import { useState } from 'react'
 import {
+  favoriteSlot,
   formatMoney,
   projectColor,
   type Client,
@@ -14,7 +15,7 @@ import {
 } from '@stint/core'
 import { Button } from '../components/Button'
 import { Checkbox } from '../components/Field'
-import { Play, Plus, Square } from 'lucide-react'
+import { Play, Plus, Square, Star } from 'lucide-react'
 import { ClientForm } from './ClientForm'
 import { ProjectForm } from './ProjectForm'
 import styles from './ClientsView.module.css'
@@ -39,6 +40,8 @@ export interface ClientsViewProps {
   defaultCurrency: string
   /** Project whose timer is running, if any. */
   runningProjectId: string | null
+  /** Favorite slots (index 0 = slot 1); assigned in Settings. */
+  favorites: readonly (string | null)[]
   onToggleTimer: (projectId: string) => Promise<unknown>
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
@@ -125,6 +128,7 @@ export function ClientsView(props: ClientsViewProps) {
               onAddProject={() => setEditing({ kind: 'project', client })}
               onEditProject={(project) => setEditing({ kind: 'project', client, project })}
               runningProjectId={props.runningProjectId}
+              favorites={props.favorites}
               onToggleTimer={(project) => act(props.onToggleTimer(project.id))}
               onArchiveProject={(project) =>
                 act(props.onUpdateProject(project.id, { archived: !project.archived }))
@@ -176,6 +180,7 @@ interface ClientCardProps {
   client: Client
   projects: readonly Project[]
   runningProjectId: string | null
+  favorites: readonly (string | null)[]
   onToggleTimer: (project: Project) => void
   onEdit: () => void
   onArchive: () => void
@@ -184,7 +189,7 @@ interface ClientCardProps {
   onArchiveProject: (project: Project) => void
 }
 
-function ClientCard({ client, projects, runningProjectId, ...on }: ClientCardProps) {
+function ClientCard({ client, projects, runningProjectId, favorites, ...on }: ClientCardProps) {
   return (
     <li className={styles.card} data-archived={client.archived || undefined}>
       <div className={styles.clientRow}>
@@ -219,6 +224,7 @@ function ClientCard({ client, projects, runningProjectId, ...on }: ClientCardPro
             />
             <Swatch color={projectColor(project, client)} />
             <span className={styles.projectName}>{project.name}</span>
+            <FavoriteBadge slot={favoriteSlot(favorites, project.id)} />
             {project.archived && <span className={styles.tag}>Archived</span>}
             {!project.billableByDefault && <span className={styles.tag}>Non-billable</span>}
             <span className={styles.meta}>
@@ -272,6 +278,16 @@ function TimerToggle(props: {
         <Play size={12} fill="currentColor" />
       )}
     </Button>
+  )
+}
+
+function FavoriteBadge({ slot }: { slot: number | null }) {
+  if (slot === null) return null
+  return (
+    <span className={styles.favorite} title={`Favorite ${slot}`}>
+      <Star size={12} fill="currentColor" aria-hidden />
+      {slot}
+    </span>
   )
 }
 

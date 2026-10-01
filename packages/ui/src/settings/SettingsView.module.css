@@ -16,3 +16,44 @@
   color: var(--color-text-muted);
   font-size: var(--text-sm);
 }
+
+.section {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-md);
+}
+
+.intro {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.favorites {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2);
+}
+
+.favorite {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.favorite select {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.slot {
+  width: 20px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
