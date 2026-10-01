@@ -30,6 +30,7 @@ describe('start', () => {
           note: '',
           billable: true,
           billingBatchId: null,
+          billedRateCents: null,
           source: 'timer',
           createdAt: now,
           updatedAt: now,

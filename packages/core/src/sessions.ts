@@ -89,6 +89,7 @@ export function createManualSession(entry: ManualEntry, ctx: ChangeContext): Ses
     note: entry.note ?? '',
     billable: entry.billable,
     billingBatchId: null,
+    billedRateCents: null,
     source: 'manual',
   })
 }
@@ -112,6 +113,7 @@ export function splitSession(session: Session, at: number, ctx: ChangeContext): 
       note: session.note,
       billable: session.billable,
       billingBatchId: null,
+      billedRateCents: null,
       source: 'split',
     }),
   ]

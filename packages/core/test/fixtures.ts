@@ -49,6 +49,7 @@ export function session(overrides: Partial<Session> = {}): Session {
     note: '',
     billable: true,
     billingBatchId: null,
+    billedRateCents: null,
     source: 'timer',
     ...overrides,
   }
@@ -65,6 +66,8 @@ export function batch(overrides: Partial<BillingBatch> = {}): BillingBatch {
     billedAt: at(2026, 4, 1),
     paidAt: null,
     note: '',
+    roundingMinutes: 0,
+    roundingMode: 'up',
     ...overrides,
   }
 }

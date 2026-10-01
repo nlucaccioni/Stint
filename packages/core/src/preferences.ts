@@ -3,7 +3,9 @@
 // Device-only settings (API token, window position) live elsewhere.
 import { StintError } from './errors'
 import { isSupportedCurrency } from './money'
+import { ROUNDING_STEPS } from './billing'
 import type { WeekStartDay } from './time'
+import type { RoundingMode } from './types'
 
 export interface Preferences {
   /** Ask about idle time after this many minutes away. 0 = never ask. */
@@ -19,6 +21,9 @@ export interface Preferences {
    * hotkeys, the tray menu, and the Keypad.
    */
   favorites: (string | null)[]
+  /** Round each billed session to this many minutes; 0 = off. */
+  billingRoundingMinutes: number
+  billingRoundingMode: RoundingMode
 }
 
 export const FAVORITE_SLOTS = 9
@@ -29,6 +34,8 @@ export const defaultPreferences: Preferences = {
   weekStartsOn: 1,
   defaultCurrency: 'USD',
   favorites: Array.from({ length: 9 }, () => null),
+  billingRoundingMinutes: 0,
+  billingRoundingMode: 'up',
 }
 
 export const preferenceKeys = Object.keys(defaultPreferences) as (keyof Preferences)[]
@@ -58,6 +65,18 @@ export function validatePreferences(edits: Partial<Preferences>): Partial<Prefer
       )
     }
     out.defaultCurrency = edits.defaultCurrency
+  }
+  if (edits.billingRoundingMinutes !== undefined) {
+    if (!(ROUNDING_STEPS as readonly number[]).includes(edits.billingRoundingMinutes)) {
+      throw new StintError('invalid-preference', 'Choose a rounding step from the list.')
+    }
+    out.billingRoundingMinutes = edits.billingRoundingMinutes
+  }
+  if (edits.billingRoundingMode !== undefined) {
+    if (edits.billingRoundingMode !== 'up' && edits.billingRoundingMode !== 'nearest') {
+      throw new StintError('invalid-preference', 'Rounding must be "up" or "nearest".')
+    }
+    out.billingRoundingMode = edits.billingRoundingMode
   }
   if (edits.favorites !== undefined) {
     const favs = edits.favorites

@@ -15,6 +15,7 @@ function startNew(project: TimerProject, ctx: ChangeContext): SessionChange {
     note: '',
     billable: project.billableByDefault,
     billingBatchId: null,
+    billedRateCents: null,
     source: 'timer',
   })
 }

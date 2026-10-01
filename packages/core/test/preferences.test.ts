@@ -24,6 +24,8 @@ describe('preferences', () => {
       weekStartsOn: 1,
       defaultCurrency: 'USD',
       favorites: [null, null, null, null, null, null, null, null, null],
+      billingRoundingMinutes: 0,
+      billingRoundingMode: 'up',
     })
   })
 

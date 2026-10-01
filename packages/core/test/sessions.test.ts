@@ -153,6 +153,7 @@ describe('createManualSession', () => {
         note: '',
         billable: false,
         billingBatchId: null,
+        billedRateCents: null,
         source: 'manual',
         createdAt: now,
         updatedAt: now,

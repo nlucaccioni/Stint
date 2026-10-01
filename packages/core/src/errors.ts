@@ -19,6 +19,10 @@ export type StintErrorCode =
   | 'archived'
   | 'invalid-preference'
   | 'not-available'
+  | 'batch-empty'
+  | 'batch-paid'
+  | 'not-eligible'
+  | 'not-locked'
 
 /** An action was rejected by a business rule. `code` is stable; `message` is for humans. */
 export class StintError extends Error {

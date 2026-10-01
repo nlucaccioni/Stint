@@ -81,7 +81,11 @@ export function computeTotals(input: TotalsInput): Totals {
     const ms = clippedDuration(session, input.range, input.now)
     if (ms === 0) continue
 
-    const rate = effectiveRate(project, client)
+    // Billed sessions keep the rate they were billed at, so old invoices never change.
+    const rate =
+      session.billedRateCents !== null
+        ? { currency: client.currency, cents: session.billedRateCents }
+        : effectiveRate(project, client)
     all.add(ms, session.billable, rate)
     getOrCreate(byClient, client.id).add(ms, session.billable, rate)
     getOrCreate(byProject, project.id).add(ms, session.billable, rate)

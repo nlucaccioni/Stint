@@ -43,6 +43,11 @@ export interface Session extends SyncFields {
   note: string
   billable: boolean
   billingBatchId: string | null
+  /**
+   * The hourly rate when the session was billed (null while unbilled). Recorded so
+   * a later rate change never alters an invoice that was already sent.
+   */
+  billedRateCents: number | null
   source: SessionSource
 }
 
@@ -50,11 +55,17 @@ export interface BillingBatch extends SyncFields {
   clientId: string
   rangeStart: number
   rangeEnd: number
+  /** Where it was invoiced: "INV-042", "Bonsai", "PDF"… */
   reference: string
   billedAt: number
   paidAt: number | null
   note: string
+  /** Billing rounding in effect when the batch was created (0 = none). */
+  roundingMinutes: number
+  roundingMode: RoundingMode
 }
+
+export type RoundingMode = 'up' | 'nearest'
 
 export type BillingStatus = 'unbilled' | 'billed' | 'paid'
 

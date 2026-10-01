@@ -183,11 +183,16 @@ All editing is allowed on unbilled sessions:
 
 ### Billing batches
 
-- Create: pick a client and date range. Stint gathers all unbilled, billable sessions in that range; the user can deselect individual sessions before confirming.
-- Record a free-text `reference` for where it was invoiced.
+- Create: pick a client and date range. Stint gathers all unbilled, billable, finished sessions that _started_ within the range (whole sessions; running timers excluded); the user can deselect individual sessions before confirming.
+- Record a free-text `reference` for where it was invoiced, a billed date, and an optional note.
+- Each session records its effective rate (`billedRateCents`) and the batch records the rounding in effect, so later rate or setting changes never alter a sent invoice.
+- Forgotten sessions can be added to an unpaid batch.
 - Mark paid: set `paidAt` (date picker, defaults to today). Can be un-marked.
+- Unlock one session (removes it from its batch, with confirmation). Un-bill a whole batch (releases all sessions) only when unpaid; mark it unpaid first.
 - Views: unbilled time per client (hours and amount), outstanding batches (billed, not paid, with days waiting), paid history.
-- Partial payments are out of scope for v1 (see open questions).
+- Non-billable time doesn't appear in billing views (it stays in the log and totals).
+- Partial payments are out of scope for v1.
+- **Rounding** (setting, off by default): round each billed session up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.
 
 ### Totals & reporting
 
@@ -338,9 +343,6 @@ Stint is open source under **GPL-3.0-or-later** and hosted publicly at `github.c
 
 ## 14. Open questions
 
-- Partial payments on a billing batch: needed eventually?
-- Rounding rules for billing (e.g. nearest 6 or 15 minutes): desired, and applied per session or per batch total?
-- Default currency (USD assumed) — confirm.
-- Should non-billable time appear in billing views at all?
+- Partial payments on a billing batch: needed eventually? (Out of scope for v1.)
 - Sync backend choice (Phase 5).
 - Code signing for macOS/Windows: if and when.
