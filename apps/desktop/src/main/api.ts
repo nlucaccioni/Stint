@@ -49,6 +49,7 @@ import {
   getSession,
   listSessions,
   projectIdsWithTime,
+  recentProjectIds,
 } from './db/sessions'
 
 export interface ApiDeps {
@@ -80,6 +81,7 @@ export interface ApiDeps {
   }
   /** Start Stint when the user logs in (an OS setting for this machine). */
   loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
+  hideSwitcher?: () => void
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
@@ -441,6 +443,13 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       item.set(enabled)
       return item.get()
     },
+
+    listRecentProjectIds: (...args) => {
+      const [limit] = z.tuple([z.number().int().min(1).max(50)]).parse(args)
+      return recentProjectIds(db, limit)
+    },
+
+    hideSwitcher: () => deps.hideSwitcher?.(),
 
     showExportedFile: (...args) => {
       z.tuple([]).parse(args)

@@ -6,6 +6,17 @@ import { sessionsTable as t } from './tables'
 
 export const getSession = (db: Db, id: string) => getById(db, t, id)
 
+/** Projects with the most recently started time, newest first. */
+export function recentProjectIds(db: Db, limit: number): string[] {
+  return db
+    .prepare(
+      `SELECT project_id FROM sessions WHERE deleted_at IS NULL
+       GROUP BY project_id ORDER BY MAX(started_at) DESC LIMIT ?`,
+    )
+    .all(limit)
+    .map((row) => row['project_id'] as string)
+}
+
 /** IDs of projects that have any (non-deleted) recorded time. */
 export function projectIdsWithTime(db: Db): string[] {
   return db

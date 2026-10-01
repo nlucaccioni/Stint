@@ -143,6 +143,11 @@ export interface StintApi {
 
   getLaunchAtLogin(): Promise<LaunchAtLogin>
   setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLogin>
+
+  /** Projects with the most recent time, newest first (for the quick switcher). */
+  listRecentProjectIds(limit: number): Promise<string[]>
+  /** Close the quick switcher (after a pick or Esc). */
+  hideSwitcher(): Promise<void>
 }
 
 export const apiMethods = [
@@ -179,6 +184,8 @@ export const apiMethods = [
   'pauseHotkeys',
   'getLaunchAtLogin',
   'setLaunchAtLogin',
+  'listRecentProjectIds',
+  'hideSwitcher',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -211,6 +218,8 @@ export interface StintEvents {
   idleChanged: IdleAway | null
   /** Show a particular tab (e.g. "Settings…" chosen in the tray menu). */
   navigate: AppView
+  /** The quick switcher was opened: reset the search and refresh. */
+  switcherShown: null
 }
 
 export const eventNames = [
@@ -219,6 +228,7 @@ export const eventNames = [
   'preferencesChanged',
   'idleChanged',
   'navigate',
+  'switcherShown',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents

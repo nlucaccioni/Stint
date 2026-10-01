@@ -21,3 +21,4 @@ export {
 } from './log/SessionDialog'
 export { SettingsView, type SettingsViewProps } from './settings/SettingsView'
 export { IdleDialog, type IdleDialogProps } from './timer/IdleDialog'
+export { QuickSwitcher, type QuickSwitcherProps } from './switcher/QuickSwitcher'

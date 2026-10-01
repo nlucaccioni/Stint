@@ -38,7 +38,9 @@ import type { TrayCommand, TrayModel } from './tray-menu'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
+import { hideSwitcher, showSwitcher } from './switcher'
 import { startUpdateChecks } from './updates'
+import { createSecureWindow, loadRenderer } from './windows'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
 // never touches real time data. This must be set before anything else reads it.
@@ -62,21 +64,13 @@ let quitting = false
 let onFirstHide: () => void = () => {}
 
 function createMainWindow(): BrowserWindow {
-  const win = new BrowserWindow({
+  const win = createSecureWindow({
     width: 1000,
     height: 700,
     minWidth: 480,
     minHeight: 400,
     show: false,
     title: 'Stint',
-    webPreferences: {
-      preload: join(import.meta.dirname, '../preload/index.cjs'),
-      // Security baseline (SPEC.md §4): the page gets no Node.js access, runs in
-      // a sandbox, and sees only what the preload script explicitly exposes.
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
   })
 
   win.once('ready-to-show', () => {
@@ -92,28 +86,7 @@ function createMainWindow(): BrowserWindow {
     onFirstHide()
   })
 
-  // The app never navigates away from its own page or opens new windows.
-  // Regular web links open in the user's browser instead.
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://') || url.startsWith('http://')) void shell.openExternal(url)
-    return { action: 'deny' }
-  })
-  win.webContents.on('will-navigate', (event) => event.preventDefault())
-
-  // In dev, echo the page's console (errors, warnings) to the terminal running `pnpm dev`.
-  if (!app.isPackaged) {
-    win.webContents.on('console-message', ({ level, message }) => {
-      console.log(`[renderer:${level}] ${message}`)
-    })
-  }
-
-  // In dev, electron-vite serves the renderer with hot reload; in a build it's a local file.
-  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
-    void win.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    void win.loadFile(join(import.meta.dirname, '../renderer/index.html'))
-  }
-
+  loadRenderer(win)
   return win
 }
 
@@ -162,7 +135,7 @@ function runHotkey(action: HotkeyAction, database: Db, handlers: ApiHandlers): v
     if (action === 'stop') {
       handlers.stopTimer()
     } else if (action === 'switcher') {
-      showMainWindow() // replaced by the quick switcher palette
+      showSwitcher()
     } else {
       const slot = Number(action.slice('favorite'.length))
       const projectId = getPreferences(database).favorites[slot - 1]
@@ -276,7 +249,7 @@ function runTrayCommand(command: TrayCommand, handlers: ApiHandlers): void {
         handlers.toggleTimer(command.projectId)
         break
       case 'switcher':
-        showMainWindow() // replaced by the quick switcher palette
+        showSwitcher()
         break
       case 'open':
         showMainWindow()
@@ -361,6 +334,7 @@ void app.whenReady().then(() => {
         set: (enabled) =>
           app.setLoginItemSettings({ openAtLogin: enabled, args: enabled ? ['--hidden'] : [] }),
       },
+      hideSwitcher,
     })
     registerIpc(handlers)
     hotkeys.apply()
