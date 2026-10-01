@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect, useState } from 'react'
-import { toLocalParts, weekRange, type Session } from '@stint/core'
-import { ClientsView, SessionDialog, SessionLog, TimerBar, useNow } from '@stint/ui'
+import {
+  resolveRange,
+  toLocalParts,
+  weekRange,
+  type RangeSelection,
+  type Session,
+} from '@stint/core'
+import { ClientsView, SessionDialog, SessionLog, TimerBar, TotalsView, useNow } from '@stint/ui'
 import type { AppInfo } from '../../shared/api'
 import { api } from './api'
 import { useCatalog } from './useCatalog'
@@ -16,7 +22,12 @@ const WEEK_STARTS_ON = 1 // Monday
 // The computer's time zone; days and weeks start at local midnight.
 const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-type Tab = 'projects' | 'time'
+type Tab = 'projects' | 'time' | 'totals'
+const TABS: { tab: Tab; label: string }[] = [
+  { tab: 'projects', label: 'Projects' },
+  { tab: 'time', label: 'Time' },
+  { tab: 'totals', label: 'Totals' },
+]
 type Editing = { session?: Session } | null
 
 export function App() {
@@ -34,6 +45,13 @@ export function App() {
   const sessions = useSessions(week)
   const [editing, setEditing] = useState<Editing>(null)
 
+  const [totalsSelection, setTotalsSelection] = useState<RangeSelection>({
+    kind: 'preset',
+    preset: 'thisWeek',
+  })
+  const totalsRange = resolveRange(totalsSelection, now, zone, WEEK_STARTS_ON)
+  const totalsSessions = useSessions(totalsRange)
+
   useEffect(() => {
     void api.getAppInfo().then(setInfo)
   }, [])
@@ -46,15 +64,15 @@ export function App() {
       <header className={styles.topbar}>
         <span className={styles.brand}>Stint</span>
         <nav className={styles.tabs} aria-label="Views">
-          {(['projects', 'time'] as const).map((t) => (
+          {TABS.map((t) => (
             <button
-              key={t}
+              key={t.tab}
               type="button"
               className={styles.tab}
-              aria-current={tab === t ? 'page' : undefined}
-              onClick={() => setTab(t)}
+              aria-current={tab === t.tab ? 'page' : undefined}
+              onClick={() => setTab(t.tab)}
             >
-              {t === 'projects' ? 'Projects' : 'Time'}
+              {t.label}
             </button>
           ))}
         </nav>
@@ -106,6 +124,17 @@ export function App() {
                 onThisWeek={() => setWeekStart(null)}
                 onAdd={() => setEditing({})}
                 onEdit={(session) => setEditing({ session })}
+              />
+            )}
+            {tab === 'totals' && (
+              <TotalsView
+                selection={totalsSelection}
+                onSelectionChange={setTotalsSelection}
+                range={totalsRange}
+                sessions={totalsSessions}
+                projects={catalog.projects}
+                clients={catalog.clients}
+                zone={zone}
               />
             )}
           </>

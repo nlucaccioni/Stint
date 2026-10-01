@@ -11,6 +11,7 @@ export { DeleteAction, type Deletion } from './catalog/DeleteAction'
 export { TimerBar, type TimerBarProps } from './timer/TimerBar'
 export { StopAtDialog, type StopAtDialogProps } from './timer/StopAtDialog'
 export { useNow } from './timer/useNow'
+export { TotalsView, type TotalsViewProps } from './totals/TotalsView'
 export { PlayIcon, StopIcon } from './components/icons'
 export { SessionLog, type SessionLogProps } from './log/SessionLog'
 export {
