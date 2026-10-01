@@ -4,7 +4,8 @@
 // process and can only reach this code through the preload bridge.
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, powerMonitor, session, shell } from 'electron'
+import { app, BrowserWindow, dialog, Notification, powerMonitor, session, shell } from 'electron'
+import { formatClock } from '@stint/core'
 import {
   eventChannel,
   type AppInfo,
@@ -15,10 +16,12 @@ import {
 import { createApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
 import { getPreferences } from './db/preferences'
+import { getProject } from './db/projects'
 import { getRunningSession } from './db/sessions'
 import { loadDeviceSettings } from './device'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
+import { NudgeWatcher } from './nudge'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
 // never touches real time data. This must be set before anything else reads it.
@@ -120,6 +123,27 @@ function startIdleWatcher(database: Db): void {
   powerMonitor.on('unlock-screen', () => watcher.resume())
 }
 
+/** Remind once when a timer has been running longer than the preference allows. */
+function startNudgeWatcher(database: Db): void {
+  const watcher = new NudgeWatcher({
+    now: () => Date.now(),
+    thresholdMs: () => getPreferences(database).nudgeHours * 3_600_000,
+    running: () => getRunningSession(database),
+    notify: (running, elapsed) => {
+      if (!Notification.isSupported()) return
+      const project = getProject(database, running.projectId)
+      const notification = new Notification({
+        title: 'Timer still running',
+        body: `${project?.name ?? 'Your timer'} has been running for ${formatClock(elapsed)}. Forgot to stop it?`,
+      })
+      notification.on('click', showMainWindow)
+      notification.show()
+    },
+  })
+  setInterval(() => watcher.tick(), 60_000)
+  watcher.tick()
+}
+
 /** Bring the main window to the front, creating it if it was closed. */
 function showMainWindow(): void {
   if (!mainWindow) {
@@ -180,6 +204,7 @@ void app.whenReady().then(() => {
       }),
     )
     startIdleWatcher(db)
+    startNudgeWatcher(db)
   } catch (error) {
     dialog.showErrorBox('Stint could not open its data', String(error))
     app.exit(1)
