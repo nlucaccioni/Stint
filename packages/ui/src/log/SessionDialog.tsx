@@ -3,7 +3,7 @@
 // billable. Also split and delete. Warns (but allows) overlapping time.
 import { useEffect, useState, type FormEvent } from 'react'
 import {
-  formatHoursMinutes,
+  formatClock,
   fromLocalParts,
   localSpan,
   toLocalParts,
@@ -181,7 +181,7 @@ export function SessionDialog(props: SessionDialogProps) {
         </div>
         {valid && !running && (
           <p className={formStyles.note}>
-            {formatHoursMinutes(span.endedAt! - span.startedAt)}
+            {formatClock(span.endedAt! - span.startedAt)}
             {overnight && ' · ends the next day'}
           </p>
         )}

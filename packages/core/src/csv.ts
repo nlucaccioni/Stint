@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { tz } from '@date-fns/tz'
 import { billingStatus } from './billing'
-import { formatDecimalHours, formatHoursMinutes } from './format'
+import { formatClock, formatDecimalHours } from './format'
 import { sessionDuration } from './time'
 import type { BillingBatch, Client, Project, Session } from './types'
 
@@ -46,9 +46,9 @@ export function sessionsToCsv(input: CsvInput): string {
       const ms = sessionDuration(s, input.now)
       return [
         format(s.startedAt, 'yyyy-MM-dd', opts),
-        format(s.startedAt, 'HH:mm', opts),
-        s.endedAt === null ? '' : format(s.endedAt, 'HH:mm', opts),
-        formatHoursMinutes(ms),
+        format(s.startedAt, 'HH:mm:ss', opts),
+        s.endedAt === null ? '' : format(s.endedAt, 'HH:mm:ss', opts),
+        formatClock(ms),
         formatDecimalHours(ms),
         text(client?.name ?? ''),
         text(project?.name ?? ''),

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-/** Running-timer style: "0:05:09", "12:00:00". */
+/** Durations everywhere in the app, to the second: "0:05:09", "12:00:00". */
 export function formatClock(ms: number): string {
   const totalSeconds = Math.floor(Math.max(0, ms) / 1000)
   const h = Math.floor(totalSeconds / 3600)

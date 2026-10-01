@@ -5,7 +5,7 @@ import { useMemo, type ReactNode } from 'react'
 import {
   computeTotals,
   dailyTotals,
-  formatHoursMinutes,
+  formatClock,
   formatMoney,
   projectColor,
   toLocalParts,
@@ -45,11 +45,8 @@ export interface TotalsViewProps {
 
 export function TotalsView(props: TotalsViewProps) {
   const { selection, range, sessions, projects, clients, zone } = props
-  // A running timer keeps adding time; minutes are the smallest unit shown.
-  const now = useNow(
-    sessions.some((s) => s.endedAt === null),
-    30_000,
-  )
+  // A running timer keeps adding time, shown to the second.
+  const now = useNow(sessions.some((s) => s.endedAt === null))
 
   const totals = useMemo(
     () => computeTotals({ sessions, projects, clients, range, now }),
@@ -119,8 +116,8 @@ export function TotalsView(props: TotalsViewProps) {
       </div>
 
       <div className={styles.tiles}>
-        <Tile label="Total time" value={formatHoursMinutes(totals.ms)} />
-        <Tile label="Billable time" value={formatHoursMinutes(totals.billableMs)} />
+        <Tile label="Total time" value={formatClock(totals.ms)} />
+        <Tile label="Billable time" value={formatClock(totals.billableMs)} />
         <Tile
           label="Billable amount"
           value={
@@ -159,8 +156,8 @@ export function TotalsView(props: TotalsViewProps) {
                   <th scope="row">
                     <Name color={client?.color}>{client?.name ?? 'Unknown client'}</Name>
                   </th>
-                  <td className={styles.num}>{formatHoursMinutes(ct.ms)}</td>
-                  <td className={styles.num}>{formatHoursMinutes(ct.billableMs)}</td>
+                  <td className={styles.num}>{formatClock(ct.ms)}</td>
+                  <td className={styles.num}>{formatClock(ct.billableMs)}</td>
                   <td className={styles.num}>{amountsLabel(ct.amounts)}</td>
                 </tr>
                 {own.map((pt) => {
@@ -172,8 +169,8 @@ export function TotalsView(props: TotalsViewProps) {
                           {project?.name ?? 'Unknown project'}
                         </Name>
                       </th>
-                      <td className={styles.num}>{formatHoursMinutes(pt.ms)}</td>
-                      <td className={styles.num}>{formatHoursMinutes(pt.billableMs)}</td>
+                      <td className={styles.num}>{formatClock(pt.ms)}</td>
+                      <td className={styles.num}>{formatClock(pt.billableMs)}</td>
                       <td className={styles.num}>{amountsLabel(pt.amounts)}</td>
                     </tr>
                   )
@@ -199,7 +196,7 @@ export function TotalsView(props: TotalsViewProps) {
             {days.map((d) => (
               <tr key={d.start} data-empty={d.ms === 0 || undefined}>
                 <th scope="row">{dayLabel(d.start, zone)}</th>
-                <td className={styles.num}>{formatHoursMinutes(d.ms)}</td>
+                <td className={styles.num}>{formatClock(d.ms)}</td>
               </tr>
             ))}
           </tbody>

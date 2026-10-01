@@ -30,7 +30,7 @@ describe('sessionsToCsv', () => {
     })
     expect(lines(csv)).toEqual([
       'Date,Start,End,Duration,Hours,Client,Project,Note,Billable,Status,Batch reference',
-      '2026-03-10,09:00,10:30,1:30,1.50,"Acme, Inc.",Website,Homepage,yes,unbilled,',
+      '2026-03-10,09:00:00,10:30:00,1:30:00,1.50,"Acme, Inc.",Website,Homepage,yes,unbilled,',
     ])
     expect(csv.endsWith('\r\n')).toBe(true)
   })
@@ -67,7 +67,7 @@ describe('sessionsToCsv', () => {
         sessions: [session({ startedAt: at(2026, 3, 10, 17), endedAt: null })],
       }),
     )[1]
-    expect(row).toBe('2026-03-10,13:00,,1:00,1.00,"Acme, Inc.",Website,,yes,unbilled,')
+    expect(row).toBe('2026-03-10,13:00:00,,1:00:00,1.00,"Acme, Inc.",Website,,yes,unbilled,')
   })
 
   it('includes billing status and batch reference', () => {

@@ -2,7 +2,7 @@
 // Recorded time for one week, grouped by day (newest first). Click a row to edit.
 import { useMemo } from 'react'
 import {
-  formatHoursMinutes,
+  formatClock,
   groupByDay,
   projectColor,
   sessionDuration,
@@ -64,7 +64,7 @@ export function SessionLog(props: SessionLogProps) {
             </Button>
           )}
         </div>
-        <span className={styles.total}>{formatHoursMinutes(weekTotal)}</span>
+        <span className={styles.total}>{formatClock(weekTotal)}</span>
         <Button variant="primary" onClick={props.onAdd}>
           Add time
         </Button>
@@ -76,7 +76,7 @@ export function SessionLog(props: SessionLogProps) {
         <div key={day.start} className={styles.day}>
           <div className={styles.dayHeader}>
             <span>{dayLabel(day.start, zone, now)}</span>
-            <span className={styles.dayTotal}>{formatHoursMinutes(ms)}</span>
+            <span className={styles.dayTotal}>{formatClock(ms)}</span>
           </div>
           <ul className={styles.rows}>
             {daySessions.map((s) => {
@@ -109,9 +109,7 @@ export function SessionLog(props: SessionLogProps) {
                       {toLocalParts(s.startedAt, zone).time}–
                       {s.endedAt === null ? 'now' : toLocalParts(s.endedAt, zone).time}
                     </span>
-                    <span className={styles.duration}>
-                      {formatHoursMinutes(sessionDuration(s, now))}
-                    </span>
+                    <span className={styles.duration}>{formatClock(sessionDuration(s, now))}</span>
                   </button>
                 </li>
               )
