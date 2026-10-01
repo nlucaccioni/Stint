@@ -12,7 +12,7 @@ Local-first desktop time tracker for freelance work (macOS + Windows). Full spec
 
 - Electron + TypeScript + React, SQLite (built-in `node:sqlite`, hand-written SQL in `apps/desktop/src/main/db`) in the main process, pnpm workspaces monorepo.
 - `packages/core`: all business logic (time math, totals, billing, timer transitions). No UI, Electron, or DB imports.
-- `packages/ui`: shared React components and design tokens (CSS variables). Placeholder visual style only; Nicholas will supply the design.
+- `packages/ui`: shared React components and design tokens (CSS variables). Placeholder visual style only; Nicholas will supply the design. UI icons come from `lucide-react`.
 - `apps/desktop`: Electron. `apps/web`: PWA (later). `plugins/logi-keypad`: C# Logi Actions SDK plugin (later).
 
 ## Commands

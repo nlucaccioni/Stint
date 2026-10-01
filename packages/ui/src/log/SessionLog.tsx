@@ -12,6 +12,7 @@ import {
   type Session,
   type TimeRange,
 } from '@stint/core'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '../components/Button'
 import { useNow } from '../timer/useNow'
 import styles from './SessionLog.module.css'
@@ -46,7 +47,7 @@ export function SessionLog(props: SessionLogProps) {
         <h1 className={styles.heading}>Time</h1>
         <div className={styles.nav}>
           <Button size="sm" variant="ghost" aria-label="Previous week" onClick={props.onPrevWeek}>
-            ‹
+            <ChevronLeft size={16} />
           </Button>
           <span className={styles.week}>{weekLabel(props.week, zone)}</span>
           <Button
@@ -56,7 +57,7 @@ export function SessionLog(props: SessionLogProps) {
             onClick={props.onNextWeek}
             disabled={props.isCurrentWeek}
           >
-            ›
+            <ChevronRight size={16} />
           </Button>
           {!props.isCurrentWeek && (
             <Button size="sm" variant="ghost" onClick={props.onThisWeek}>
@@ -66,7 +67,7 @@ export function SessionLog(props: SessionLogProps) {
         </div>
         <span className={styles.total}>{formatClock(weekTotal)}</span>
         <Button variant="primary" onClick={props.onAdd}>
-          Add time
+          <Plus size={16} /> Add time
         </Button>
       </header>
 

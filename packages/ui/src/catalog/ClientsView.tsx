@@ -14,7 +14,7 @@ import {
 } from '@stint/core'
 import { Button } from '../components/Button'
 import { Checkbox } from '../components/Field'
-import { PlayIcon, StopIcon } from '../components/icons'
+import { Play, Plus, Square } from 'lucide-react'
 import { ClientForm } from './ClientForm'
 import { ProjectForm } from './ProjectForm'
 import styles from './ClientsView.module.css'
@@ -240,7 +240,7 @@ function ClientCard({ client, projects, runningProjectId, ...on }: ClientCardPro
 
       {!client.archived && (
         <Button size="sm" variant="ghost" className={styles.addProject} onClick={on.onAddProject}>
-          + Add project
+          <Plus size={14} /> Add project
         </Button>
       )}
     </li>
@@ -266,7 +266,11 @@ function TimerToggle(props: {
       disabled={props.disabled}
       onClick={props.onClick}
     >
-      {props.running ? <StopIcon /> : <PlayIcon />}
+      {props.running ? (
+        <Square size={12} fill="currentColor" />
+      ) : (
+        <Play size={12} fill="currentColor" />
+      )}
     </Button>
   )
 }

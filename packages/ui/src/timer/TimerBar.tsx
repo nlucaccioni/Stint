@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { formatClock, projectColor, type Client, type Project, type Session } from '@stint/core'
 import { Button } from '../components/Button'
-import { StopIcon } from '../components/icons'
+import { Play, Square } from 'lucide-react'
 import { StopAtDialog } from './StopAtDialog'
 import { useNow } from './useNow'
 import styles from './TimerBar.module.css'
@@ -26,7 +26,11 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
     return (
       <div className={styles.bar} data-idle>
         <span className={styles.clock}>0:00:00</span>
-        <span className={styles.muted}>No timer running. Press ▶ next to a project to start.</span>
+        <span className={styles.muted}>
+          No timer running. Press{' '}
+          <Play size={11} fill="currentColor" className={styles.inlineIcon} /> next to a project to
+          start.
+        </span>
       </div>
     )
   }
@@ -59,7 +63,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
         Stop at…
       </Button>
       <Button variant="primary" onClick={stopNow}>
-        <StopIcon /> Stop
+        <Square size={12} fill="currentColor" /> Stop
       </Button>
       {stoppingAt && (
         <StopAtDialog

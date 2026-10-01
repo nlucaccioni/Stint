@@ -53,3 +53,7 @@
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
+
+.inlineIcon {
+  vertical-align: -1px;
+}

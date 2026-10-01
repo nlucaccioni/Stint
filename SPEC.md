@@ -205,18 +205,28 @@ All editing is allowed on unbilled sessions:
 
 **Tray / menu bar:**
 
-- macOS: menu bar icon (template image for light/dark) with the running time shown as text next to it.
+- macOS: menu bar icon (template image for light/dark) with the running time shown as text next to it, as hours:minutes (`1:23`) to keep the menu bar calm. The app and tooltips show seconds.
 - Windows: system tray icon with tooltip showing running project and time.
-- Menu: running timer + stop, favorites, "Open Stint," quick switcher, quit.
+- Menu: running timer + stop, favorites, "Open Stint," quick switcher, settings, quit.
+- Closing the main window keeps Stint running in the tray/menu bar (hotkeys and the timer keep working). Quit from the menu exits. On Windows, the first close shows a notification explaining this.
+- Launch at login: a Settings checkbox, off by default (device-local).
 
-**Global hotkeys (user-configurable):**
+**Favorites:** up to 9 project slots, a synced preference, assigned in Settings. Shared by hotkeys, the tray menu, and the Keypad.
 
-- Favorite slots 1–9: `Cmd+Option+1…9` (macOS) / `Ctrl+Alt+1…9` (Windows). Press to start/switch; press the running one to stop.
-- Stop: `Cmd+Option+0` / `Ctrl+Alt+0`.
-- Quick switcher: `Cmd+Option+Space` / `Ctrl+Alt+Space` — small always-on-top palette; type to fuzzy-search client/project, Enter to start.
+**Global hotkeys (fully customizable per action, device-local):**
+
+| Action                                                           | macOS default    | Windows default      |
+| ---------------------------------------------------------------- | ---------------- | -------------------- |
+| Favorite slots 1–9 (start/switch; press the running one to stop) | `Cmd+Option+1…9` | `Ctrl+Shift+Alt+1…9` |
+| Stop                                                             | `Cmd+Option+0`   | `Ctrl+Shift+Alt+0`   |
+| Quick switcher                                                   | `Cmd+Option+K`   | `Ctrl+Shift+Alt+K`   |
+
+- Windows avoids plain `Ctrl+Alt`: on many European layouts it equals AltGr, and global `Ctrl+Alt+digit` shortcuts would block typing characters like `{` or `@`.
+- macOS avoids `Cmd+Option+Space`: it opens Finder's search window by default.
+- Quick switcher: small always-on-top palette; type to fuzzy-search client/project, Enter to start.
 - Handle registration failures gracefully (another app may own a shortcut) and show which ones failed in settings.
 
-**Visual design:** Nicholas will provide the visual design. Build with a clean, neutral placeholder style driven by design tokens (CSS variables) in `packages/ui` so the design can be applied later without restructuring components. Support light and dark mode.
+**Visual design:** Nicholas will provide the visual design. Build with a clean, neutral placeholder style driven by design tokens (CSS variables) in `packages/ui` so the design can be applied later without restructuring components. Support light and dark mode. UI icons use the Lucide library (`lucide-react`, ISC). App and tray icons are placeholders until Nicholas supplies them.
 
 ---
 
