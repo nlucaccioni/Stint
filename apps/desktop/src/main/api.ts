@@ -55,6 +55,7 @@ import {
   getRunningSession,
   getSession,
   listBatchSessions,
+  listBilledSessions,
   listSessions,
   listUnbilledSessions,
   projectIdsWithTime,
@@ -498,6 +499,8 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     listUnbilledSessions: () => listUnbilledSessions(db),
+
+    listBilledSessions: () => listBilledSessions(db),
 
     createBatch: (...args) => {
       const [input] = z.tuple([newBatch]).parse(args)

@@ -7,11 +7,13 @@ import {
   fromLocalParts,
   localSpan,
   toLocalParts,
+  type BillingBatch,
   type Client,
   type Project,
   type Session,
   type SessionEdits,
 } from '@stint/core'
+import { Lock } from 'lucide-react'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { Checkbox, Field } from '../components/Field'
@@ -47,10 +49,84 @@ export interface SessionDialogProps {
   onUpdate: (id: string, edits: SessionEdits) => Promise<unknown>
   onSplit: (id: string, at: number) => Promise<unknown>
   onDelete: (id: string) => Promise<unknown>
+  /** Take a billed session out of its batch so it can be edited. */
+  onUnlock: (id: string) => Promise<unknown>
+  /** The batch a billed session belongs to (for the read-only view). */
+  batch?: BillingBatch | null
   onClose: () => void
 }
 
 export function SessionDialog(props: SessionDialogProps) {
+  // Billed sessions are read-only until deliberately unlocked (SPEC.md §6 "Locking").
+  if (props.session?.billingBatchId) {
+    return <LockedSession {...props} session={props.session} />
+  }
+  return <EditableSession {...props} />
+}
+
+function LockedSession(props: SessionDialogProps & { session: Session }) {
+  const { session: s, zone, batch } = props
+  const project = props.projects.find((p) => p.id === s.projectId)
+  const client = props.clients.find((c) => c.id === project?.clientId)
+  const [error, setError] = useState<string | null>(null)
+  const start = toLocalParts(s.startedAt, zone)
+  const end = s.endedAt === null ? 'now' : toLocalParts(s.endedAt, zone).time
+  const status = batch?.paidAt != null ? 'paid' : 'billed'
+  return (
+    <Dialog title="Billed time" onClose={props.onClose}>
+      <div className={formStyles.form}>
+        <p className={styles.locked}>
+          <Lock size={14} aria-hidden /> This time is {status}
+          {batch?.reference ? ` (${batch.reference})` : ''}, so it can’t be changed. Unlock it to
+          edit: it’s removed from the batch and becomes unbilled.
+        </p>
+        <dl className={styles.details}>
+          <dt>Project</dt>
+          <dd>
+            {project?.name ?? 'Unknown project'}
+            {client && ` · ${client.name}`}
+          </dd>
+          <dt>When</dt>
+          <dd>
+            {start.date}, {start.time}–{end} (
+            {formatClock((s.endedAt ?? s.startedAt) - s.startedAt)})
+          </dd>
+          {s.note && (
+            <>
+              <dt>Note</dt>
+              <dd>{s.note}</dd>
+            </>
+          )}
+        </dl>
+        <DeleteAction
+          kind="session"
+          onError={setError}
+          label="Unlock to edit…"
+          confirmLabel="Unlock"
+          warning=""
+          deletion={{
+            allowed: true,
+            question: 'Remove this session from its batch?',
+            onDelete: async () => {
+              await props.onUnlock(s.id)
+              props.onClose()
+            },
+          }}
+        />
+        {error && (
+          <p className={formStyles.error} role="alert">
+            {error}
+          </p>
+        )}
+        <div className={formStyles.actions}>
+          <Button onClick={props.onClose}>Close</Button>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+function EditableSession(props: SessionDialogProps) {
   const { session, projects, clients, zone } = props
   const running = session?.endedAt === null
   const start = session ? toLocalParts(session.startedAt, zone) : null

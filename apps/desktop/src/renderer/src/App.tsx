@@ -8,6 +8,7 @@ import {
   type Session,
 } from '@stint/core'
 import {
+  BillingView,
   ClientsView,
   IdleDialog,
   SessionDialog,
@@ -17,10 +18,11 @@ import {
   TotalsView,
   useNow,
 } from '@stint/ui'
-import type { AppInfo } from '../../shared/api'
+import type { AppInfo, AppView } from '../../shared/api'
 import { api, onEvent } from './api'
 import { ShortcutSettings } from './ShortcutSettings'
 import { SystemSettings } from './SystemSettings'
+import { useBilling } from './useBilling'
 import { useCatalog } from './useCatalog'
 import { useIdle } from './useIdle'
 import { usePreferences } from './usePreferences'
@@ -31,11 +33,12 @@ import styles from './App.module.css'
 // The computer's time zone; days and weeks start at local midnight.
 const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-type Tab = 'projects' | 'time' | 'totals' | 'settings'
+type Tab = AppView
 const TABS: { tab: Tab; label: string }[] = [
   { tab: 'projects', label: 'Projects' },
   { tab: 'time', label: 'Time' },
   { tab: 'totals', label: 'Totals' },
+  { tab: 'billing', label: 'Billing' },
   { tab: 'settings', label: 'Settings' },
 ]
 type Editing = { session?: Session } | null
@@ -47,6 +50,7 @@ export function App() {
   const timer = useTimer()
   const prefs = usePreferences()
   const idle = useIdle()
+  const billing = useBilling()
   const weekStartsOn = prefs.preferences.weekStartsOn
 
   // The week shown in the log, identified by its start (null = this week). `now`
@@ -132,6 +136,7 @@ export function App() {
                 sessions={sessions}
                 projects={catalog.projects}
                 clients={catalog.clients}
+                batches={billing.batches}
                 zone={zone}
                 onPrevWeek={() => setWeekStart(weekRange(week.start - 1, zone, weekStartsOn).start)}
                 onNextWeek={() => setWeekStart(week.end)}
@@ -153,6 +158,25 @@ export function App() {
                   api.exportCsv({ start: totalsRange.start, end: totalsRange.end }, zone)
                 }
                 onShowExport={() => void api.showExportedFile()}
+              />
+            )}
+            {tab === 'billing' && (
+              <BillingView
+                clients={catalog.clients}
+                projects={catalog.projects}
+                batches={billing.batches}
+                unbilledSessions={billing.unbilledSessions}
+                billedSessions={billing.billedSessions}
+                rounding={{
+                  minutes: prefs.preferences.billingRoundingMinutes,
+                  mode: prefs.preferences.billingRoundingMode,
+                }}
+                zone={zone}
+                onCreateBatch={api.createBatch}
+                onUpdateBatch={api.updateBatch}
+                onAddToBatch={api.addToBatch}
+                onUnlockSession={api.unlockSession}
+                onUnbillBatch={api.unbillBatch}
               />
             )}
             {tab === 'settings' && info && (
@@ -182,6 +206,8 @@ export function App() {
           onUpdate={api.updateSession}
           onSplit={api.splitSession}
           onDelete={api.deleteSession}
+          onUnlock={api.unlockSession}
+          batch={billing.batches.find((b) => b.id === editing.session?.billingBatchId) ?? null}
           onClose={() => setEditing(null)}
         />
       )}

@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useState, type FormEvent } from 'react'
-import type { Client, Preferences, Project, WeekStartDay } from '@stint/core'
+import {
+  ROUNDING_STEPS,
+  type Client,
+  type Preferences,
+  type Project,
+  type RoundingMode,
+  type WeekStartDay,
+} from '@stint/core'
 import { Button } from '../components/Button'
 import { Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
@@ -22,6 +29,8 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   const [weekStart, setWeekStart] = useState<WeekStartDay>(preferences.weekStartsOn)
   const [currency, setCurrency] = useState(preferences.defaultCurrency)
   const [favorites, setFavorites] = useState(preferences.favorites)
+  const [roundingMinutes, setRoundingMinutes] = useState(preferences.billingRoundingMinutes)
+  const [roundingMode, setRoundingMode] = useState<RoundingMode>(preferences.billingRoundingMode)
   const [saved, setSaved] = useState(false)
   const { saving, error, run } = useSubmit()
 
@@ -38,6 +47,8 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
         weekStartsOn: weekStart,
         defaultCurrency: currency,
         favorites,
+        billingRoundingMinutes: roundingMinutes,
+        billingRoundingMode: roundingMode,
       })
       setSaved(true)
     })
@@ -80,6 +91,37 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             ))}
           </select>
         </Field>
+        <h2 className={styles.section}>Billing</h2>
+        <div className={formStyles.row}>
+          <div className={formStyles.grow}>
+            <Field
+              label="Round billed time"
+              hint="Applies to each session when you bill it. The log and totals always show actual time."
+            >
+              <select
+                value={roundingMinutes}
+                onChange={(e) => setRoundingMinutes(Number(e.target.value))}
+              >
+                {ROUNDING_STEPS.map((m) => (
+                  <option key={m} value={m}>
+                    {m === 0 ? 'Off' : `To ${m} minute${m === 1 ? '' : 's'}`}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <Field label="Direction">
+            <select
+              value={roundingMode}
+              disabled={roundingMinutes === 0}
+              onChange={(e) => setRoundingMode(e.target.value as RoundingMode)}
+            >
+              <option value="up">Up</option>
+              <option value="nearest">Nearest</option>
+            </select>
+          </Field>
+        </div>
+
         <h2 className={styles.section}>Favorites</h2>
         <p className={styles.intro}>
           Favorites 1–9 can be started from the tray menu and keyboard shortcuts (and later the MX

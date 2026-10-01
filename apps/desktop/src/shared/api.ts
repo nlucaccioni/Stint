@@ -40,7 +40,7 @@ export interface HotkeyState {
   paused: boolean
 }
 
-export type AppView = 'projects' | 'time' | 'totals' | 'settings'
+export type AppView = 'projects' | 'time' | 'totals' | 'billing' | 'settings'
 
 export interface LaunchAtLogin {
   enabled: boolean
@@ -166,6 +166,8 @@ export interface StintApi {
   listBatchSessions(batchId: string): Promise<Session[]>
   /** Every unbilled, billable, finished session (for the Billing tab). */
   listUnbilledSessions(): Promise<Session[]>
+  /** Every session in any batch (for batch hours and amounts). */
+  listBilledSessions(): Promise<Session[]>
   createBatch(input: NewBatch): Promise<BillingBatch>
   /** Edit reference/note/billed date, or mark paid (date) / unpaid (null). */
   updateBatch(id: string, edits: BatchEdits): Promise<BillingBatch>
@@ -216,6 +218,7 @@ export const apiMethods = [
   'listBatches',
   'listBatchSessions',
   'listUnbilledSessions',
+  'listBilledSessions',
   'createBatch',
   'updateBatch',
   'addToBatch',

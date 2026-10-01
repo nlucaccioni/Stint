@@ -7,12 +7,14 @@ import {
   projectColor,
   sessionDuration,
   toLocalParts,
+  billingStatus,
+  type BillingBatch,
   type Client,
   type Project,
   type Session,
   type TimeRange,
 } from '@stint/core'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Lock, Plus } from 'lucide-react'
 import { Button } from '../components/Button'
 import { useNow } from '../timer/useNow'
 import styles from './SessionLog.module.css'
@@ -23,6 +25,8 @@ export interface SessionLogProps {
   sessions: readonly Session[]
   projects: readonly Project[]
   clients: readonly Client[]
+  /** For showing which sessions are billed or paid. */
+  batches: readonly BillingBatch[]
   zone: string
   onPrevWeek: () => void
   onNextWeek: () => void
@@ -40,6 +44,7 @@ export function SessionLog(props: SessionLogProps) {
 
   const projects = useMemo(() => new Map(props.projects.map((p) => [p.id, p])), [props.projects])
   const clients = useMemo(() => new Map(props.clients.map((c) => [c.id, c])), [props.clients])
+  const batches = useMemo(() => new Map(props.batches.map((b) => [b.id, b])), [props.batches])
 
   return (
     <section className={styles.log}>
@@ -106,6 +111,12 @@ export function SessionLog(props: SessionLogProps) {
                       {s.note && <span className={styles.note}>{s.note}</span>}
                     </span>
                     {!s.billable && <span className={styles.tag}>Non-billable</span>}
+                    {s.billingBatchId && (
+                      <span className={styles.tag} title="Billed sessions are locked">
+                        <Lock size={11} aria-hidden />{' '}
+                        {billingStatus(s, batches) === 'paid' ? 'Paid' : 'Billed'}
+                      </span>
+                    )}
                     <span className={styles.times}>
                       {toLocalParts(s.startedAt, zone).time}–
                       {s.endedAt === null ? 'now' : toLocalParts(s.endedAt, zone).time}

@@ -16,10 +16,18 @@ export function DeleteAction({
   deletion,
   kind,
   onError,
+  label = `Delete ${kind}…`,
+  confirmLabel = 'Delete',
+  warning = "This can't be undone.",
 }: {
   deletion: Deletion
   kind: 'client' | 'project' | 'session'
   onError: (message: string) => void
+  /** Text of the first button. */
+  label?: string
+  confirmLabel?: string
+  /** Shown after the question; empty for actions that can be reversed. */
+  warning?: string
 }) {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -36,7 +44,7 @@ export function DeleteAction({
     return (
       <div>
         <Button size="sm" variant="danger" onClick={() => setConfirming(true)}>
-          Delete {kind}…
+          {label}
         </Button>
       </div>
     )
@@ -56,12 +64,15 @@ export function DeleteAction({
 
   return (
     <div className={styles.confirm} role="alert">
-      <span>{deletion.question} This can't be undone.</span>
+      <span>
+        {deletion.question}
+        {warning && ` ${warning}`}
+      </span>
       <Button size="sm" onClick={() => setConfirming(false)}>
         Keep
       </Button>
       <Button size="sm" variant="danger" disabled={busy} onClick={() => void confirm()}>
-        Delete
+        {confirmLabel}
       </Button>
     </div>
   )
