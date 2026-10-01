@@ -22,12 +22,16 @@ mac:
   # Not notarized yet (SPEC.md §11). "-" = ad-hoc signature, which Apple Silicon
   # requires to launch at all; without it macOS reports the app as "damaged".
   identity: '-'
+  # DMG only. Silent auto-update on macOS would also need a zip target and
+  # latest-mac.yml, but it requires a signed app; until then Stint's update check
+  # reads the GitHub release directly and opens the DMG (see src/main/updates.ts).
   target:
-    # The zip is what the update check reads (latest-mac.yml); users download the DMG.
     - target: dmg
       arch: [arm64, x64]
-    - target: zip
-      arch: [arm64, x64]
+
+dmg:
+  # No blockmap/update info for the DMG: nothing reads it (see above).
+  writeUpdateInfo: false
 
 win:
   target:
