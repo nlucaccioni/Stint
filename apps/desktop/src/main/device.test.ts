@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { loadDeviceSettings } from './device'
+import { loadDeviceSettings, saveDeviceSettings } from './device'
 
 let dir: string
 beforeEach(() => {
@@ -16,7 +16,7 @@ describe('loadDeviceSettings', () => {
     const first = loadDeviceSettings(dir)
     expect(first.deviceId).toMatch(/^[0-9a-f-]{36}$/)
     expect(existsSync(join(dir, 'device.json'))).toBe(true)
-    expect(loadDeviceSettings(dir)).toEqual(first)
+    expect(loadDeviceSettings(dir).deviceId).toBe(first.deviceId)
   })
 
   it('replaces an unreadable file and keeps the bad one aside', () => {
@@ -24,5 +24,14 @@ describe('loadDeviceSettings', () => {
     const settings = loadDeviceSettings(dir)
     expect(settings.deviceId).toMatch(/^[0-9a-f-]{36}$/)
     expect(readdirSync(dir).some((f) => f.startsWith('device.json.invalid-'))).toBe(true)
+  })
+
+  it('keeps hotkey overrides and drops malformed ones', () => {
+    const { deviceId } = loadDeviceSettings(dir)
+    saveDeviceSettings(dir, {
+      deviceId,
+      hotkeys: { stop: 'Control+Alt+F12', switcher: null, favorite1: 42 as unknown as string },
+    })
+    expect(loadDeviceSettings(dir).hotkeys).toEqual({ stop: 'Control+Alt+F12', switcher: null })
   })
 })

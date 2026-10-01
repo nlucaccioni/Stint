@@ -29,7 +29,8 @@ import {
   type Project,
   type SessionChange,
 } from '@stint/core'
-import type { AppInfo, ApiMethod, IdleAway, StintApi, TimerState } from '../shared/api'
+import type { AppInfo, ApiMethod, HotkeyState, IdleAway, StintApi, TimerState } from '../shared/api'
+import { hotkeyActions, type HotkeyAction } from '../shared/hotkeys'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getPreferences, setPreferences } from './db/preferences'
@@ -62,6 +63,13 @@ export interface ApiDeps {
   revealFile?: (path: string) => void
   /** The absence waiting for a decision, owned by the idle watcher in main. */
   pendingIdle?: { get: () => IdleAway | null; clear: () => void }
+  /** Global shortcuts (see main/hotkeys.ts). */
+  hotkeys?: {
+    state: () => HotkeyState
+    set: (action: HotkeyAction, accelerator: string | null) => HotkeyState
+    reset: () => HotkeyState
+    setPaused: (paused: boolean) => HotkeyState
+  }
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
@@ -150,6 +158,11 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   // Only the file Stint itself just exported can be revealed, never a path from the UI.
   let lastExportPath: string | null = null
   const ctx = (): ChangeContext => ({ now: (deps.now ?? Date.now)(), deviceId: deps.deviceId })
+
+  function hotkeys() {
+    if (!deps.hotkeys) throw new Error('Shortcuts are not available.')
+    return deps.hotkeys
+  }
 
   function savePreferences(values: Partial<Preferences>): Preferences {
     setPreferences(db, values, ctx())
@@ -386,6 +399,22 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
           ? resolveIdle(running, pending.idleStartedAt, choice, ctx())
           : [],
       )
+    },
+
+    getHotkeys: () => hotkeys().state(),
+
+    setHotkey: (...args) => {
+      const [action, accelerator] = z
+        .tuple([z.enum(hotkeyActions), z.string().min(1).max(100).nullable()])
+        .parse(args)
+      return hotkeys().set(action, accelerator)
+    },
+
+    resetHotkeys: () => hotkeys().reset(),
+
+    pauseHotkeys: (...args) => {
+      const [paused] = z.tuple([z.boolean()]).parse(args)
+      return hotkeys().setPaused(paused)
     },
 
     showExportedFile: (...args) => {

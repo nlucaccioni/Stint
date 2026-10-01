@@ -22,6 +22,22 @@ import type {
   TimeRange,
 } from '@stint/core'
 
+import type { HotkeyAction, HotkeyBindings } from './hotkeys'
+
+export interface HotkeyStatus {
+  ok: boolean
+  /** in-use: another app owns it. duplicate: another Stint action uses it. invalid: not a usable shortcut. */
+  problem?: 'in-use' | 'duplicate' | 'invalid'
+}
+
+export interface HotkeyState {
+  bindings: HotkeyBindings
+  defaults: HotkeyBindings
+  status: Record<HotkeyAction, HotkeyStatus>
+  /** True while the settings screen is recording a new shortcut. */
+  paused: boolean
+}
+
 /** A manual time entry. */
 export interface SessionInput {
   projectId: string
@@ -108,6 +124,14 @@ export interface StintApi {
   getPendingIdle(): Promise<IdleAway | null>
   /** Keep, discard, or discard-and-continue the pending idle time. */
   resolveIdle(choice: IdleChoice): Promise<TimerState>
+
+  /** Global shortcuts on this device, and whether each one registered. */
+  getHotkeys(): Promise<HotkeyState>
+  /** Change one shortcut (null = none). */
+  setHotkey(action: HotkeyAction, accelerator: string | null): Promise<HotkeyState>
+  resetHotkeys(): Promise<HotkeyState>
+  /** Release all shortcuts while recording a new one (so pressing it isn't swallowed). */
+  pauseHotkeys(paused: boolean): Promise<HotkeyState>
 }
 
 export const apiMethods = [
@@ -138,6 +162,10 @@ export const apiMethods = [
   'updatePreferences',
   'getPendingIdle',
   'resolveIdle',
+  'getHotkeys',
+  'setHotkey',
+  'resetHotkeys',
+  'pauseHotkeys',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.

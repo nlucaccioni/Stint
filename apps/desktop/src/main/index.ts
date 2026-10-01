@@ -4,7 +4,16 @@
 // process and can only reach this code through the preload bridge.
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, Notification, powerMonitor, session, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  globalShortcut,
+  Notification,
+  powerMonitor,
+  session,
+  shell,
+} from 'electron'
 import { formatClock } from '@stint/core'
 import {
   eventChannel,
@@ -13,12 +22,14 @@ import {
   type IdleAway,
   type StintEvents,
 } from '../shared/api'
-import { createApiHandlers } from './api'
+import type { HotkeyAction, Platform } from '../shared/hotkeys'
+import { createApiHandlers, type ApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
 import { getPreferences } from './db/preferences'
 import { getProject } from './db/projects'
 import { getRunningSession } from './db/sessions'
-import { loadDeviceSettings } from './device'
+import { loadDeviceSettings, saveDeviceSettings, type DeviceSettings } from './device'
+import { HotkeyService } from './hotkeys'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
@@ -124,6 +135,40 @@ function startIdleWatcher(database: Db): void {
   powerMonitor.on('unlock-screen', () => watcher.resume())
 }
 
+/** What each global shortcut does. Problems are reported as notifications. */
+function runHotkey(action: HotkeyAction, database: Db, handlers: ApiHandlers): void {
+  try {
+    if (action === 'stop') {
+      handlers.stopTimer()
+    } else if (action === 'switcher') {
+      showMainWindow() // replaced by the quick switcher palette
+    } else {
+      const slot = Number(action.slice('favorite'.length))
+      const projectId = getPreferences(database).favorites[slot - 1]
+      if (!projectId) {
+        notify(`Favorite ${slot} is empty`, 'Choose a project for it in Settings.')
+        return
+      }
+      handlers.toggleTimer(projectId)
+    }
+  } catch (error) {
+    notify("Couldn't do that", error instanceof Error ? error.message : String(error))
+  }
+}
+
+function notify(title: string, body: string): void {
+  if (!Notification.isSupported()) return
+  const n = new Notification({ title, body })
+  n.on('click', showMainWindow)
+  n.show()
+}
+
+/** Update and save device-local settings. */
+function saveDevice(dir: string, device: DeviceSettings, changes: Partial<DeviceSettings>): void {
+  Object.assign(device, changes)
+  saveDeviceSettings(dir, device)
+}
+
 /** Remind once when a timer has been running longer than the preference allows. */
 function startNudgeWatcher(database: Db): void {
   const watcher = new NudgeWatcher({
@@ -187,23 +232,31 @@ void app.whenReady().then(() => {
       version: app.getVersion(),
       platform: process.platform as AppInfo['platform'],
     }
-    registerIpc(
-      createApiHandlers({
-        db,
-        deviceId: device.deviceId,
-        appInfo,
-        onTimerChanged: (state) => {
-          broadcast('timerChanged', state)
-          // A prompt about a session that's no longer running doesn't apply any more.
-          if (pendingIdle && state.running?.id !== pendingIdle.sessionId) setPendingIdle(null)
-        },
-        onSessionsChanged: () => broadcast('sessionsChanged', null),
-        onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
-        saveFile,
-        revealFile: (path) => shell.showItemInFolder(path),
-        pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },
-      }),
-    )
+    const hotkeys = new HotkeyService({
+      registry: globalShortcut,
+      platform: process.platform as Platform,
+      overrides: device.hotkeys ?? {},
+      save: (overrides) => saveDevice(dataDir, device, { hotkeys: overrides }),
+      onAction: (action) => runHotkey(action, db!, handlers),
+    })
+    const handlers: ApiHandlers = createApiHandlers({
+      db,
+      deviceId: device.deviceId,
+      appInfo,
+      onTimerChanged: (state) => {
+        broadcast('timerChanged', state)
+        // A prompt about a session that's no longer running doesn't apply any more.
+        if (pendingIdle && state.running?.id !== pendingIdle.sessionId) setPendingIdle(null)
+      },
+      onSessionsChanged: () => broadcast('sessionsChanged', null),
+      onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
+      saveFile,
+      revealFile: (path) => shell.showItemInFolder(path),
+      pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },
+      hotkeys,
+    })
+    registerIpc(handlers)
+    hotkeys.apply()
     startIdleWatcher(db)
     startNudgeWatcher(db)
     startUpdateChecks()
@@ -223,6 +276,7 @@ void app.whenReady().then(() => {
 })
 
 app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
   db?.close()
   db = null
 })

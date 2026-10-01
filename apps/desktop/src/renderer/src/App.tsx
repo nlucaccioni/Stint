@@ -19,6 +19,7 @@ import {
 } from '@stint/ui'
 import type { AppInfo } from '../../shared/api'
 import { api } from './api'
+import { ShortcutSettings } from './ShortcutSettings'
 import { useCatalog } from './useCatalog'
 import { useIdle } from './useIdle'
 import { usePreferences } from './usePreferences'
@@ -151,13 +152,16 @@ export function App() {
                 onShowExport={() => void api.showExportedFile()}
               />
             )}
-            {tab === 'settings' && (
-              <SettingsView
-                preferences={prefs.preferences}
-                projects={catalog.projects}
-                clients={catalog.clients}
-                onSave={prefs.update}
-              />
+            {tab === 'settings' && info && (
+              <>
+                <SettingsView
+                  preferences={prefs.preferences}
+                  projects={catalog.projects}
+                  clients={catalog.clients}
+                  onSave={prefs.update}
+                />
+                <ShortcutSettings platform={info.platform} />
+              </>
             )}
           </>
         )}
