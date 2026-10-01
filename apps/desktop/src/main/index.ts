@@ -4,11 +4,20 @@
 // process and can only reach this code through the preload bridge.
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, session, shell } from 'electron'
-import { eventChannel, type AppInfo, type EventName, type StintEvents } from '../shared/api'
+import { app, BrowserWindow, dialog, powerMonitor, session, shell } from 'electron'
+import {
+  eventChannel,
+  type AppInfo,
+  type EventName,
+  type IdleAway,
+  type StintEvents,
+} from '../shared/api'
 import { createApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
+import { getPreferences } from './db/preferences'
+import { getRunningSession } from './db/sessions'
 import { loadDeviceSettings } from './device'
+import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
@@ -24,6 +33,8 @@ if (!app.requestSingleInstanceLock()) {
 
 let mainWindow: BrowserWindow | null = null
 let db: Db | null = null
+/** An absence waiting for the user to decide what to do with it. */
+let pendingIdle: IdleAway | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -84,6 +95,43 @@ async function saveFile(suggestedName: string, contents: string): Promise<string
   return result.filePath
 }
 
+function setPendingIdle(away: IdleAway | null): void {
+  pendingIdle = away
+  broadcast('idleChanged', away)
+  if (away) showMainWindow()
+}
+
+/**
+ * Poll system idle time while a timer runs, and treat sleep and screen lock as
+ * being away. When the user returns after the threshold, ask what to do.
+ */
+function startIdleWatcher(database: Db): void {
+  const watcher = new IdleWatcher({
+    systemIdleSeconds: () => powerMonitor.getSystemIdleTime(),
+    now: () => Date.now(),
+    thresholdMs: () => getPreferences(database).idleMinutes * 60_000,
+    runningSessionId: () => getRunningSession(database)?.id ?? null,
+    onReturn: setPendingIdle,
+  })
+  setInterval(() => watcher.tick(), 5_000)
+  powerMonitor.on('suspend', () => watcher.suspend())
+  powerMonitor.on('lock-screen', () => watcher.suspend())
+  powerMonitor.on('resume', () => watcher.resume())
+  powerMonitor.on('unlock-screen', () => watcher.resume())
+}
+
+/** Bring the main window to the front, creating it if it was closed. */
+function showMainWindow(): void {
+  if (!mainWindow) {
+    mainWindow = createMainWindow()
+    mainWindow.on('closed', () => (mainWindow = null))
+    return
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
+
 /** Send an event to every window (the change may have come from elsewhere). */
 function broadcast<E extends EventName>(event: E, payload: StintEvents[E]): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -119,13 +167,19 @@ void app.whenReady().then(() => {
         db,
         deviceId: device.deviceId,
         appInfo,
-        onTimerChanged: (state) => broadcast('timerChanged', state),
+        onTimerChanged: (state) => {
+          broadcast('timerChanged', state)
+          // A prompt about a session that's no longer running doesn't apply any more.
+          if (pendingIdle && state.running?.id !== pendingIdle.sessionId) setPendingIdle(null)
+        },
         onSessionsChanged: () => broadcast('sessionsChanged', null),
         onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
         saveFile,
         revealFile: (path) => shell.showItemInFolder(path),
+        pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },
       }),
     )
+    startIdleWatcher(db)
   } catch (error) {
     dialog.showErrorBox('Stint could not open its data', String(error))
     app.exit(1)

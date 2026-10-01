@@ -13,6 +13,7 @@ import {
   newClient,
   newProject,
   projectPatch,
+  resolveIdle,
   sessionsToCsv,
   splitSession,
   start,
@@ -27,7 +28,7 @@ import {
   type Project,
   type SessionChange,
 } from '@stint/core'
-import type { AppInfo, ApiMethod, StintApi, TimerState } from '../shared/api'
+import type { AppInfo, ApiMethod, IdleAway, StintApi, TimerState } from '../shared/api'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getPreferences, setPreferences } from './db/preferences'
@@ -58,6 +59,8 @@ export interface ApiDeps {
   saveFile?: (suggestedName: string, contents: string) => Promise<string | null>
   /** Reveal a file in Finder / Explorer. */
   revealFile?: (path: string) => void
+  /** The absence waiting for a decision, owned by the idle watcher in main. */
+  pendingIdle?: { get: () => IdleAway | null; clear: () => void }
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
@@ -354,6 +357,21 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       const prefs = getPreferences(db)
       deps.onPreferencesChanged?.(prefs)
       return prefs
+    },
+
+    getPendingIdle: () => deps.pendingIdle?.get() ?? null,
+
+    resolveIdle: (...args) => {
+      const [choice] = z.tuple([z.enum(['keep', 'discard', 'discard-continue'])]).parse(args)
+      const pending = deps.pendingIdle?.get() ?? null
+      deps.pendingIdle?.clear()
+      if (!pending) return timerState()
+      return changeTimer((running) =>
+        // Only apply to the session that was running when the user went away.
+        running?.id === pending.sessionId
+          ? resolveIdle(running, pending.idleStartedAt, choice, ctx())
+          : [],
+      )
     },
 
     showExportedFile: (...args) => {

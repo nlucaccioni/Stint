@@ -9,6 +9,7 @@ import {
 } from '@stint/core'
 import {
   ClientsView,
+  IdleDialog,
   SessionDialog,
   SessionLog,
   SettingsView,
@@ -19,6 +20,7 @@ import {
 import type { AppInfo } from '../../shared/api'
 import { api } from './api'
 import { useCatalog } from './useCatalog'
+import { useIdle } from './useIdle'
 import { usePreferences } from './usePreferences'
 import { useSessions } from './useSessions'
 import { useTimer } from './useTimer'
@@ -42,6 +44,7 @@ export function App() {
   const catalog = useCatalog()
   const timer = useTimer()
   const prefs = usePreferences()
+  const idle = useIdle()
   const weekStartsOn = prefs.preferences.weekStartsOn
 
   // The week shown in the log, identified by its start (null = this week). `now`
@@ -166,6 +169,15 @@ export function App() {
           onSplit={api.splitSession}
           onDelete={api.deleteSession}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {idle.away && (
+        <IdleDialog
+          idleStartedAt={idle.away.idleStartedAt}
+          returnedAt={idle.away.returnedAt}
+          projectName={runningProject?.name ?? 'your project'}
+          zone={zone}
+          onChoose={idle.resolve}
         />
       )}
     </div>

@@ -11,6 +11,7 @@
 import type {
   Client,
   ClientEdits,
+  IdleChoice,
   Preferences,
   ClientInput,
   Project,
@@ -45,6 +46,13 @@ export interface AppInfo {
 export interface TimerState {
   /** The running session, or null when no timer is running. */
   running: Session | null
+}
+
+/** Time the user was away while a timer ran (see main/idle.ts). */
+export interface IdleAway {
+  sessionId: string
+  idleStartedAt: number
+  returnedAt: number
 }
 
 export interface ExportResult {
@@ -95,6 +103,11 @@ export interface StintApi {
 
   getPreferences(): Promise<Preferences>
   updatePreferences(edits: Partial<Preferences>): Promise<Preferences>
+
+  /** An absence waiting for the user's decision, if any. */
+  getPendingIdle(): Promise<IdleAway | null>
+  /** Keep, discard, or discard-and-continue the pending idle time. */
+  resolveIdle(choice: IdleChoice): Promise<TimerState>
 }
 
 export const apiMethods = [
@@ -123,6 +136,8 @@ export const apiMethods = [
   'showExportedFile',
   'getPreferences',
   'updatePreferences',
+  'getPendingIdle',
+  'resolveIdle',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -151,12 +166,15 @@ export interface StintEvents {
   /** Any session was added, edited, or deleted (including by the timer). */
   sessionsChanged: null
   preferencesChanged: Preferences
+  /** An absence needs a decision (or null: it was resolved or no longer applies). */
+  idleChanged: IdleAway | null
 }
 
 export const eventNames = [
   'timerChanged',
   'sessionsChanged',
   'preferencesChanged',
+  'idleChanged',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents
