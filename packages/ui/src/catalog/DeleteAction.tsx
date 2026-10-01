@@ -18,7 +18,7 @@ export function DeleteAction({
   onError,
 }: {
   deletion: Deletion
-  kind: 'client' | 'project'
+  kind: 'client' | 'project' | 'session'
   onError: (message: string) => void
 }) {
   const [confirming, setConfirming] = useState(false)

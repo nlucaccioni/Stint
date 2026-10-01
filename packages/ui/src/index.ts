@@ -12,3 +12,10 @@ export { TimerBar, type TimerBarProps } from './timer/TimerBar'
 export { StopAtDialog, type StopAtDialogProps } from './timer/StopAtDialog'
 export { useNow } from './timer/useNow'
 export { PlayIcon, StopIcon } from './components/icons'
+export { SessionLog, type SessionLogProps } from './log/SessionLog'
+export {
+  SessionDialog,
+  type NewSessionValues,
+  type OverlapCheck,
+  type SessionDialogProps,
+} from './log/SessionDialog'
