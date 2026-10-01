@@ -45,6 +45,7 @@ function session(overrides: Partial<Session>): Session {
     note: '',
     billable: true,
     billingBatchId: null,
+    billedRateCents: null,
     source: 'manual',
     ...overrides,
   }

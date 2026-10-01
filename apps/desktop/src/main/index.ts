@@ -322,6 +322,7 @@ void app.whenReady().then(() => {
         tray?.refresh()
       },
       onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
+      onBatchesChanged: () => broadcast('batchesChanged', null),
       saveFile,
       revealFile: (path) => shell.showItemInFolder(path),
       pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },

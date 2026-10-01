@@ -6,6 +6,29 @@ import { sessionsTable as t } from './tables'
 
 export const getSession = (db: Db, id: string) => getById(db, t, id)
 
+/** Every unbilled, billable, finished session (candidates for billing), oldest first. */
+export function listUnbilledSessions(db: Db): Session[] {
+  return db
+    .prepare(
+      `SELECT ${selectList(t)} FROM sessions
+       WHERE deleted_at IS NULL AND billing_batch_id IS NULL AND billable = 1 AND ended_at IS NOT NULL
+       ORDER BY started_at`,
+    )
+    .all()
+    .map((row) => fromRow(t, row))
+}
+
+/** The sessions in one billing batch, oldest first. */
+export function listBatchSessions(db: Db, batchId: string): Session[] {
+  return db
+    .prepare(
+      `SELECT ${selectList(t)} FROM sessions
+       WHERE deleted_at IS NULL AND billing_batch_id = ? ORDER BY started_at`,
+    )
+    .all(batchId)
+    .map((row) => fromRow(t, row))
+}
+
 /** Projects with the most recently started time, newest first. */
 export function recentProjectIds(db: Db, limit: number): string[] {
   return db

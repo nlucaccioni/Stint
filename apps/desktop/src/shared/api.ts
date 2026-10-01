@@ -9,6 +9,8 @@
 // - Main can also push events (StintEvents) to the renderer, e.g. when the timer
 //   changes from somewhere other than the window (tray, hotkeys, Keypad).
 import type {
+  BatchEdits,
+  BillingBatch,
   Client,
   ClientEdits,
   IdleChoice,
@@ -44,6 +46,16 @@ export interface LaunchAtLogin {
   enabled: boolean
   /** False in development builds (it would register the dev Electron binary). */
   available: boolean
+}
+
+export interface NewBatch {
+  clientId: string
+  rangeStart: number
+  rangeEnd: number
+  sessionIds: string[]
+  reference: string
+  billedAt: number
+  note: string
 }
 
 /** A manual time entry. */
@@ -148,6 +160,21 @@ export interface StintApi {
   listRecentProjectIds(limit: number): Promise<string[]>
   /** Close the quick switcher (after a pick or Esc). */
   hideSwitcher(): Promise<void>
+
+  /** All billing batches, most recently billed first. */
+  listBatches(): Promise<BillingBatch[]>
+  listBatchSessions(batchId: string): Promise<Session[]>
+  /** Every unbilled, billable, finished session (for the Billing tab). */
+  listUnbilledSessions(): Promise<Session[]>
+  createBatch(input: NewBatch): Promise<BillingBatch>
+  /** Edit reference/note/billed date, or mark paid (date) / unpaid (null). */
+  updateBatch(id: string, edits: BatchEdits): Promise<BillingBatch>
+  /** Add forgotten sessions to an unpaid batch. */
+  addToBatch(id: string, sessionIds: string[]): Promise<BillingBatch>
+  /** Take one session out of its batch so it can be edited. */
+  unlockSession(sessionId: string): Promise<Session>
+  /** Release every session and delete the batch (unpaid batches only). */
+  unbillBatch(id: string): Promise<void>
 }
 
 export const apiMethods = [
@@ -186,6 +213,14 @@ export const apiMethods = [
   'setLaunchAtLogin',
   'listRecentProjectIds',
   'hideSwitcher',
+  'listBatches',
+  'listBatchSessions',
+  'listUnbilledSessions',
+  'createBatch',
+  'updateBatch',
+  'addToBatch',
+  'unlockSession',
+  'unbillBatch',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -220,6 +255,8 @@ export interface StintEvents {
   navigate: AppView
   /** The quick switcher was opened: reset the search and refresh. */
   switcherShown: null
+  /** A billing batch was created, edited, or removed. */
+  batchesChanged: null
 }
 
 export const eventNames = [
@@ -229,6 +266,7 @@ export const eventNames = [
   'idleChanged',
   'navigate',
   'switcherShown',
+  'batchesChanged',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents

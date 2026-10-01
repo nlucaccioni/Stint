@@ -5,6 +5,11 @@
 // be tested directly against an in-memory database.
 import { z } from 'zod'
 import {
+  addToBatch,
+  createBatch,
+  editBatch,
+  unbillBatch,
+  unlockSession,
   clientPatch,
   createManualSession,
   deleteSession,
@@ -24,6 +29,7 @@ import {
   validatePreferences,
   withoutFavorites,
   toggle,
+  type BillingBatch,
   type ChangeContext,
   type Preferences,
   type Project,
@@ -40,6 +46,7 @@ import type {
 } from '../shared/api'
 import { hotkeyActions, type HotkeyAction } from '../shared/hotkeys'
 import { transaction, type Db } from './db/connection'
+import { getBatch, insertBatch, listBatches, saveBatch } from './db/batches'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getPreferences, setPreferences } from './db/preferences'
 import { getProject, insertProject, listProjects, updateProject } from './db/projects'
@@ -47,7 +54,9 @@ import {
   applySessionChanges,
   getRunningSession,
   getSession,
+  listBatchSessions,
   listSessions,
+  listUnbilledSessions,
   projectIdsWithTime,
   recentProjectIds,
 } from './db/sessions'
@@ -62,6 +71,7 @@ export interface ApiDeps {
   onTimerChanged?: (state: TimerState) => void
   /** Called after any session is added, edited, or deleted. */
   onSessionsChanged?: () => void
+  onBatchesChanged?: () => void
   onPreferencesChanged?: (prefs: Preferences) => void
   /**
    * Ask the user where to save a file (system dialog) and write it there.
@@ -145,8 +155,26 @@ const preferenceEdits = z.strictObject({
   weekStartsOn: z.number().optional(),
   defaultCurrency: z.string().max(3).optional(),
   favorites: z.array(id.nullable()).max(20).optional(),
+  billingRoundingMinutes: z.number().optional(),
+  billingRoundingMode: z.enum(['up', 'nearest']).optional(),
 })
 const timeZone = z.string().refine(isTimeZone, 'Unknown time zone')
+const reference = z.string().max(500)
+const newBatch = z.strictObject({
+  clientId: id,
+  rangeStart: time,
+  rangeEnd: time,
+  sessionIds: z.array(id).max(10_000),
+  reference,
+  billedAt: time,
+  note,
+})
+const batchEdits = z.strictObject({
+  reference: reference.optional(),
+  note: note.optional(),
+  billedAt: time.optional(),
+  paidAt: time.nullable().optional(),
+})
 
 function isTimeZone(zone: string): boolean {
   try {
@@ -170,6 +198,17 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   // Only the file Stint itself just exported can be revealed, never a path from the UI.
   let lastExportPath: string | null = null
   const ctx = (): ChangeContext => ({ now: (deps.now ?? Date.now)(), deviceId: deps.deviceId })
+
+  function existingBatch(batchId: string) {
+    const batch = getBatch(db, batchId)
+    if (!batch || batch.deletedAt !== null) throw new StintError('not-found', 'Batch not found.')
+    return batch
+  }
+
+  function rounding() {
+    const prefs = getPreferences(db)
+    return { minutes: prefs.billingRoundingMinutes, mode: prefs.billingRoundingMode }
+  }
 
   function hotkeys() {
     if (!deps.hotkeys) throw new Error('Shortcuts are not available.')
@@ -375,7 +414,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
         sessions,
         projects: listProjects(db),
         clients: listClients(db),
-        batches: [], // billing batches arrive in Phase 3
+        batches: listBatches(db),
         zone,
         now: ctx().now,
       })
@@ -450,6 +489,88 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     hideSwitcher: () => deps.hideSwitcher?.(),
+
+    listBatches: () => listBatches(db),
+
+    listBatchSessions: (...args) => {
+      const [batchId] = z.tuple([id]).parse(args)
+      return listBatchSessions(db, batchId)
+    },
+
+    listUnbilledSessions: () => listUnbilledSessions(db),
+
+    createBatch: (...args) => {
+      const [input] = z.tuple([newBatch]).parse(args)
+      const client = existingClient(input.clientId)
+      let created: BillingBatch | null = null
+      // Saving the batch and locking its sessions happen in one transaction.
+      changeSessions(() => {
+        const result = createBatch(
+          {
+            clientId: input.clientId,
+            range: { start: input.rangeStart, end: input.rangeEnd },
+            sessionIds: input.sessionIds,
+            reference: input.reference,
+            billedAt: input.billedAt,
+            note: input.note,
+          },
+          {
+            sessions: listUnbilledSessions(db),
+            projects: listProjects(db),
+            client,
+            rounding: rounding(),
+          },
+          ctx(),
+        )
+        insertBatch(db, result.batch)
+        created = result.batch
+        return result.sessions
+      })
+      deps.onBatchesChanged?.()
+      return created!
+    },
+
+    updateBatch: (...args) => {
+      const [batchId, edits] = z.tuple([id, batchEdits]).parse(args)
+      const batch = editBatch(existingBatch(batchId), edits, ctx())
+      saveBatch(db, batch)
+      deps.onBatchesChanged?.()
+      return batch
+    },
+
+    addToBatch: (...args) => {
+      const [batchId, sessionIds] = z.tuple([id, z.array(id).min(1).max(10_000)]).parse(args)
+      const batch = existingBatch(batchId)
+      const client = existingClient(batch.clientId)
+      changeSessions(() =>
+        addToBatch(
+          batch,
+          sessionIds,
+          { sessions: listUnbilledSessions(db), projects: listProjects(db), client },
+          ctx(),
+        ),
+      )
+      deps.onBatchesChanged?.()
+      return existingBatch(batchId)
+    },
+
+    unlockSession: (...args) => {
+      const [sessionId] = z.tuple([id]).parse(args)
+      changeSessions(() => [unlockSession(existingSession(sessionId), ctx())])
+      deps.onBatchesChanged?.()
+      return existingSession(sessionId)
+    },
+
+    unbillBatch: (...args) => {
+      const [batchId] = z.tuple([id]).parse(args)
+      const batch = existingBatch(batchId)
+      changeSessions(() => {
+        const result = unbillBatch(batch, listBatchSessions(db, batchId), ctx())
+        saveBatch(db, result.batch)
+        return result.sessions
+      })
+      deps.onBatchesChanged?.()
+    },
 
     showExportedFile: (...args) => {
       z.tuple([]).parse(args)

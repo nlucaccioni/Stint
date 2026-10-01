@@ -76,4 +76,28 @@ export const migrations: readonly string[] = [
     deleted_at INTEGER
   ) STRICT;
   `,
+
+  // 3 — billing batches, and the rate each session was billed at.
+  `
+  ALTER TABLE sessions ADD COLUMN billed_rate_cents INTEGER CHECK (billed_rate_cents >= 0);
+  CREATE INDEX sessions_billing_batch_id ON sessions (billing_batch_id);
+
+  CREATE TABLE billing_batches (
+    id               TEXT PRIMARY KEY NOT NULL,
+    client_id        TEXT NOT NULL,
+    range_start      INTEGER NOT NULL,
+    range_end        INTEGER NOT NULL,
+    reference        TEXT NOT NULL DEFAULT '',
+    billed_at        INTEGER NOT NULL,
+    paid_at          INTEGER,
+    note             TEXT NOT NULL DEFAULT '',
+    rounding_minutes INTEGER NOT NULL DEFAULT 0 CHECK (rounding_minutes >= 0),
+    rounding_mode    TEXT NOT NULL DEFAULT 'up' CHECK (rounding_mode IN ('up', 'nearest')),
+    created_at       INTEGER NOT NULL,
+    updated_at       INTEGER NOT NULL,
+    device_id        TEXT NOT NULL,
+    deleted_at       INTEGER
+  ) STRICT;
+  CREATE INDEX billing_batches_client_id ON billing_batches (client_id);
+  `,
 ]
