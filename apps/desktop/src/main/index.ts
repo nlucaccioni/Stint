@@ -22,6 +22,7 @@ import { loadDeviceSettings } from './device'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
+import { startUpdateChecks } from './updates'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
 // never touches real time data. This must be set before anything else reads it.
@@ -205,6 +206,7 @@ void app.whenReady().then(() => {
     )
     startIdleWatcher(db)
     startNudgeWatcher(db)
+    startUpdateChecks()
   } catch (error) {
     dialog.showErrorBox('Stint could not open its data', String(error))
     app.exit(1)
