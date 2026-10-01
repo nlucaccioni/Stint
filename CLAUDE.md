@@ -26,7 +26,7 @@ Local-first desktop time tracker for freelance work (macOS + Windows). Full spec
 
 ## Rules that must not be broken
 
-- Every synced record uses a device-generated UUIDv7, `createdAt`/`updatedAt`, `deviceId`, and soft delete via `deletedAt`. Timestamps are integer UTC epoch ms. Money is integer cents.
+- Every synced record uses a device-generated UUIDv7 (exception: synced preferences use the setting name as id, so devices merge per setting), `createdAt`/`updatedAt`, `deviceId`, and soft delete via `deletedAt`. Timestamps are integer UTC epoch ms. Money is integer cents.
 - Totals and billing status are always derived from sessions, never stored.
 - Only one timer runs at a time. A running timer is a session with `endedAt = null`.
 - Sessions in a billing batch are read-only until explicitly unlocked.

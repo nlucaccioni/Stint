@@ -62,4 +62,18 @@ export const migrations: readonly string[] = [
   CREATE UNIQUE INDEX sessions_one_running ON sessions ((1))
     WHERE ended_at IS NULL AND deleted_at IS NULL;
   `,
+
+  // 2 — synced preferences. One row per setting, and the row's id is the setting's
+  // name (e.g. 'idleMinutes') rather than a random UUID, so when sync arrives two
+  // devices changing the same setting update the same record (last write wins).
+  `
+  CREATE TABLE preferences (
+    id         TEXT PRIMARY KEY NOT NULL,
+    value      TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    device_id  TEXT NOT NULL,
+    deleted_at INTEGER
+  ) STRICT;
+  `,
 ]

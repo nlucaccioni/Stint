@@ -20,3 +20,4 @@ export {
   type OverlapCheck,
   type SessionDialogProps,
 } from './log/SessionDialog'
+export { SettingsView, type SettingsViewProps } from './settings/SettingsView'

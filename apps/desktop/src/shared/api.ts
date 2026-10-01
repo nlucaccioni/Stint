@@ -11,6 +11,7 @@
 import type {
   Client,
   ClientEdits,
+  Preferences,
   ClientInput,
   Project,
   ProjectEdits,
@@ -91,6 +92,9 @@ export interface StintApi {
   exportCsv(range: TimeRange, zone: string): Promise<ExportResult>
   /** Show the most recently exported file in Finder / Explorer. */
   showExportedFile(): Promise<void>
+
+  getPreferences(): Promise<Preferences>
+  updatePreferences(edits: Partial<Preferences>): Promise<Preferences>
 }
 
 export const apiMethods = [
@@ -117,6 +121,8 @@ export const apiMethods = [
   'deleteSession',
   'exportCsv',
   'showExportedFile',
+  'getPreferences',
+  'updatePreferences',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -144,11 +150,13 @@ export interface StintEvents {
   timerChanged: TimerState
   /** Any session was added, edited, or deleted (including by the timer). */
   sessionsChanged: null
+  preferencesChanged: Preferences
 }
 
 export const eventNames = [
   'timerChanged',
   'sessionsChanged',
+  'preferencesChanged',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents

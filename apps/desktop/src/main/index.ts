@@ -121,6 +121,7 @@ void app.whenReady().then(() => {
         appInfo,
         onTimerChanged: (state) => broadcast('timerChanged', state),
         onSessionsChanged: () => broadcast('sessionsChanged', null),
+        onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
         saveFile,
         revealFile: (path) => shell.showItemInFolder(path),
       }),

@@ -7,26 +7,32 @@ import {
   type RangeSelection,
   type Session,
 } from '@stint/core'
-import { ClientsView, SessionDialog, SessionLog, TimerBar, TotalsView, useNow } from '@stint/ui'
+import {
+  ClientsView,
+  SessionDialog,
+  SessionLog,
+  SettingsView,
+  TimerBar,
+  TotalsView,
+  useNow,
+} from '@stint/ui'
 import type { AppInfo } from '../../shared/api'
 import { api } from './api'
 import { useCatalog } from './useCatalog'
+import { usePreferences } from './usePreferences'
 import { useSessions } from './useSessions'
 import { useTimer } from './useTimer'
 import styles from './App.module.css'
 
-// Until synced preferences exist (default currency, week start), use these defaults.
-const DEFAULT_CURRENCY = 'USD'
-const WEEK_STARTS_ON = 1 // Monday
-
 // The computer's time zone; days and weeks start at local midnight.
 const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-type Tab = 'projects' | 'time' | 'totals'
+type Tab = 'projects' | 'time' | 'totals' | 'settings'
 const TABS: { tab: Tab; label: string }[] = [
   { tab: 'projects', label: 'Projects' },
   { tab: 'time', label: 'Time' },
   { tab: 'totals', label: 'Totals' },
+  { tab: 'settings', label: 'Settings' },
 ]
 type Editing = { session?: Session } | null
 
@@ -35,13 +41,15 @@ export function App() {
   const [tab, setTab] = useState<Tab>('projects')
   const catalog = useCatalog()
   const timer = useTimer()
+  const prefs = usePreferences()
+  const weekStartsOn = prefs.preferences.weekStartsOn
 
   // The week shown in the log, identified by its start (null = this week). `now`
   // refreshes each minute so "this week" rolls over at the start of a new week.
   const now = useNow(true, 60_000)
-  const thisWeek = weekRange(now, zone, WEEK_STARTS_ON)
+  const thisWeek = weekRange(now, zone, weekStartsOn)
   const [weekStart, setWeekStart] = useState<number | null>(null)
-  const week = weekRange(weekStart ?? thisWeek.start, zone, WEEK_STARTS_ON)
+  const week = weekRange(weekStart ?? thisWeek.start, zone, weekStartsOn)
   const sessions = useSessions(week)
   const [editing, setEditing] = useState<Editing>(null)
 
@@ -49,7 +57,7 @@ export function App() {
     kind: 'preset',
     preset: 'thisWeek',
   })
-  const totalsRange = resolveRange(totalsSelection, now, zone, WEEK_STARTS_ON)
+  const totalsRange = resolveRange(totalsSelection, now, zone, weekStartsOn)
   const totalsSessions = useSessions(totalsRange)
 
   useEffect(() => {
@@ -84,7 +92,7 @@ export function App() {
             Couldn't load data: {catalog.loadError}
           </p>
         )}
-        {catalog.loaded && (
+        {catalog.loaded && prefs.loaded && (
           <>
             <TimerBar
               running={timer.running}
@@ -98,7 +106,7 @@ export function App() {
                 clients={catalog.clients}
                 projects={catalog.projects}
                 projectIdsWithTime={catalog.projectIdsWithTime}
-                defaultCurrency={DEFAULT_CURRENCY}
+                defaultCurrency={prefs.preferences.defaultCurrency}
                 runningProjectId={timer.running?.projectId ?? null}
                 onToggleTimer={timer.toggle}
                 onCreateClient={catalog.createClient}
@@ -117,9 +125,7 @@ export function App() {
                 projects={catalog.projects}
                 clients={catalog.clients}
                 zone={zone}
-                onPrevWeek={() =>
-                  setWeekStart(weekRange(week.start - 1, zone, WEEK_STARTS_ON).start)
-                }
+                onPrevWeek={() => setWeekStart(weekRange(week.start - 1, zone, weekStartsOn).start)}
                 onNextWeek={() => setWeekStart(week.end)}
                 onThisWeek={() => setWeekStart(null)}
                 onAdd={() => setEditing({})}
@@ -140,6 +146,9 @@ export function App() {
                 }
                 onShowExport={() => void api.showExportedFile()}
               />
+            )}
+            {tab === 'settings' && (
+              <SettingsView preferences={prefs.preferences} onSave={prefs.update} />
             )}
           </>
         )}

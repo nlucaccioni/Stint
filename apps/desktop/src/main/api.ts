@@ -20,14 +20,17 @@ import {
   stopAt,
   StintError,
   toLocalParts,
+  validatePreferences,
   toggle,
   type ChangeContext,
+  type Preferences,
   type Project,
   type SessionChange,
 } from '@stint/core'
 import type { AppInfo, ApiMethod, StintApi, TimerState } from '../shared/api'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
+import { getPreferences, setPreferences } from './db/preferences'
 import { getProject, insertProject, listProjects, updateProject } from './db/projects'
 import {
   applySessionChanges,
@@ -47,6 +50,7 @@ export interface ApiDeps {
   onTimerChanged?: (state: TimerState) => void
   /** Called after any session is added, edited, or deleted. */
   onSessionsChanged?: () => void
+  onPreferencesChanged?: (prefs: Preferences) => void
   /**
    * Ask the user where to save a file (system dialog) and write it there.
    * Returns the chosen path, or null if they cancelled.
@@ -111,6 +115,12 @@ const overlapQuery = z.strictObject({
   endedAt: time.nullable(),
 })
 const timeRange = z.strictObject({ start: time, end: time })
+const preferenceEdits = z.strictObject({
+  idleMinutes: z.number().optional(),
+  nudgeHours: z.number().optional(),
+  weekStartsOn: z.number().optional(),
+  defaultCurrency: z.string().max(3).optional(),
+})
 const timeZone = z.string().refine(isTimeZone, 'Unknown time zone')
 
 function isTimeZone(zone: string): boolean {
@@ -333,6 +343,17 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       if (path === null) return { saved: false, count: 0 }
       lastExportPath = path
       return { saved: true, count: sessions.length }
+    },
+
+    getPreferences: () => getPreferences(db),
+
+    updatePreferences: (...args) => {
+      const [edits] = z.tuple([preferenceEdits]).parse(args)
+      const valid = validatePreferences(edits as Partial<Preferences>)
+      setPreferences(db, valid, ctx())
+      const prefs = getPreferences(db)
+      deps.onPreferencesChanged?.(prefs)
+      return prefs
     },
 
     showExportedFile: (...args) => {
