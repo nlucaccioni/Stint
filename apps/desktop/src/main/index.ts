@@ -2,6 +2,7 @@
 // Electron main process: the Node.js side of the app. It owns windows, the
 // database, and (later) the timer engine. The UI runs in a separate, sandboxed renderer
 // process and can only reach this code through the preload bridge.
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, session, shell } from 'electron'
 import { eventChannel, type AppInfo, type EventName, type StintEvents } from '../shared/api'
@@ -69,6 +70,20 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
+/** Native "Save as" dialog (starting in Documents), then write the file. */
+async function saveFile(suggestedName: string, contents: string): Promise<string | null> {
+  const options = {
+    defaultPath: join(app.getPath('documents'), suggestedName),
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+  }
+  const result = mainWindow
+    ? await dialog.showSaveDialog(mainWindow, options)
+    : await dialog.showSaveDialog(options)
+  if (result.canceled || !result.filePath) return null
+  await writeFile(result.filePath, contents, 'utf8')
+  return result.filePath
+}
+
 /** Send an event to every window (the change may have come from elsewhere). */
 function broadcast<E extends EventName>(event: E, payload: StintEvents[E]): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -106,6 +121,8 @@ void app.whenReady().then(() => {
         appInfo,
         onTimerChanged: (state) => broadcast('timerChanged', state),
         onSessionsChanged: () => broadcast('sessionsChanged', null),
+        saveFile,
+        revealFile: (path) => shell.showItemInFolder(path),
       }),
     )
   } catch (error) {

@@ -7,7 +7,7 @@
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
 }
 
@@ -168,4 +168,18 @@
 
 .tileValue[data-several] {
   font-size: var(--text-lg);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.exported {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.exportError {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
 }

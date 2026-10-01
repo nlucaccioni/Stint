@@ -13,11 +13,13 @@ import {
   newClient,
   newProject,
   projectPatch,
+  sessionsToCsv,
   splitSession,
   start,
   stop,
   stopAt,
   StintError,
+  toLocalParts,
   toggle,
   type ChangeContext,
   type Project,
@@ -45,11 +47,26 @@ export interface ApiDeps {
   onTimerChanged?: (state: TimerState) => void
   /** Called after any session is added, edited, or deleted. */
   onSessionsChanged?: () => void
+  /**
+   * Ask the user where to save a file (system dialog) and write it there.
+   * Returns the chosen path, or null if they cancelled.
+   */
+  saveFile?: (suggestedName: string, contents: string) => Promise<string | null>
+  /** Reveal a file in Finder / Explorer. */
+  revealFile?: (path: string) => void
 }
 
-/** Each handler takes raw arguments and returns the unwrapped value (or throws). */
+/** Handlers that wait on something outside Stint (e.g. a save dialog). */
+type AsyncMethod = 'exportCsv'
+
+/**
+ * Each handler takes raw arguments and returns the value (or throws). Most are
+ * synchronous, since SQLite calls are; the few that wait return a promise.
+ */
 export type ApiHandlers = {
-  [K in ApiMethod]: (...args: unknown[]) => Awaited<ReturnType<StintApi[K]>>
+  [K in ApiMethod]: (
+    ...args: unknown[]
+  ) => K extends AsyncMethod ? ReturnType<StintApi[K]> : Awaited<ReturnType<StintApi[K]>>
 }
 
 const id = z.string().min(1).max(100)
@@ -94,6 +111,16 @@ const overlapQuery = z.strictObject({
   endedAt: time.nullable(),
 })
 const timeRange = z.strictObject({ start: time, end: time })
+const timeZone = z.string().refine(isTimeZone, 'Unknown time zone')
+
+function isTimeZone(zone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: zone })
+    return true
+  } catch {
+    return false
+  }
+}
 
 const projectEdits = z.strictObject({
   name: name.optional(),
@@ -105,6 +132,8 @@ const projectEdits = z.strictObject({
 
 export function createApiHandlers(deps: ApiDeps): ApiHandlers {
   const { db } = deps
+  // Only the file Stint itself just exported can be revealed, never a path from the UI.
+  let lastExportPath: string | null = null
   const ctx = (): ChangeContext => ({ now: (deps.now ?? Date.now)(), deviceId: deps.deviceId })
 
   function stamp() {
@@ -282,6 +311,33 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     deleteSession: (...args) => {
       const [sessionId] = z.tuple([id]).parse(args)
       changeSessions(() => [deleteSession(existingSession(sessionId), ctx())])
+    },
+
+    exportCsv: async (...args) => {
+      const [range, zone] = z.tuple([timeRange, timeZone]).parse(args)
+      if (!deps.saveFile) throw new Error('Saving files is not available.')
+      const sessions = listSessions(db, range)
+      const csv = sessionsToCsv({
+        sessions,
+        projects: listProjects(db),
+        clients: listClients(db),
+        batches: [], // billing batches arrive in Phase 3
+        zone,
+        now: ctx().now,
+      })
+      const first = toLocalParts(range.start, zone).date
+      const last = toLocalParts(range.end - 1, zone).date
+      const name = first === last ? `stint-${first}.csv` : `stint-${first}-to-${last}.csv`
+      // The BOM tells Excel the file is UTF-8, so names like "Café" and "€" show correctly.
+      const path = await deps.saveFile(name, '\uFEFF' + csv)
+      if (path === null) return { saved: false, count: 0 }
+      lastExportPath = path
+      return { saved: true, count: sessions.length }
+    },
+
+    showExportedFile: (...args) => {
+      z.tuple([]).parse(args)
+      if (lastExportPath) deps.revealFile?.(lastExportPath)
     },
 
     // Deleting is only for mistakes: anything with recorded time must be archived

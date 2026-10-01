@@ -135,6 +135,10 @@ export function App() {
                 projects={catalog.projects}
                 clients={catalog.clients}
                 zone={zone}
+                onExport={() =>
+                  api.exportCsv({ start: totalsRange.start, end: totalsRange.end }, zone)
+                }
+                onShowExport={() => void api.showExportedFile()}
               />
             )}
           </>

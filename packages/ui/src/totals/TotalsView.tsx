@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Totals for a chosen date range: headline figures, a client → project breakdown,
 // and time per day. Everything is computed from sessions (core), never stored.
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   computeTotals,
   dailyTotals,
@@ -17,6 +17,7 @@ import {
   type Session,
   type TimeRange,
 } from '@stint/core'
+import { Button } from '../components/Button'
 import { useNow } from '../timer/useNow'
 import styles from './TotalsView.module.css'
 
@@ -41,10 +42,31 @@ export interface TotalsViewProps {
   projects: readonly Project[]
   clients: readonly Client[]
   zone: string
+  /** Save the sessions in the current range as CSV (asks where to save). */
+  onExport: () => Promise<{ saved: boolean; count: number }>
+  /** Reveal the last exported file in Finder / Explorer. */
+  onShowExport: () => void
 }
 
 export function TotalsView(props: TotalsViewProps) {
   const { selection, range, sessions, projects, clients, zone } = props
+  const [exportStatus, setExportStatus] = useState<
+    { kind: 'done'; count: number } | { kind: 'error'; message: string } | null
+  >(null)
+  const [exporting, setExporting] = useState(false)
+
+  async function exportCsv() {
+    setExporting(true)
+    setExportStatus(null)
+    try {
+      const result = await props.onExport()
+      if (result.saved) setExportStatus({ kind: 'done', count: result.count })
+    } catch (e) {
+      setExportStatus({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
+    } finally {
+      setExporting(false)
+    }
+  }
   // A running timer keeps adding time, shown to the second.
   const now = useNow(sessions.some((s) => s.endedAt === null))
 
@@ -68,6 +90,23 @@ export function TotalsView(props: TotalsViewProps) {
       <header className={styles.header}>
         <h1 className={styles.heading}>Totals</h1>
         <span className={styles.range}>{rangeLabel(range, zone)}</span>
+        <span className={styles.spacer} />
+        {exportStatus?.kind === 'done' && (
+          <span className={styles.exported} role="status">
+            Exported {exportStatus.count} {exportStatus.count === 1 ? 'session' : 'sessions'}.{' '}
+            <Button size="sm" variant="ghost" onClick={props.onShowExport}>
+              Show file
+            </Button>
+          </span>
+        )}
+        {exportStatus?.kind === 'error' && (
+          <span className={styles.exportError} role="alert">
+            {exportStatus.message}
+          </span>
+        )}
+        <Button onClick={() => void exportCsv()} disabled={exporting}>
+          Export CSV
+        </Button>
       </header>
 
       <div className={styles.filters} role="group" aria-label="Date range">

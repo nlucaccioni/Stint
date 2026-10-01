@@ -46,6 +46,13 @@ export interface TimerState {
   running: Session | null
 }
 
+export interface ExportResult {
+  /** False if the user cancelled the save dialog. */
+  saved: boolean
+  /** Number of sessions written. */
+  count: number
+}
+
 export interface StintApi {
   getAppInfo(): Promise<AppInfo>
   listClients(): Promise<Client[]>
@@ -79,6 +86,11 @@ export interface StintApi {
   /** Split a session in two at `at` (epoch ms). */
   splitSession(id: string, at: number): Promise<void>
   deleteSession(id: string): Promise<void>
+
+  /** Ask where to save, then write a CSV of the sessions overlapping `range`. */
+  exportCsv(range: TimeRange, zone: string): Promise<ExportResult>
+  /** Show the most recently exported file in Finder / Explorer. */
+  showExportedFile(): Promise<void>
 }
 
 export const apiMethods = [
@@ -103,6 +115,8 @@ export const apiMethods = [
   'updateSession',
   'splitSession',
   'deleteSession',
+  'exportCsv',
+  'showExportedFile',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
