@@ -6,9 +6,14 @@
 import { z } from 'zod'
 import {
   clientPatch,
+  createManualSession,
+  deleteSession,
+  editSession,
+  findOverlaps,
   newClient,
   newProject,
   projectPatch,
+  splitSession,
   start,
   stop,
   stopAt,
@@ -22,7 +27,13 @@ import type { AppInfo, ApiMethod, StintApi, TimerState } from '../shared/api'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
 import { getProject, insertProject, listProjects, updateProject } from './db/projects'
-import { applySessionChanges, getRunningSession, projectIdsWithTime } from './db/sessions'
+import {
+  applySessionChanges,
+  getRunningSession,
+  getSession,
+  listSessions,
+  projectIdsWithTime,
+} from './db/sessions'
 
 export interface ApiDeps {
   db: Db
@@ -32,6 +43,8 @@ export interface ApiDeps {
   now?: () => number
   /** Called after any change to the running timer, so every window can update. */
   onTimerChanged?: (state: TimerState) => void
+  /** Called after any session is added, edited, or deleted. */
+  onSessionsChanged?: () => void
 }
 
 /** Each handler takes raw arguments and returns the unwrapped value (or throws). */
@@ -59,6 +72,29 @@ const projectInput = z.strictObject({
   hourlyRateCents: rate,
   billableByDefault: z.boolean(),
 })
+const time = z.number().int().nonnegative()
+const note = z.string().max(10_000)
+const sessionInput = z.strictObject({
+  projectId: id,
+  startedAt: time,
+  endedAt: time,
+  note,
+  billable: z.boolean(),
+})
+const sessionEdits = z.strictObject({
+  projectId: id.optional(),
+  startedAt: time.optional(),
+  endedAt: time.optional(),
+  note: note.optional(),
+  billable: z.boolean().optional(),
+})
+const overlapQuery = z.strictObject({
+  id: id.optional(),
+  startedAt: time,
+  endedAt: time.nullable(),
+})
+const timeRange = z.strictObject({ start: time, end: time })
+
 const projectEdits = z.strictObject({
   name: name.optional(),
   color: color.nullable().optional(),
@@ -82,17 +118,38 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
 
   /**
    * Read the running timer, decide what changes (core), and save them, all inside
-   * one transaction so nothing can change the timer in between.
+   * one transaction so nothing can change in between. Then tell listeners: every
+   * change is a sessions change, and a timer change if the running session differs.
    */
-  function changeTimer(decide: (running: TimerState['running']) => SessionChange[]): TimerState {
+  function changeSessions(
+    decide: (running: TimerState['running']) => SessionChange[],
+  ): SessionChange[] {
+    let before: TimerState['running'] = null
     const changes = transaction(db, () => {
-      const changes = decide(getRunningSession(db))
+      before = getRunningSession(db)
+      const changes = decide(before)
       applySessionChanges(db, changes)
       return changes
     })
-    const state = timerState()
-    if (changes.length > 0) deps.onTimerChanged?.(state)
-    return state
+    if (changes.length > 0) {
+      deps.onSessionsChanged?.()
+      const state = timerState()
+      if (JSON.stringify(state.running) !== JSON.stringify(before)) deps.onTimerChanged?.(state)
+    }
+    return changes
+  }
+
+  function changeTimer(decide: (running: TimerState['running']) => SessionChange[]): TimerState {
+    changeSessions(decide)
+    return timerState()
+  }
+
+  function existingSession(sessionId: string) {
+    const session = getSession(db, sessionId)
+    if (!session || session.deletedAt !== null) {
+      throw new StintError('not-found', 'Session not found.')
+    }
+    return session
   }
 
   /** Archived projects (or projects of archived clients) can't be started. */
@@ -184,6 +241,47 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     stopTimerAt: (...args) => {
       const [at] = z.tuple([z.number().int()]).parse(args)
       return changeTimer((running) => stopAt(running, at, ctx()))
+    },
+
+    listSessions: (...args) => {
+      const [range] = z.tuple([timeRange]).parse(args)
+      return listSessions(db, range)
+    },
+
+    findOverlaps: (...args) => {
+      const [query] = z.tuple([overlapQuery]).parse(args)
+      const now = ctx().now
+      const nearby = listSessions(db, { start: query.startedAt, end: query.endedAt ?? now })
+      return findOverlaps(query, nearby, now)
+    },
+
+    createSession: (...args) => {
+      const [input] = z.tuple([sessionInput]).parse(args)
+      assertStartable(existingProject(input.projectId))
+      const change = createManualSession(input, ctx())
+      changeSessions(() => [change])
+      return existingSession(change.kind === 'insert' ? change.session.id : change.id)
+    },
+
+    updateSession: (...args) => {
+      const [sessionId, edits] = z.tuple([id, sessionEdits]).parse(args)
+      const session = existingSession(sessionId)
+      // Moving time onto an archived project isn't allowed (same rule as starting one).
+      if (edits.projectId !== undefined && edits.projectId !== session.projectId) {
+        assertStartable(existingProject(edits.projectId))
+      }
+      changeSessions(() => [editSession(existingSession(sessionId), edits, ctx())])
+      return existingSession(sessionId)
+    },
+
+    splitSession: (...args) => {
+      const [sessionId, at] = z.tuple([id, time]).parse(args)
+      changeSessions(() => splitSession(existingSession(sessionId), at, ctx()))
+    },
+
+    deleteSession: (...args) => {
+      const [sessionId] = z.tuple([id]).parse(args)
+      changeSessions(() => [deleteSession(existingSession(sessionId), ctx())])
     },
 
     // Deleting is only for mistakes: anything with recorded time must be archived

@@ -16,7 +16,25 @@ import type {
   ProjectEdits,
   ProjectInput,
   Session,
+  SessionEdits,
+  TimeRange,
 } from '@stint/core'
+
+/** A manual time entry. */
+export interface SessionInput {
+  projectId: string
+  startedAt: number
+  endedAt: number
+  note: string
+  billable: boolean
+}
+
+/** Time to check for overlaps. Pass `id` when editing so a session doesn't overlap itself. */
+export interface OverlapQuery {
+  id?: string
+  startedAt: number
+  endedAt: number | null
+}
 
 export interface AppInfo {
   version: string
@@ -51,6 +69,16 @@ export interface StintApi {
   stopTimer(): Promise<TimerState>
   /** End the running timer at an earlier time (epoch ms). */
   stopTimerAt(at: number): Promise<TimerState>
+
+  /** Sessions overlapping `range`, oldest first. */
+  listSessions(range: TimeRange): Promise<Session[]>
+  /** Other sessions sharing time with the given span (allowed, but worth a warning). */
+  findOverlaps(query: OverlapQuery): Promise<Session[]>
+  createSession(input: SessionInput): Promise<Session>
+  updateSession(id: string, edits: SessionEdits): Promise<Session>
+  /** Split a session in two at `at` (epoch ms). */
+  splitSession(id: string, at: number): Promise<void>
+  deleteSession(id: string): Promise<void>
 }
 
 export const apiMethods = [
@@ -69,6 +97,12 @@ export const apiMethods = [
   'startTimer',
   'stopTimer',
   'stopTimerAt',
+  'listSessions',
+  'findOverlaps',
+  'createSession',
+  'updateSession',
+  'splitSession',
+  'deleteSession',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -92,10 +126,16 @@ export type ApiResult<T> = { ok: true; value: T } | { ok: false; error: ApiError
 
 /** Events main pushes to the renderer, and their payloads. */
 export interface StintEvents {
+  /** The running timer started, stopped, switched, or was edited. */
   timerChanged: TimerState
+  /** Any session was added, edited, or deleted (including by the timer). */
+  sessionsChanged: null
 }
 
-export const eventNames = ['timerChanged'] as const satisfies readonly (keyof StintEvents)[]
+export const eventNames = [
+  'timerChanged',
+  'sessionsChanged',
+] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents
 

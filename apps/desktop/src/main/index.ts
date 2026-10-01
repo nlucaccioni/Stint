@@ -4,7 +4,7 @@
 // process and can only reach this code through the preload bridge.
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, session, shell } from 'electron'
-import { eventChannel, type AppInfo, type TimerState } from '../shared/api'
+import { eventChannel, type AppInfo, type EventName, type StintEvents } from '../shared/api'
 import { createApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
 import { loadDeviceSettings } from './device'
@@ -69,10 +69,10 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
-/** Tell every window the timer changed (the change may have come from elsewhere). */
-function broadcastTimer(state: TimerState): void {
+/** Send an event to every window (the change may have come from elsewhere). */
+function broadcast<E extends EventName>(event: E, payload: StintEvents[E]): void {
   for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send(eventChannel('timerChanged'), state)
+    win.webContents.send(eventChannel(event), payload)
   }
 }
 
@@ -100,7 +100,13 @@ void app.whenReady().then(() => {
       platform: process.platform as AppInfo['platform'],
     }
     registerIpc(
-      createApiHandlers({ db, deviceId: device.deviceId, appInfo, onTimerChanged: broadcastTimer }),
+      createApiHandlers({
+        db,
+        deviceId: device.deviceId,
+        appInfo,
+        onTimerChanged: (state) => broadcast('timerChanged', state),
+        onSessionsChanged: () => broadcast('sessionsChanged', null),
+      }),
     )
   } catch (error) {
     dialog.showErrorBox('Stint could not open its data', String(error))
