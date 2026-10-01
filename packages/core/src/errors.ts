@@ -18,6 +18,7 @@ export type StintErrorCode =
   | 'has-recorded-time'
   | 'archived'
   | 'invalid-preference'
+  | 'not-available'
 
 /** An action was rejected by a business rule. `code` is stable; `message` is for humans. */
 export class StintError extends Error {

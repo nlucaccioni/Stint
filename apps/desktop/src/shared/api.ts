@@ -38,6 +38,14 @@ export interface HotkeyState {
   paused: boolean
 }
 
+export type AppView = 'projects' | 'time' | 'totals' | 'settings'
+
+export interface LaunchAtLogin {
+  enabled: boolean
+  /** False in development builds (it would register the dev Electron binary). */
+  available: boolean
+}
+
 /** A manual time entry. */
 export interface SessionInput {
   projectId: string
@@ -132,6 +140,9 @@ export interface StintApi {
   resetHotkeys(): Promise<HotkeyState>
   /** Release all shortcuts while recording a new one (so pressing it isn't swallowed). */
   pauseHotkeys(paused: boolean): Promise<HotkeyState>
+
+  getLaunchAtLogin(): Promise<LaunchAtLogin>
+  setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLogin>
 }
 
 export const apiMethods = [
@@ -166,6 +177,8 @@ export const apiMethods = [
   'setHotkey',
   'resetHotkeys',
   'pauseHotkeys',
+  'getLaunchAtLogin',
+  'setLaunchAtLogin',
 ] as const satisfies readonly (keyof StintApi)[]
 
 // Compile-time check that apiMethods lists every StintApi method.
@@ -196,6 +209,8 @@ export interface StintEvents {
   preferencesChanged: Preferences
   /** An absence needs a decision (or null: it was resolved or no longer applies). */
   idleChanged: IdleAway | null
+  /** Show a particular tab (e.g. "Settings…" chosen in the tray menu). */
+  navigate: AppView
 }
 
 export const eventNames = [
@@ -203,6 +218,7 @@ export const eventNames = [
   'sessionsChanged',
   'preferencesChanged',
   'idleChanged',
+  'navigate',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents

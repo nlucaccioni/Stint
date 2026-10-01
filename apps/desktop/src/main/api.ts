@@ -29,7 +29,15 @@ import {
   type Project,
   type SessionChange,
 } from '@stint/core'
-import type { AppInfo, ApiMethod, HotkeyState, IdleAway, StintApi, TimerState } from '../shared/api'
+import type {
+  AppInfo,
+  ApiMethod,
+  HotkeyState,
+  IdleAway,
+  LaunchAtLogin,
+  StintApi,
+  TimerState,
+} from '../shared/api'
 import { hotkeyActions, type HotkeyAction } from '../shared/hotkeys'
 import { transaction, type Db } from './db/connection'
 import { getClient, insertClient, listClients, updateClient } from './db/clients'
@@ -70,6 +78,8 @@ export interface ApiDeps {
     reset: () => HotkeyState
     setPaused: (paused: boolean) => HotkeyState
   }
+  /** Start Stint when the user logs in (an OS setting for this machine). */
+  loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
@@ -415,6 +425,21 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     pauseHotkeys: (...args) => {
       const [paused] = z.tuple([z.boolean()]).parse(args)
       return hotkeys().setPaused(paused)
+    },
+
+    getLaunchAtLogin: () => deps.loginItem?.get() ?? { enabled: false, available: false },
+
+    setLaunchAtLogin: (...args) => {
+      const [enabled] = z.tuple([z.boolean()]).parse(args)
+      const item = deps.loginItem
+      if (!item || !item.get().available) {
+        throw new StintError(
+          'not-available',
+          'Launch at login is only available in the installed app.',
+        )
+      }
+      item.set(enabled)
+      return item.get()
     },
 
     showExportedFile: (...args) => {

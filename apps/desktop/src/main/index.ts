@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Electron main process: the Node.js side of the app. It owns windows, the
-// database, and (later) the timer engine. The UI runs in a separate, sandboxed renderer
-// process and can only reach this code through the preload bridge.
+// database, the tray, global shortcuts, and background watchers. The UI runs in a
+// separate, sandboxed renderer process and can only reach this code through the
+// preload bridge.
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
@@ -18,6 +19,7 @@ import { formatClock } from '@stint/core'
 import {
   eventChannel,
   type AppInfo,
+  type AppView,
   type EventName,
   type IdleAway,
   type StintEvents,
@@ -25,11 +27,14 @@ import {
 import type { HotkeyAction, Platform } from '../shared/hotkeys'
 import { createApiHandlers, type ApiHandlers } from './api'
 import { openDatabase, type Db } from './db/connection'
+import { getClient } from './db/clients'
 import { getPreferences } from './db/preferences'
 import { getProject } from './db/projects'
 import { getRunningSession } from './db/sessions'
 import { loadDeviceSettings, saveDeviceSettings, type DeviceSettings } from './device'
 import { HotkeyService } from './hotkeys'
+import { createTray, type TrayHandle } from './tray'
+import type { TrayCommand, TrayModel } from './tray-menu'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
@@ -50,6 +55,11 @@ let mainWindow: BrowserWindow | null = null
 let db: Db | null = null
 /** An absence waiting for the user to decide what to do with it. */
 let pendingIdle: IdleAway | null = null
+let tray: TrayHandle | null = null
+/** Set when the user really quits (tray "Quit", Cmd+Q). Until then, closing hides. */
+let quitting = false
+/** Shows the Windows "still running in the tray" notice once; set up after startup. */
+let onFirstHide: () => void = () => {}
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -69,7 +79,18 @@ function createMainWindow(): BrowserWindow {
     },
   })
 
-  win.once('ready-to-show', () => win.show())
+  win.once('ready-to-show', () => {
+    if (!startHidden) win.show()
+  })
+
+  // Closing the window keeps Stint running in the tray / menu bar so the timer and
+  // shortcuts keep working. Only "Quit" actually exits.
+  win.on('close', (event) => {
+    if (quitting) return
+    event.preventDefault()
+    win.hide()
+    onFirstHide()
+  })
 
   // The app never navigates away from its own page or opens new windows.
   // Regular web links open in the user's browser instead.
@@ -159,7 +180,7 @@ function runHotkey(action: HotkeyAction, database: Db, handlers: ApiHandlers): v
 function notify(title: string, body: string): void {
   if (!Notification.isSupported()) return
   const n = new Notification({ title, body })
-  n.on('click', showMainWindow)
+  n.on('click', () => showMainWindow())
   n.show()
 }
 
@@ -182,7 +203,7 @@ function startNudgeWatcher(database: Db): void {
         title: 'Timer still running',
         body: `${project?.name ?? 'Your timer'} has been running for ${formatClock(elapsed)}. Forgot to stop it?`,
       })
-      notification.on('click', showMainWindow)
+      notification.on('click', () => showMainWindow())
       notification.show()
     },
   })
@@ -190,16 +211,86 @@ function startNudgeWatcher(database: Db): void {
   watcher.tick()
 }
 
-/** Bring the main window to the front, creating it if it was closed. */
-function showMainWindow(): void {
+/** Bring the main window to the front (creating it if needed), optionally on a tab. */
+function showMainWindow(view?: AppView): void {
+  startHidden = false
   if (!mainWindow) {
     mainWindow = createMainWindow()
     mainWindow.on('closed', () => (mainWindow = null))
+    if (view) {
+      const win = mainWindow
+      win.webContents.once('did-finish-load', () =>
+        win.webContents.send(eventChannel('navigate'), view),
+      )
+    }
     return
   }
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
   mainWindow.focus()
+  if (view) broadcast('navigate', view)
+}
+
+/** What the tray menu shows, read fresh from the database. */
+function trayModel(database: Db, hotkeys: HotkeyService): TrayModel {
+  const running = getRunningSession(database)
+  const runningProject = running ? getProject(database, running.projectId) : null
+  const runningClient = runningProject ? getClient(database, runningProject.clientId) : null
+  const bindings = hotkeys.bindings()
+  const favorites: TrayModel['favorites'] = []
+  getPreferences(database).favorites.forEach((projectId, i) => {
+    const project = projectId ? getProject(database, projectId) : null
+    if (!project || project.deletedAt !== null) return
+    const client = getClient(database, project.clientId)
+    favorites.push({
+      slot: i + 1,
+      projectId: project.id,
+      label: `${project.name} · ${client?.name ?? '?'}`,
+      running: running?.projectId === project.id,
+      enabled: !project.archived && !client?.archived,
+      accelerator: bindings[`favorite${i + 1}` as HotkeyAction],
+    })
+  })
+  return {
+    running:
+      running && runningProject
+        ? {
+            projectName: runningProject.name,
+            clientName: runningClient?.name ?? '?',
+            startedAt: running.startedAt,
+          }
+        : null,
+    favorites,
+    stopAccelerator: bindings.stop,
+    switcherAccelerator: bindings.switcher,
+  }
+}
+
+function runTrayCommand(command: TrayCommand, handlers: ApiHandlers): void {
+  try {
+    switch (command.kind) {
+      case 'stop':
+        handlers.stopTimer()
+        break
+      case 'toggle':
+        handlers.toggleTimer(command.projectId)
+        break
+      case 'switcher':
+        showMainWindow() // replaced by the quick switcher palette
+        break
+      case 'open':
+        showMainWindow()
+        break
+      case 'settings':
+        showMainWindow('settings')
+        break
+      case 'quit':
+        app.quit()
+        break
+    }
+  } catch (error) {
+    notify("Couldn't do that", error instanceof Error ? error.message : String(error))
+  }
 }
 
 /** Send an event to every window (the change may have come from elsewhere). */
@@ -209,11 +300,15 @@ function broadcast<E extends EventName>(event: E, payload: StintEvents[E]): void
   }
 }
 
-app.on('second-instance', () => {
-  if (!mainWindow) return
-  if (mainWindow.isMinimized()) mainWindow.restore()
-  mainWindow.focus()
-})
+app.on('second-instance', () => showMainWindow())
+
+/**
+ * Launched by "launch at login": start quietly in the tray. Windows passes our
+ * --hidden argument; macOS reports it through getLoginItemSettings.
+ */
+let startHidden =
+  process.argv.includes('--hidden') ||
+  (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin)
 
 void app.whenReady().then(() => {
   // Windows uses this ID to group taskbar icons and show notifications.
@@ -245,18 +340,42 @@ void app.whenReady().then(() => {
       appInfo,
       onTimerChanged: (state) => {
         broadcast('timerChanged', state)
+        tray?.refresh()
         // A prompt about a session that's no longer running doesn't apply any more.
         if (pendingIdle && state.running?.id !== pendingIdle.sessionId) setPendingIdle(null)
       },
-      onSessionsChanged: () => broadcast('sessionsChanged', null),
+      onSessionsChanged: () => {
+        broadcast('sessionsChanged', null)
+        tray?.refresh()
+      },
       onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
       saveFile,
       revealFile: (path) => shell.showItemInFolder(path),
       pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },
       hotkeys,
+      loginItem: {
+        get: () => ({
+          enabled: app.getLoginItemSettings().openAtLogin,
+          available: app.isPackaged,
+        }),
+        set: (enabled) =>
+          app.setLoginItemSettings({ openAtLogin: enabled, args: enabled ? ['--hidden'] : [] }),
+      },
     })
     registerIpc(handlers)
     hotkeys.apply()
+    const database = db
+    tray = createTray({
+      getModel: () => trayModel(database, hotkeys),
+      onCommand: (command) => runTrayCommand(command, handlers),
+      onOpen: () => showMainWindow(),
+    })
+    // Windows users may not know to look in the tray, so explain once.
+    onFirstHide = () => {
+      if (process.platform !== 'win32' || device.trayNoticeShown) return
+      notify('Stint is still running', 'It keeps timing in the tray. Right-click the icon to quit.')
+      saveDevice(dataDir, device, { trayNoticeShown: true })
+    }
     startIdleWatcher(db)
     startNudgeWatcher(db)
     startUpdateChecks()
@@ -269,10 +388,12 @@ void app.whenReady().then(() => {
   mainWindow = createMainWindow()
   mainWindow.on('closed', () => (mainWindow = null))
 
-  // macOS: clicking the dock icon with no windows open reopens the main window.
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow()
-  })
+  // macOS: clicking the dock icon brings the (possibly hidden) window back.
+  app.on('activate', () => showMainWindow())
+})
+
+app.on('before-quit', () => {
+  quitting = true
 })
 
 app.on('will-quit', () => {
@@ -281,8 +402,5 @@ app.on('will-quit', () => {
   db = null
 })
 
-// macOS apps usually stay running when their last window closes; Windows apps quit.
-// (Phase 2 changes this: Stint will keep running in the tray/menu bar on both.)
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+// Stint lives in the tray / menu bar, so it keeps running with no windows open.
+app.on('window-all-closed', () => {})

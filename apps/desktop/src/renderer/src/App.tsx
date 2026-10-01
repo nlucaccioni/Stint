@@ -18,8 +18,9 @@ import {
   useNow,
 } from '@stint/ui'
 import type { AppInfo } from '../../shared/api'
-import { api } from './api'
+import { api, onEvent } from './api'
 import { ShortcutSettings } from './ShortcutSettings'
+import { SystemSettings } from './SystemSettings'
 import { useCatalog } from './useCatalog'
 import { useIdle } from './useIdle'
 import { usePreferences } from './usePreferences'
@@ -66,6 +67,8 @@ export function App() {
 
   useEffect(() => {
     void api.getAppInfo().then(setInfo)
+    // The tray menu can ask for a particular tab (e.g. "Settings…").
+    return onEvent('navigate', setTab)
   }, [])
 
   const runningProject = catalog.projects.find((p) => p.id === timer.running?.projectId) ?? null
@@ -161,6 +164,7 @@ export function App() {
                   onSave={prefs.update}
                 />
                 <ShortcutSettings platform={info.platform} />
+                <SystemSettings />
               </>
             )}
           </>
