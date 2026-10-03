@@ -10,6 +10,7 @@ import {
   BrowserWindow,
   dialog,
   globalShortcut,
+  nativeTheme,
   Notification,
   powerMonitor,
   session,
@@ -26,6 +27,7 @@ import {
 } from '../shared/api'
 import type { HotkeyAction, Platform } from '../shared/hotkeys'
 import { createApiHandlers, type ApiHandlers } from './api'
+import { installAppMenu, popUpAppMenu } from './app-menu'
 import { openDatabase, type Db } from './db/connection'
 import { getClient } from './db/clients'
 import { getPreferences } from './db/preferences'
@@ -39,7 +41,7 @@ import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
 import { hideSwitcher, showSwitcher } from './switcher'
-import { startUpdateChecks } from './updates'
+import { checkForUpdatesNow, startUpdateChecks } from './updates'
 import { createSecureWindow, loadRenderer } from './windows'
 
 // Where the database and settings live. Dev runs use a separate folder so testing
@@ -63,6 +65,16 @@ let quitting = false
 /** Shows the Windows "still running in the tray" notice once; set up after startup. */
 let onFirstHide: () => void = () => {}
 
+/** Must match the title bar height in renderer TitleBar.module.css. */
+const TITLE_BAR_HEIGHT = 36
+
+/** Starting colors for the window buttons; the renderer swaps in the design tokens on load. */
+function titleBarColors(): { color: string; symbolColor: string } {
+  return nativeTheme.shouldUseDarkColors
+    ? { color: '#161616', symbolColor: '#ededed' }
+    : { color: '#ffffff', symbolColor: '#1a1a1a' }
+}
+
 function createMainWindow(): BrowserWindow {
   const win = createSecureWindow({
     width: 1000,
@@ -71,6 +83,13 @@ function createMainWindow(): BrowserWindow {
     minHeight: 400,
     show: false,
     title: 'Stint',
+    // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
+    // button. Windows still draws minimize/maximize/close at the top right, over
+    // the page ("title bar overlay"); macOS keeps its traffic lights, inset.
+    titleBarStyle: 'hidden',
+    ...(process.platform === 'darwin'
+      ? { trafficLightPosition: { x: 14, y: 12 } }
+      : { titleBarOverlay: { height: TITLE_BAR_HEIGHT, ...titleBarColors() } }),
   })
 
   win.once('ready-to-show', () => {
@@ -336,8 +355,17 @@ void app.whenReady().then(() => {
           app.setLoginItemSettings({ openAtLogin: enabled, args: enabled ? ['--hidden'] : [] }),
       },
       hideSwitcher,
+      titleBar: {
+        showMenu: (x, y) => {
+          if (mainWindow) popUpAppMenu(mainWindow, x, y)
+        },
+        setColors: (color, symbolColor) => {
+          if (process.platform !== 'darwin') mainWindow?.setTitleBarOverlay({ color, symbolColor })
+        },
+      },
     })
     registerIpc(handlers)
+    installAppMenu({ checkForUpdates: checkForUpdatesNow })
     hotkeys.apply()
     const database = db
     tray = createTray({

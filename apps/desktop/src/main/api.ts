@@ -93,6 +93,11 @@ export interface ApiDeps {
   /** Start Stint when the user logs in (an OS setting for this machine). */
   loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
   hideSwitcher?: () => void
+  /** The main window's own title bar (see renderer TitleBar.tsx). */
+  titleBar?: {
+    showMenu: (x: number, y: number) => void
+    setColors: (background: string, symbols: string) => void
+  }
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
@@ -490,6 +495,17 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     hideSwitcher: () => deps.hideSwitcher?.(),
+
+    showAppMenu: (...args) => {
+      const [x, y] = z.tuple([z.number().int().min(0), z.number().int().min(0)]).parse(args)
+      deps.titleBar?.showMenu(x, y)
+    },
+
+    setTitleBarColors: (...args) => {
+      const color = z.string().trim().min(1).max(64)
+      const [background, symbols] = z.tuple([color, color]).parse(args)
+      deps.titleBar?.setColors(background, symbols)
+    },
 
     listBatches: () => listBatches(db),
 

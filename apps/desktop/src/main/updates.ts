@@ -13,23 +13,87 @@ const REPO = 'nlucaccioni/stint'
 const FIRST_CHECK_DELAY = 10_000
 const CHECK_EVERY = 24 * 60 * 60 * 1000
 
-/** Start checking for updates (installed builds only). */
+const check = process.platform === 'darwin' ? checkMac : checkWindows
+/** True while a check started from the menu is running, so repeat clicks don't stack. */
+let manualCheckRunning = false
+
+/** Start checking for updates in the background (installed builds only). */
 export function startUpdateChecks(): void {
   if (!app.isPackaged) return
-  const check = process.platform === 'darwin' ? checkMac : checkWindows
-  const run = () => void check().catch((e: unknown) => console.error('[updates]', e))
+  const run = () => void check(false).catch((e: unknown) => console.error('[updates]', e))
   setTimeout(run, FIRST_CHECK_DELAY)
   setInterval(run, CHECK_EVERY)
 }
 
-async function checkWindows(): Promise<void> {
+/**
+ * "Check for updates…" from the app menu. Unlike background checks, this always
+ * tells the user the outcome, including "you're up to date" and errors.
+ */
+export function checkForUpdatesNow(): void {
+  if (manualCheckRunning) return
+  if (!app.isPackaged) {
+    void dialog.showMessageBox({
+      type: 'info',
+      message: 'Updates are only checked in the installed app',
+      detail: 'This is a development build.',
+    })
+    return
+  }
+  manualCheckRunning = true
+  void check(true)
+    .catch((e: unknown) => {
+      console.error('[updates]', e)
+      void dialog.showMessageBox({
+        type: 'warning',
+        message: 'Couldn’t check for updates',
+        detail: e instanceof Error ? e.message : String(e),
+      })
+    })
+    .finally(() => (manualCheckRunning = false))
+}
+
+function showUpToDate(): Promise<unknown> {
+  return dialog.showMessageBox({
+    type: 'info',
+    message: 'Stint is up to date',
+    detail: `You have the latest version, ${app.getVersion()}.`,
+  })
+}
+
+async function checkWindows(manual: boolean): Promise<void> {
   const { autoUpdater } = electronUpdater
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
-  await autoUpdater.checkForUpdatesAndNotify({
-    title: 'Stint update ready',
-    body: 'Version {version} will be installed when you quit Stint.',
+  if (!manual) {
+    await autoUpdater.checkForUpdatesAndNotify({
+      title: 'Stint update ready',
+      body: 'Version {version} will be installed when you quit Stint.',
+    })
+    return
+  }
+
+  const result = await autoUpdater.checkForUpdates()
+  const latest = result?.updateInfo.version
+  if (!result || !latest || !isNewerVersion(latest, app.getVersion())) {
+    await showUpToDate()
+    return
+  }
+  // The download starts on its own (autoDownload); offer to restart when it's done.
+  void dialog.showMessageBox({
+    type: 'info',
+    message: `Stint ${latest} is available`,
+    detail: 'It’s downloading in the background. You can keep working.',
   })
+  await result.downloadPromise
+  const { response: button } = await dialog.showMessageBox({
+    type: 'info',
+    message: `Stint ${latest} is ready to install`,
+    detail: 'Restart Stint now to update, or it will update the next time you quit.',
+    buttons: ['Restart now', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+  })
+  if (button === 0) autoUpdater.quitAndInstall()
 }
 
 interface Release {
@@ -38,15 +102,17 @@ interface Release {
   assets: { name: string; browser_download_url: string }[]
 }
 
-async function checkMac(): Promise<void> {
+async function checkMac(manual: boolean): Promise<void> {
   const response = await net.fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
     headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Stint' },
   })
-  if (response.status === 404) return // nothing published yet
-  if (!response.ok) throw new Error(`GitHub responded ${response.status}`)
-  const release = (await response.json()) as Release
-  const latest = release.tag_name.replace(/^v/, '')
-  if (!isNewerVersion(latest, app.getVersion())) return
+  // 404: nothing published yet.
+  const release = response.status === 404 ? null : await readRelease(response)
+  const latest = release?.tag_name.replace(/^v/, '')
+  if (!release || !latest || !isNewerVersion(latest, app.getVersion())) {
+    if (manual) await showUpToDate()
+    return
+  }
 
   const dmg = release.assets.find((a) => a.name === `Stint-${latest}-mac-${process.arch}.dmg`)
   const { response: button } = await dialog.showMessageBox({
@@ -58,6 +124,11 @@ async function checkMac(): Promise<void> {
     cancelId: 1,
   })
   if (button === 0) await shell.openExternal(dmg?.browser_download_url ?? release.html_url)
+}
+
+async function readRelease(response: Response): Promise<Release> {
+  if (!response.ok) throw new Error(`GitHub responded ${response.status}`)
+  return (await response.json()) as Release
 }
 
 /**

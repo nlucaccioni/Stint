@@ -1,0 +1,41 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Must match TITLE_BAR_HEIGHT in main/index.ts. */
+  height: 36px;
+  padding: 0 var(--space-2);
+  background: var(--color-bg);
+  user-select: none;
+  /* Lets the user drag the window by its title bar (and double-click to maximize). */
+  -webkit-app-region: drag;
+}
+
+/* Room for the macOS traffic lights. */
+.bar[data-platform='darwin'] {
+  padding-left: 80px;
+}
+
+.menuButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.menuButton:hover {
+  background: var(--color-surface);
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}

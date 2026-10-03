@@ -14,3 +14,8 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
 }
+
+/* The app fills the window, so it can keep its header fixed and scroll the rest. */
+#root {
+  height: 100%;
+}
