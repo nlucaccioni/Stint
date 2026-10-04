@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Update checks (SPEC.md §11). Only published GitHub Releases count; drafts are
+// Update checks (SPEC.md Â§11). Only published GitHub Releases count; drafts are
 // invisible to these checks, so a release goes out only when it's published.
 //
 // - Windows: electron-updater downloads the new installer in the background and
@@ -26,7 +26,7 @@ export function startUpdateChecks(): void {
 }
 
 /**
- * "Check for updates�" from the app menu. Unlike background checks, this always
+ * "Check for updates…" from the app menu. Unlike background checks, this always
  * tells the user the outcome, including "you're up to date" and errors.
  */
 export function checkForUpdatesNow(): void {
@@ -45,7 +45,7 @@ export function checkForUpdatesNow(): void {
       console.error('[updates]', e)
       void dialog.showMessageBox({
         type: 'warning',
-        message: 'Couldn�t check for updates',
+        message: 'Couldn’t check for updates',
         detail: e instanceof Error ? e.message : String(e),
       })
     })
@@ -82,7 +82,7 @@ async function checkWindows(manual: boolean): Promise<void> {
   void dialog.showMessageBox({
     type: 'info',
     message: `Stint ${latest} is available`,
-    detail: 'It�s downloading in the background. You can keep working.',
+    detail: 'It’s downloading in the background. You can keep working.',
   })
   await result.downloadPromise
   const { response: button } = await dialog.showMessageBox({
