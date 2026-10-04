@@ -62,3 +62,24 @@
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
+
+.iconButton {
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+/* .bar raises specificity above Button's own variant colors. */
+.bar .stop {
+  border-color: transparent;
+  background: var(--color-danger);
+  color: var(--color-accent-text);
+}
+
+/* No timer running: neutral, so an unusable red button doesn't draw the eye. */
+.bar .stop:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}

@@ -19,36 +19,41 @@ export interface TimerBarProps {
 
 export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBarProps) {
   const now = useNow(running !== null)
-  const [stoppingAt, setStoppingAt] = useState(false)
+  // The session "Stop at…" was opened for; if that timer stops some other way
+  // (tray, shortcut), the dialog no longer applies and stays closed.
+  const [stoppingAtId, setStoppingAtId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  if (!running) {
-    return (
-      <div className={styles.bar} data-idle>
-        <span className={styles.muted}>No timer running</span>
-        <span className={styles.clock}>0:00:00</span>
-      </div>
-    )
-  }
 
   function stopNow() {
     setError(null)
     onStop().catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }
 
+  // The clock and buttons are always shown (disabled while idle) so nothing moves
+  // when a timer starts or stops.
   return (
-    <div className={styles.bar} data-running>
-      <span
-        className={styles.swatch}
-        style={{ background: project && client ? projectColor(project, client) : undefined }}
-        aria-hidden
-      />
-      <span className={styles.what}>
-        <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
-        {client && <span className={styles.client}>{client.name}</span>}
-      </span>
+    <div
+      className={styles.bar}
+      data-running={running ? '' : undefined}
+      data-idle={running ? undefined : ''}
+    >
+      {running ? (
+        <>
+          <span
+            className={styles.swatch}
+            style={{ background: project && client ? projectColor(project, client) : undefined }}
+            aria-hidden
+          />
+          <span className={styles.what}>
+            <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
+            {client && <span className={styles.client}>{client.name}</span>}
+          </span>
+        </>
+      ) : (
+        <span className={styles.muted}>No timer running</span>
+      )}
       <span className={styles.clock} role="timer" aria-live="off">
-        {formatClock(now - running.startedAt)}
+        {running ? formatClock(now - running.startedAt) : '0:00:00'}
       </span>
       {error && (
         <span className={styles.error} role="alert">
@@ -58,20 +63,29 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
       <Button
         variant="ghost"
         size="sm"
+        className={styles.iconButton}
         aria-label="Stop at an earlier time…"
         title="Stop at an earlier time…"
-        onClick={() => setStoppingAt(true)}
+        disabled={!running}
+        onClick={() => setStoppingAtId(running?.id ?? null)}
       >
         <Clock size={14} aria-hidden />
       </Button>
-      <Button variant="primary" size="sm" onClick={stopNow}>
-        <Square size={12} fill="currentColor" /> Stop
+      <Button
+        size="sm"
+        className={`${styles.iconButton} ${styles.stop}`}
+        aria-label="Stop"
+        title="Stop"
+        disabled={!running}
+        onClick={stopNow}
+      >
+        <Square size={12} fill="currentColor" aria-hidden />
       </Button>
-      {stoppingAt && (
+      {running && stoppingAtId === running.id && (
         <StopAtDialog
           startedAt={running.startedAt}
           onSubmit={onStopAt}
-          onClose={() => setStoppingAt(false)}
+          onClose={() => setStoppingAtId(null)}
         />
       )}
     </div>
