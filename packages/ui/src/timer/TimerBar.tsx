@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The running timer, shown at the top of the main window.
+// The running timer, shown on the right of the main window's tab bar.
 import { useState } from 'react'
 import { formatClock, projectColor, type Client, type Project, type Session } from '@stint/core'
 import { Button } from '../components/Button'
-import { Play, Square } from 'lucide-react'
+import { Clock, Square } from 'lucide-react'
 import { StopAtDialog } from './StopAtDialog'
 import { useNow } from './useNow'
 import styles from './TimerBar.module.css'
@@ -25,12 +25,8 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
   if (!running) {
     return (
       <div className={styles.bar} data-idle>
+        <span className={styles.muted}>No timer running</span>
         <span className={styles.clock}>0:00:00</span>
-        <span className={styles.muted}>
-          No timer running. Press{' '}
-          <Play size={11} fill="currentColor" className={styles.inlineIcon} /> next to a project to
-          start.
-        </span>
       </div>
     )
   }
@@ -47,22 +43,28 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
         style={{ background: project && client ? projectColor(project, client) : undefined }}
         aria-hidden
       />
-      <span className={styles.clock} role="timer" aria-live="off">
-        {formatClock(now - running.startedAt)}
-      </span>
       <span className={styles.what}>
         <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
-        {client && <span className={styles.muted}>{client.name}</span>}
+        {client && <span className={styles.client}>{client.name}</span>}
+      </span>
+      <span className={styles.clock} role="timer" aria-live="off">
+        {formatClock(now - running.startedAt)}
       </span>
       {error && (
         <span className={styles.error} role="alert">
           {error}
         </span>
       )}
-      <Button variant="ghost" onClick={() => setStoppingAt(true)}>
-        Stop at…
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label="Stop at an earlier time…"
+        title="Stop at an earlier time…"
+        onClick={() => setStoppingAt(true)}
+      >
+        <Clock size={14} aria-hidden />
       </Button>
-      <Button variant="primary" onClick={stopNow}>
+      <Button variant="primary" size="sm" onClick={stopNow}>
         <Square size={12} fill="currentColor" /> Stop
       </Button>
       {stoppingAt && (

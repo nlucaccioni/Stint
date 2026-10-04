@@ -81,7 +81,7 @@ export function App() {
 
   return (
     <div className={styles.shell}>
-      <TitleBar platform={info?.platform} />
+      <TitleBar platform={info?.platform} version={info?.version} />
       <header className={styles.topbar}>
         <nav className={styles.tabs} aria-label="Views">
           {TABS.map((t) => (
@@ -96,9 +96,17 @@ export function App() {
             </button>
           ))}
         </nav>
-        {info && <span className={styles.muted}>v{info.version}</span>}
+        {catalog.loaded && (
+          <TimerBar
+            running={timer.running}
+            project={runningProject}
+            client={runningClient}
+            onStop={timer.stop}
+            onStopAt={timer.stopAt}
+          />
+        )}
       </header>
-      {/* Only this part scrolls, so the title bar and tabs stay put. */}
+      {/* Only this part scrolls, so the title bar, tabs, and timer stay put. */}
       <div className={styles.scroll}>
         <main className={styles.main}>
           {catalog.loadError && (
@@ -108,13 +116,6 @@ export function App() {
           )}
           {catalog.loaded && prefs.loaded && (
             <>
-              <TimerBar
-                running={timer.running}
-                project={runningProject}
-                client={runningClient}
-                onStop={timer.stop}
-                onStopAt={timer.stopAt}
-              />
               {tab === 'projects' && (
                 <ClientsView
                   clients={catalog.clients}

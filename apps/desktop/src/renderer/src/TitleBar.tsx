@@ -8,7 +8,12 @@ import type { AppInfo } from '../../shared/api'
 import { api } from './api'
 import styles from './TitleBar.module.css'
 
-export function TitleBar({ platform }: { platform: AppInfo['platform'] | undefined }) {
+export interface TitleBarProps {
+  platform: AppInfo['platform'] | undefined
+  version: string | undefined
+}
+
+export function TitleBar({ platform, version }: TitleBarProps) {
   const hasMenuButton = platform !== undefined && platform !== 'darwin'
 
   // Windows draws its own window buttons over the bar; give them the bar's colors,
@@ -43,6 +48,7 @@ export function TitleBar({ platform }: { platform: AppInfo['platform'] | undefin
         </button>
       )}
       <span className={styles.title}>Stint</span>
+      {version && <span className={styles.version}>v{version}</span>}
     </div>
   )
 }
