@@ -44,7 +44,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
           {client && <span className={styles.client}>{client.name}</span>}
         </span>
       ) : (
-        <span className={styles.muted}>No timer running</span>
+        <span className={styles.muted}>No Timer Active</span>
       )}
       <span className={styles.clock} role="timer" aria-live="off">
         {running ? formatClock(now - running.startedAt) : '0:00:00'}

@@ -57,7 +57,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-text-muted);
   font: inherit;
   font-size: var(--text-md);
   font-weight: 500;
@@ -65,9 +65,13 @@
   cursor: pointer;
 }
 
-.tab:hover,
+.tab:hover {
+  color: var(--color-text);
+}
+
 .tab[aria-current='page'] {
   background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .tab:focus-visible {

@@ -37,7 +37,7 @@ export function TitleBar({ platform, version }: TitleBarProps) {
             void api.showAppMenu(Math.round(r.left), Math.round(r.bottom))
           }}
         >
-          <Menu size={12} aria-hidden />
+          <Menu size={16} aria-hidden />
         </button>
       )}
       <span className={styles.title}>Stint</span>
