@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The running timer, shown on the right of the main window's tab bar.
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { formatClock, type Client, type Project, type Session } from '@stint/core'
-import { Button } from '../components/Button'
-import { Clock, Square } from 'lucide-react'
+import { IconButton } from '../components/IconButton'
+import { Timer } from 'lucide-react'
 import { StopAtDialog } from './StopAtDialog'
 import { useNow } from './useNow'
 import styles from './TimerBar.module.css'
@@ -30,21 +30,19 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
   }
 
   // The clock and buttons are always shown (disabled while idle) so nothing moves
-  // when a timer starts or stops.
+  // when a timer starts or stops. While running, the pill takes the client's color.
   return (
     <div
       className={styles.bar}
       data-running={running ? '' : undefined}
       data-idle={running ? undefined : ''}
+      style={running && client ? ({ '--client-color': client.color } as CSSProperties) : undefined}
     >
       {running ? (
-        <>
-          <span className={styles.swatch} style={{ background: client?.color }} aria-hidden />
-          <span className={styles.what}>
-            <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
-            {client && <span className={styles.client}>{client.name}</span>}
-          </span>
-        </>
+        <span className={styles.what}>
+          <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
+          {client && <span className={styles.client}>{client.name}</span>}
+        </span>
       ) : (
         <span className={styles.muted}>No timer running</span>
       )}
@@ -56,27 +54,23 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
           {error}
         </span>
       )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className={styles.iconButton}
-        aria-label="Stop at an earlier time…"
-        title="Stop at an earlier time…"
+      <IconButton
+        label="Stop at an earlier time…"
         disabled={!running}
         onClick={() => setStoppingAtId(running?.id ?? null)}
       >
-        <Clock size={14} aria-hidden />
-      </Button>
-      <Button
-        size="sm"
-        className={`${styles.iconButton} ${styles.stop}`}
+        <Timer aria-hidden />
+      </IconButton>
+      <button
+        type="button"
+        className={styles.stop}
         aria-label="Stop"
         title="Stop"
         disabled={!running}
         onClick={stopNow}
       >
-        <Square size={12} fill="currentColor" aria-hidden />
-      </Button>
+        <span className={styles.stopIcon} aria-hidden />
+      </button>
       {running && stoppingAtId === running.id && (
         <StopAtDialog
           startedAt={running.startedAt}

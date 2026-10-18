@@ -1,39 +1,31 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* The timer pill in the tab bar. --client-color is set inline while running. */
 .bar {
   display: flex;
-  flex: 1 0 auto;
+  flex: none;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
   /* Same height running or idle, so the bar around it doesn't jump. */
-  min-height: 36px;
+  min-height: 34px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
 }
 
-.swatch {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.clock {
-  flex: none;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.bar[data-idle] .clock {
-  color: var(--color-text-muted);
-  font-weight: 400;
+.bar[data-running] {
+  border-color: var(--client-color, var(--color-text-muted));
+  background: color-mix(in srgb, var(--client-color, transparent) 10%, transparent);
 }
 
 .what {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
-  max-width: 240px;
-  line-height: 1.2;
+  max-width: 200px;
+  font-size: var(--text-sm);
+  line-height: normal;
   text-align: right;
 }
 
@@ -45,17 +37,28 @@
 }
 
 .project {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .client,
 .muted {
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
 }
 
 .muted {
+  font-size: var(--text-sm);
   white-space: nowrap;
+}
+
+.clock {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar[data-idle] .clock {
+  color: var(--color-text-muted);
 }
 
 .error {
@@ -63,23 +66,38 @@
   font-size: var(--text-sm);
 }
 
-.iconButton {
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+/* A red rounded square holding a white stop square. */
+.stop {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-danger);
+  cursor: pointer;
 }
 
-/* .bar raises specificity above Button's own variant colors. */
-.bar .stop {
-  border-color: transparent;
-  background: var(--color-danger);
-  color: var(--color-accent-text);
+.stop:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.stopIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #ffffff;
 }
 
 /* No timer running: neutral, so an unusable red button doesn't draw the eye. */
-.bar .stop:disabled {
-  border-color: var(--color-border);
+.stop:disabled {
   background: var(--color-surface);
-  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.stop:disabled .stopIcon {
+  background: var(--color-text-tertiary);
 }
