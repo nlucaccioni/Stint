@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @stint/desktop dev",
+    "seed": "pnpm --filter @stint/desktop seed",
     "build": "pnpm --filter @stint/desktop build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",

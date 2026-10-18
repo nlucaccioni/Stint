@@ -9,6 +9,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "node scripts/electron-vite.mjs dev",
+    "seed": "node scripts/seed-dev.mjs",
     "build": "electron-vite build && electron-builder",
     "build:unpacked": "electron-vite build && electron-builder --dir",
     "test": "vitest run",
