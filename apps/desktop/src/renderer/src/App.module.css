@@ -70,7 +70,7 @@
 }
 
 .tab[aria-current='page'] {
-  background: var(--color-surface);
+  background: var(--color-wash);
   color: var(--color-text);
 }
 

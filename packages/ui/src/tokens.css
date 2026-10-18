@@ -54,5 +54,7 @@
   --color-hover-wash: rgb(154 154 154 / 0.1);
   /* Light wash: text at 5%. Hovered project bars, start/stop, Tertiary buttons. */
   --color-wash: rgb(237 237 237 / 0.05);
+  /* Stronger wash: text at 10%. The Non-billable tag. */
+  --color-wash-strong: rgb(237 237 237 / 0.1);
   --color-warning: #f6ad55;
 }

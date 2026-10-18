@@ -4,18 +4,11 @@
   flex: none;
   align-items: center;
   padding: 2px var(--space-1);
-  border: 0.5px solid currentColor;
   border-radius: var(--radius-pill);
+  background: var(--color-wash-strong);
+  color: var(--color-text-muted);
   font-size: var(--text-xxs);
   font-weight: 500;
   line-height: normal;
   white-space: nowrap;
-}
-
-.muted {
-  color: var(--color-text-muted);
-}
-
-.tertiary {
-  color: var(--color-text-tertiary);
 }

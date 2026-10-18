@@ -365,7 +365,7 @@ function ProjectRow(props: {
               {props.slot}
             </span>
           )}
-          {!project.billableByDefault && <Tag tone="tertiary">Non-Billable</Tag>}
+          {!project.billableByDefault && <Tag>Non-Billable</Tag>}
         </div>
         {summary?.budget && <BudgetBar usage={summary.budget} currency={client.currency} />}
       </div>
