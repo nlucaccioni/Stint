@@ -1,4 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* The ⋯ button stays highlighted while its menu (the next sibling) is open. */
+.trigger:has(+ :popover-open) {
+  background: var(--color-border);
+}
+
 .menu {
   /* Undo the browser's default popover box. */
   inset: auto;

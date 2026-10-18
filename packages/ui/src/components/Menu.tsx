@@ -63,6 +63,7 @@ export function Menu({ label, items }: MenuProps) {
       <IconButton
         label={label}
         aria-haspopup="menu"
+        className={styles.trigger}
         popoverTarget={id}
         style={{ anchorName: anchor } as CSSProperties}
       >

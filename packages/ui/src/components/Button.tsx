@@ -3,7 +3,8 @@ import type { ButtonHTMLAttributes } from 'react'
 import styles from './Button.module.css'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'subtle' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'subtle' | 'ghost' | 'danger'
+  /** md: 12px text and icons; sm: 10px (Tertiary and Show Archived in the design). */
   size?: 'md' | 'sm'
 }
 

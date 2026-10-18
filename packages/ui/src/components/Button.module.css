@@ -1,16 +1,26 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* Pill buttons, from the Figma file (Search, Add Client, Add Project, Show Archived). */
+/* Pill buttons, from the Figma Button component (Primary, Secondary, Tertiary). */
 .button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
+  background: transparent;
   font: inherit;
   font-weight: 500;
   line-height: normal;
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+/* Text first, icon last: the text side gets a little more room, as in the design. */
+.button:has(> svg:last-child:not(:first-child)) {
+  padding-left: 10px;
 }
 
 .button:focus-visible {
@@ -23,19 +33,12 @@
   cursor: default;
 }
 
-/* Icons sit a touch tighter to the edge than text, as in the design. */
-.md {
-  padding: var(--space-1) var(--space-2) var(--space-1) 10px;
-  font-size: var(--text-sm);
-}
-
-.sm {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--text-xs);
-}
-
 .button > svg {
   flex: none;
+}
+
+.md {
+  font-size: var(--text-sm);
 }
 
 .md > svg {
@@ -43,62 +46,67 @@
   height: 12px;
 }
 
+.sm {
+  font-size: var(--text-xs);
+}
+
 .sm > svg {
   width: 10px;
   height: 10px;
 }
 
+/* Filled; on hover it opens up to an outline. */
 .primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-text);
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.primary:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text);
 }
 
 .secondary {
   border-color: var(--color-text-muted);
-  background: transparent;
   color: var(--color-text-muted);
 }
 
-.secondary:hover:not(:disabled) {
+/* Outlined in the text color, e.g. "Add Project". */
+.tertiary {
   border-color: var(--color-text);
   color: var(--color-text);
 }
 
-/* Outlined in the text color: "Add Project". */
-.outline {
-  border-color: var(--color-text);
-  background: transparent;
-  color: var(--color-text);
-}
-
-.outline:hover:not(:disabled) {
-  background: var(--color-surface);
+.secondary:hover:not(:disabled),
+.tertiary:hover:not(:disabled) {
+  background: var(--color-hover-wash);
 }
 
 /* Quiet: hairline border, muted text ("Show Archived"). */
 .subtle {
   border-color: var(--color-border);
-  background: transparent;
   color: var(--color-text-muted);
 }
 
 .subtle:hover:not(:disabled) {
-  color: var(--color-text);
+  background: var(--color-hover-wash);
 }
 
 .ghost {
-  background: transparent;
   color: var(--color-text-muted);
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--color-surface);
+  background: var(--color-hover-wash);
   color: var(--color-text);
 }
 
 .danger {
-  background: transparent;
   border-color: var(--color-danger);
   color: var(--color-danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
