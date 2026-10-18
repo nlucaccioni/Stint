@@ -23,6 +23,7 @@ import {
 import {
   ChevronDown,
   ChevronUp,
+  PanelTopClose,
   PanelTopOpen,
   Play,
   Plus,
@@ -194,7 +195,15 @@ export function ClientsView(props: ClientsViewProps) {
       {hasArchived && (
         <div className={styles.archiveRow}>
           <Button size="sm" variant="subtle" onClick={() => setShowArchived(!showArchived)}>
-            {showArchived ? 'Hide Archived' : 'Show Archived'} <PanelTopOpen aria-hidden />
+            {showArchived ? (
+              <>
+                Hide Archived <PanelTopClose aria-hidden />
+              </>
+            ) : (
+              <>
+                Show Archived <PanelTopOpen aria-hidden />
+              </>
+            )}
           </Button>
         </div>
       )}
@@ -257,10 +266,9 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
     >
       <span className={styles.colorBar} aria-hidden />
       <div className={styles.body}>
-        <div className={styles.row}>
+        <div className={styles.clientBar}>
           <div className={styles.names}>
-            <span className={styles.name}>{client.name}</span>
-            {client.archived && <Tag>Archived</Tag>}
+            <span className={styles.clientName}>{client.name}</span>
           </div>
           <div className={styles.meta}>
             <span className={styles.rate}>
@@ -275,9 +283,9 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
               ]}
             />
             <span className={styles.divider} aria-hidden />
-            <span className={styles.clock}>
-              <span>Total</span>
-              <span>{formatClock(totalMs)}</span>
+            <span className={styles.total}>
+              <span className={styles.totalLabel}>Total</span>
+              <span className={styles.clock}>{formatClock(totalMs)}</span>
             </span>
             <IconButton
               label={collapsed ? `Show projects for ${client.name}` : `Hide projects`}
@@ -312,7 +320,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
             )}
             {!client.archived && (
               <div className={styles.addRow}>
-                <Button size="sm" variant="outline" onClick={on.onAddProject}>
+                <Button size="sm" variant="tertiary" onClick={on.onAddProject}>
                   <Plus aria-hidden /> Add Project
                 </Button>
               </div>
@@ -341,17 +349,16 @@ function ProjectRow(props: {
   const toggleLabel = `${running ? 'Stop' : 'Start'} timer for ${project.name}`
   return (
     <li className={styles.project} data-archived={project.archived || undefined}>
-      <div className={styles.row}>
+      <div className={styles.projectRow}>
         <div className={styles.names}>
           <span className={styles.name}>{project.name}</span>
           {props.slot !== null && (
             <span className={styles.favorite} title={`Favorite ${props.slot}`}>
-              <Star size={8} fill="currentColor" aria-hidden />
+              <Star size={10} fill="currentColor" aria-hidden />
               {props.slot}
             </span>
           )}
-          {!project.billableByDefault && <Tag tone="tertiary">Non-billable</Tag>}
-          {project.archived && <Tag>Archived</Tag>}
+          {!project.billableByDefault && <Tag tone="tertiary">Non-Billable</Tag>}
         </div>
         <div className={styles.meta}>
           {project.hourlyRateCents !== null && (
@@ -381,7 +388,7 @@ function ProjectRow(props: {
             {running ? (
               <span className={styles.stopIcon} aria-hidden />
             ) : (
-              <Play size={8} fill="currentColor" aria-hidden />
+              <Play size={10} fill="currentColor" aria-hidden />
             )}
           </button>
         </div>
