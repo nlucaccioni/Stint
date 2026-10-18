@@ -83,6 +83,11 @@ function createMainWindow(): BrowserWindow {
     minHeight: 400,
     show: false,
     title: 'Stint',
+    // Windows/Linux window and taskbar icon (installed builds also embed it in the
+    // .exe; this covers dev runs). macOS uses the app bundle's icon.
+    ...(process.platform === 'darwin'
+      ? {}
+      : { icon: join(app.getAppPath(), 'resources', 'icon.png') }),
     // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
     // button. Windows still draws minimize/maximize/close at the top right, over
     // the page ("title bar overlay"); macOS keeps its traffic lights, inset.

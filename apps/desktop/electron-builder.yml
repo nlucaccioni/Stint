@@ -20,6 +20,9 @@ extraResources:
 
 mac:
   category: public.app-category.productivity
+  # Padded to Apple's icon grid (824px artwork in a 1024px canvas). Windows uses the
+  # full-bleed build/icon.png.
+  icon: build/icon-mac.png
   # Not notarized yet (SPEC.md §11). "-" = ad-hoc signature, which Apple Silicon
   # requires to launch at all; without it macOS reports the app as "damaged".
   identity: '-'
