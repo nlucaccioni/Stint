@@ -13,14 +13,25 @@
   background: var(--color-surface);
 }
 
-/* Running: the client's color as the border, and a 10% tint of it as the fill. */
+/* Running: the client's color as the border, a 10% tint of it as the fill, and a
+   glow (Figma: 50px drop shadow at 25%). As on client cards, the glow is a blurred
+   layer under the pill so it also tints the pill, as Figma's shadow does. */
 .pill[data-running] {
+  position: relative;
+  isolation: isolate;
   border-color: var(--client-color, var(--color-border));
-  background: color-mix(
-    in srgb,
-    var(--client-color, var(--color-surface)) 10%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--client-color, transparent) 10%, transparent);
+}
+
+.pill[data-running]::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--client-color, transparent) 25%, transparent);
+  filter: blur(25px);
+  pointer-events: none;
 }
 
 .details {
@@ -101,7 +112,7 @@
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--color-accent-text);
+  background: var(--color-on-danger);
 }
 
 /* No timer running: grey, so an unusable red button doesn't draw the eye. */

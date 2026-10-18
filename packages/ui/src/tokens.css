@@ -36,8 +36,10 @@
 
   --color-bg: #161616;
   --color-surface: #202020;
-  /* Client cards: the surface at 75%, so a running client's glow shows through. */
+  /* Client cards: the surface at 75% (60% while running), so a running client's
+     glow shows through. */
   --color-surface-translucent: rgb(32 32 32 / 0.75);
+  --color-surface-translucent-active: rgb(32 32 32 / 0.6);
   --color-border: #333333;
   --color-text: #ededed;
   --color-text-muted: #9a9a9a;
@@ -46,6 +48,8 @@
   --color-accent: #ededed;
   --color-accent-text: #161616;
   --color-danger: #ef5350;
+  /* Icons on danger fills (the white square on stop buttons). */
+  --color-on-danger: #ffffff;
   /* Hover wash on outlined buttons: text-muted at 10%. */
   --color-hover-wash: rgb(154 154 154 / 0.1);
   /* Light wash: text at 5%. Hovered project bars, start/stop, Tertiary buttons. */
