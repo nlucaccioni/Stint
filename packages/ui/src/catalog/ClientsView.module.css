@@ -110,7 +110,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2);
 }
 
 .names,
@@ -232,7 +232,8 @@
   background: var(--color-surface-hover);
 }
 
-/* Start/stop: a grey play button (brightens on hover), or red with a square while running. */
+/* Start/stop: a grey play button (on hover the fill drops away and the arrow turns
+   white), or red with a square while running. */
 .toggle {
   display: grid;
   flex: none;
@@ -245,10 +246,13 @@
   background: var(--color-border);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .toggle:hover:not(:disabled) {
+  background: transparent;
   color: var(--color-text);
 }
 
