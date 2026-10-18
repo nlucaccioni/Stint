@@ -59,7 +59,7 @@
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   font-weight: 500;
   line-height: normal;
   cursor: pointer;

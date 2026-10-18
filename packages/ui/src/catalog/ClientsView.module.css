@@ -105,16 +105,12 @@
   padding: var(--space-2);
 }
 
-.clientBar,
-.projectRow {
+.clientBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-}
-
-.clientBar {
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
 }
 
 .names,
@@ -172,6 +168,7 @@
 }
 
 .totalLabel {
+  color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
 
@@ -205,42 +202,54 @@
 .card[data-archived] .clientBar button,
 .project[data-archived] .name,
 .project[data-archived] .clock,
-.project[data-archived] button {
+.project[data-archived] .meta > button:not(.toggle) {
   color: var(--color-text-muted);
 }
 
-/* One project: its row, and the budget bar under it if it has one. */
+/* One project bar: name (and budget) on the left, rate, time and start/stop on the right. */
 .project {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 10px;
   transition: background-color 0.15s;
+}
+
+.project[data-capped] {
+  padding: var(--space-2);
+}
+
+.projectInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .project:hover {
   background: var(--color-surface-hover);
 }
 
-/* Start/stop: a play arrow (inverted on hover), or a red square while running. */
+/* Start/stop: a grey play button (brightens on hover), or red with a square while running. */
 .toggle {
   display: grid;
   flex: none;
   place-items: center;
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--color-text);
+  border-radius: var(--radius);
+  background: var(--color-border);
+  color: var(--color-text-muted);
   cursor: pointer;
+  transition: color 0.15s;
 }
 
 .toggle:hover:not(:disabled) {
-  background: var(--color-text);
-  color: var(--color-bg);
+  color: var(--color-text);
 }
 
 .toggle:focus-visible {
@@ -258,9 +267,9 @@
 }
 
 .stopIcon {
-  width: 8px;
-  height: 8px;
-  border-radius: 1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
   background: var(--color-accent-text);
 }
 

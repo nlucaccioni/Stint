@@ -348,8 +348,13 @@ function ProjectRow(props: {
   const startable = !(project.archived || client.archived) || running
   const toggleLabel = `${running ? 'Stop' : 'Start'} timer for ${project.name}`
   return (
-    <li className={styles.project} data-archived={project.archived || undefined}>
-      <div className={styles.projectRow}>
+    <li
+      className={styles.project}
+      data-archived={project.archived || undefined}
+      data-capped={summary?.budget ? '' : undefined}
+    >
+      {/* Name, with the budget bar under it when the project has one. */}
+      <div className={styles.projectInfo}>
         <div className={styles.names}>
           <span className={styles.name}>{project.name}</span>
           {props.slot !== null && (
@@ -360,40 +365,38 @@ function ProjectRow(props: {
           )}
           {!project.billableByDefault && <Tag tone="tertiary">Non-Billable</Tag>}
         </div>
-        <div className={styles.meta}>
-          {project.hourlyRateCents !== null && (
-            <span className={styles.rate}>
-              {rateLabel(project.hourlyRateCents, client.currency)}
-            </span>
-          )}
-          <Menu
-            label={`Actions for ${project.name}`}
-            items={[
-              { label: 'Edit', onSelect: props.onEdit },
-              { label: project.archived ? 'Unarchive' : 'Archive', onSelect: props.onArchive },
-              { label: 'Delete…', onSelect: props.onDelete, danger: true },
-            ]}
-          />
-          <span className={styles.divider} aria-hidden />
-          <span className={styles.clock}>{formatClock(summary?.unbilledMs ?? 0)}</span>
-          <button
-            type="button"
-            className={styles.toggle}
-            data-running={running || undefined}
-            aria-label={toggleLabel}
-            title={toggleLabel}
-            disabled={!startable}
-            onClick={props.onToggleTimer}
-          >
-            {running ? (
-              <span className={styles.stopIcon} aria-hidden />
-            ) : (
-              <Play size={10} fill="currentColor" aria-hidden />
-            )}
-          </button>
-        </div>
+        {summary?.budget && <BudgetBar usage={summary.budget} currency={client.currency} />}
       </div>
-      {summary?.budget && <BudgetBar usage={summary.budget} currency={client.currency} />}
+      <div className={styles.meta}>
+        {project.hourlyRateCents !== null && (
+          <span className={styles.rate}>{rateLabel(project.hourlyRateCents, client.currency)}</span>
+        )}
+        <Menu
+          label={`Actions for ${project.name}`}
+          items={[
+            { label: 'Edit', onSelect: props.onEdit },
+            { label: project.archived ? 'Unarchive' : 'Archive', onSelect: props.onArchive },
+            { label: 'Delete…', onSelect: props.onDelete, danger: true },
+          ]}
+        />
+        <span className={styles.divider} aria-hidden />
+        <span className={styles.clock}>{formatClock(summary?.unbilledMs ?? 0)}</span>
+        <button
+          type="button"
+          className={styles.toggle}
+          data-running={running || undefined}
+          aria-label={toggleLabel}
+          title={toggleLabel}
+          disabled={!startable}
+          onClick={props.onToggleTimer}
+        >
+          {running ? (
+            <span className={styles.stopIcon} aria-hidden />
+          ) : (
+            <Play size={14} fill="currentColor" aria-hidden />
+          )}
+        </button>
+      </div>
     </li>
   )
 }
