@@ -3,9 +3,6 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  /* Trim text to its cap height and baseline (as in Figma), so spacing and
-     alignment are measured from the letters rather than the line box. */
-  text-box: trim-both cap alphabetic;
 }
 
 html,
