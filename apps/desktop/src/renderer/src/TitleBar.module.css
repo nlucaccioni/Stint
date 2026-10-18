@@ -5,7 +5,7 @@
   gap: var(--space-2);
   /* Must match TITLE_BAR_HEIGHT in main/index.ts. */
   height: 36px;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-4);
   background: var(--color-bg);
   user-select: none;
   /* Lets the user drag the window by its title bar (and double-click to maximize). */
@@ -20,8 +20,9 @@
 .menuButton {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
+  margin-left: -4px;
   padding: 0;
   border: 0;
   border-radius: var(--radius);
@@ -37,7 +38,6 @@
 
 .title {
   font-size: var(--text-sm);
-  font-weight: 600;
 }
 
 .version {

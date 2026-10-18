@@ -1,0 +1,47 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+.menu {
+  /* Undo the browser's default popover box. */
+  inset: auto;
+  margin: 0;
+  /* Below the ⋯ button, right edges aligned; flips above if there's no room. */
+  position-area: bottom span-left;
+  position-try-fallbacks: flip-block;
+  margin-top: var(--space-1);
+  min-width: 120px;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover:not(:disabled),
+.item:focus-visible {
+  background: var(--color-border);
+  outline: none;
+}
+
+.item:disabled {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+.item[data-danger] {
+  color: var(--color-danger);
+}

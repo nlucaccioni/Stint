@@ -1,0 +1,34 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+.button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.button > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.button:hover:not(:disabled),
+.button[aria-expanded='true'] {
+  background: var(--color-border);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

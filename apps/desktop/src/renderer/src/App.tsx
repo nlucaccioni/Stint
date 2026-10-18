@@ -10,6 +10,7 @@ import {
 import {
   BillingView,
   ClientsView,
+  IconButton,
   IdleDialog,
   SessionDialog,
   SessionLog,
@@ -18,6 +19,7 @@ import {
   TotalsView,
   useNow,
 } from '@stint/ui'
+import { Settings } from 'lucide-react'
 import type { AppInfo, AppView } from '../../shared/api'
 import { api, onEvent } from './api'
 import { ShortcutSettings } from './ShortcutSettings'
@@ -35,12 +37,12 @@ import styles from './App.module.css'
 const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 type Tab = AppView
+/** Settings isn't a tab: it opens from the gear next to the timer. */
 const TABS: { tab: Tab; label: string }[] = [
   { tab: 'projects', label: 'Projects' },
   { tab: 'time', label: 'Time' },
   { tab: 'totals', label: 'Totals' },
   { tab: 'billing', label: 'Billing' },
-  { tab: 'settings', label: 'Settings' },
 ]
 type Editing = { session?: Session } | null
 
@@ -96,15 +98,24 @@ export function App() {
             </button>
           ))}
         </nav>
-        {catalog.loaded && (
-          <TimerBar
-            running={timer.running}
-            project={runningProject}
-            client={runningClient}
-            onStop={timer.stop}
-            onStopAt={timer.stopAt}
-          />
-        )}
+        <div className={styles.topbarEnd}>
+          <IconButton
+            label="Settings"
+            aria-current={tab === 'settings' ? 'page' : undefined}
+            onClick={() => setTab('settings')}
+          >
+            <Settings aria-hidden />
+          </IconButton>
+          {catalog.loaded && (
+            <TimerBar
+              running={timer.running}
+              project={runningProject}
+              client={runningClient}
+              onStop={timer.stop}
+              onStopAt={timer.stopAt}
+            />
+          )}
+        </div>
       </header>
       {/* Only this part scrolls, so the title bar, tabs, and timer stay put. */}
       <div className={styles.scroll}>

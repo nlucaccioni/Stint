@@ -1,12 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Pill buttons, from the Figma file (Search, Add Client, Add Project, Show Archived). */
 .button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font: inherit;
   font-weight: 500;
+  line-height: normal;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -21,23 +23,67 @@
   cursor: default;
 }
 
+/* Icons sit a touch tighter to the edge than text, as in the design. */
 .md {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-1) 10px;
+  font-size: var(--text-sm);
 }
 
 .sm {
   padding: var(--space-1) var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+}
+
+.button > svg {
+  flex: none;
+}
+
+.md > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.sm > svg {
+  width: 10px;
+  height: 10px;
 }
 
 .primary {
   background: var(--color-accent);
+  border-color: var(--color-accent);
   color: var(--color-accent-text);
 }
 
 .secondary {
+  border-color: var(--color-text-muted);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* Outlined in the text color: "Add Project". */
+.outline {
+  border-color: var(--color-text);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.outline:hover:not(:disabled) {
   background: var(--color-surface);
+}
+
+/* Quiet: hairline border, muted text ("Show Archived"). */
+.subtle {
   border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.subtle:hover:not(:disabled) {
   color: var(--color-text);
 }
 
@@ -53,6 +99,6 @@
 
 .danger {
   background: transparent;
-  border-color: var(--color-border);
+  border-color: var(--color-danger);
   color: var(--color-danger);
 }
