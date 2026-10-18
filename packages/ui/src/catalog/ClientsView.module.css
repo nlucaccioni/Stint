@@ -55,6 +55,8 @@
 
 .clients {
   gap: var(--space-4);
+  /* Own stacking layer, so a card's glow can sit behind every card. */
+  isolation: isolate;
 }
 
 .projects {
@@ -63,21 +65,34 @@
 
 /* One client. --client-color is set inline. */
 .card {
+  position: relative;
   display: flex;
-  overflow: clip;
   border-radius: var(--radius);
   background: var(--color-surface);
-  transition: box-shadow 0.3s;
 }
 
-/* A timer for this client is running: a soft glow in its color. */
-.card[data-running] {
+/* A timer for this client is running: a soft glow in its color. It's drawn on a
+   layer below all the cards (z-index -1 inside .clients) so it never covers one. */
+.card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
   box-shadow: 0 0 100px 0 color-mix(in srgb, var(--client-color) 10%, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.card[data-running]::before {
+  opacity: 1;
 }
 
 .colorBar {
   flex: none;
   width: 4px;
+  border-radius: var(--radius) 0 0 var(--radius);
   background: var(--client-color);
 }
 

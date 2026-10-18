@@ -4,10 +4,15 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell, type BrowserWindowConstructorOptions } from 'electron'
 
-export function createSecureWindow(options: BrowserWindowConstructorOptions): BrowserWindow {
+export function createSecureWindow(
+  options: BrowserWindowConstructorOptions,
+  /** Starting page zoom (1 = 100%). */
+  zoomFactor = 1,
+): BrowserWindow {
   const win = new BrowserWindow({
     ...options,
     webPreferences: {
+      zoomFactor,
       preload: join(import.meta.dirname, '../preload/index.cjs'),
       // Security baseline (SPEC.md §4): the page gets no Node.js access, runs in
       // a sandbox, and sees only what the preload script explicitly exposes.

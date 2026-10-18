@@ -65,8 +65,14 @@ let quitting = false
 /** Shows the Windows "still running in the tray" notice once; set up after startup. */
 let onFirstHide: () => void = () => {}
 
-/** Must match the title bar height in renderer TitleBar.module.css. */
-const TITLE_BAR_HEIGHT = 36
+/**
+ * The main window opens at 125%: the design tokens hold the Figma values, which
+ * read small at 100%. Trial setting; the tokens may be scaled instead later.
+ */
+const MAIN_ZOOM = 1.25
+
+/** The title bar's CSS height (renderer TitleBar.module.css), in window pixels. */
+const TITLE_BAR_HEIGHT = Math.round(36 * MAIN_ZOOM)
 
 /** Starting colors for the window buttons; the renderer swaps in the design tokens on load. */
 function titleBarColors(): { color: string; symbolColor: string } {
@@ -74,21 +80,24 @@ function titleBarColors(): { color: string; symbolColor: string } {
 }
 
 function createMainWindow(): BrowserWindow {
-  const win = createSecureWindow({
-    width: 1000,
-    height: 700,
-    minWidth: 480,
-    minHeight: 400,
-    show: false,
-    title: 'Stint',
-    // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
-    // button. Windows still draws minimize/maximize/close at the top right, over
-    // the page ("title bar overlay"); macOS keeps its traffic lights, inset.
-    titleBarStyle: 'hidden',
-    ...(process.platform === 'darwin'
-      ? { trafficLightPosition: { x: 14, y: 12 } }
-      : { titleBarOverlay: { height: TITLE_BAR_HEIGHT, ...titleBarColors() } }),
-  })
+  const win = createSecureWindow(
+    {
+      width: 1000,
+      height: 700,
+      minWidth: 480,
+      minHeight: 400,
+      show: false,
+      title: 'Stint',
+      // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
+      // button. Windows still draws minimize/maximize/close at the top right, over
+      // the page ("title bar overlay"); macOS keeps its traffic lights, inset.
+      titleBarStyle: 'hidden',
+      ...(process.platform === 'darwin'
+        ? { trafficLightPosition: { x: 14, y: Math.round((TITLE_BAR_HEIGHT - 12) / 2) } }
+        : { titleBarOverlay: { height: TITLE_BAR_HEIGHT, ...titleBarColors() } }),
+    },
+    MAIN_ZOOM,
+  )
 
   win.once('ready-to-show', () => {
     if (!startHidden) win.show()

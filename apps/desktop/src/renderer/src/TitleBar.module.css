@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  /* Must match TITLE_BAR_HEIGHT in main/index.ts. */
+  /* main/index.ts sizes the Windows window buttons from this (times the zoom). */
   height: 36px;
   padding: 0 var(--space-4);
   background: var(--color-bg);
