@@ -16,12 +16,13 @@ export interface TitleBarProps {
 export function TitleBar({ platform, version }: TitleBarProps) {
   const hasMenuButton = platform !== undefined && platform !== 'darwin'
 
-  // Windows draws its own window buttons over the bar; give them the bar's colors.
+  // Windows draws its own window buttons over the bar: a transparent strip, so the
+  // page shows through, and symbols in the text color.
   useEffect(() => {
     if (!hasMenuButton) return
     const css = getComputedStyle(document.documentElement)
     const color = (name: string) => css.getPropertyValue(name).trim()
-    void api.setTitleBarColors(color('--color-bg'), color('--color-text'))
+    void api.setTitleBarColors('#00000000', color('--color-text'))
   }, [hasMenuButton])
 
   return (

@@ -69,8 +69,10 @@ let onFirstHide: () => void = () => {}
 const TITLE_BAR_HEIGHT = 36
 
 /** Starting colors for the window buttons; the renderer swaps in the design tokens on load. */
+// The strip behind the buttons is transparent, so the page (and the timer pill's
+// glow) shows through instead of a solid block.
 function titleBarColors(): { color: string; symbolColor: string } {
-  return { color: '#161616', symbolColor: '#ededed' }
+  return { color: '#00000000', symbolColor: '#ededed' }
 }
 
 function createMainWindow(): BrowserWindow {
