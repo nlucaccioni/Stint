@@ -16,19 +16,12 @@ export interface TitleBarProps {
 export function TitleBar({ platform, version }: TitleBarProps) {
   const hasMenuButton = platform !== undefined && platform !== 'darwin'
 
-  // Windows draws its own window buttons over the bar; give them the bar's colors,
-  // and update them when the system switches between light and dark.
+  // Windows draws its own window buttons over the bar; give them the bar's colors.
   useEffect(() => {
     if (!hasMenuButton) return
-    const dark = window.matchMedia('(prefers-color-scheme: dark)')
-    const apply = () => {
-      const css = getComputedStyle(document.documentElement)
-      const color = (name: string) => css.getPropertyValue(name).trim()
-      void api.setTitleBarColors(color('--color-bg'), color('--color-text'))
-    }
-    apply()
-    dark.addEventListener('change', apply)
-    return () => dark.removeEventListener('change', apply)
+    const css = getComputedStyle(document.documentElement)
+    const color = (name: string) => css.getPropertyValue(name).trim()
+    void api.setTitleBarColors(color('--color-bg'), color('--color-text'))
   }, [hasMenuButton])
 
   return (

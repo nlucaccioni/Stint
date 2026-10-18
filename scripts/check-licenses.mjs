@@ -18,6 +18,7 @@ const ALLOWED = new Set([
   'LGPL-3.0-or-later',
   'MIT',
   'MPL-2.0',
+  'OFL-1.1', // Geist fonts, bundled as separate font files (approved in SPEC.md §13)
   'Python-2.0',
   'Unlicense',
   'WTFPL', // GPL-compatible per the FSF; small helpers inside electron-builder

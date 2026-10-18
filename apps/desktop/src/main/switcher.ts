@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The quick switcher: a small always-on-top palette, opened by shortcut or tray.
 // It's created once and kept hidden between uses, so it appears instantly.
-import { nativeTheme, screen, type BrowserWindow } from 'electron'
+import { screen, type BrowserWindow } from 'electron'
 import { eventChannel } from '../shared/api'
 import { createSecureWindow, loadRenderer } from './windows'
 
@@ -43,8 +43,8 @@ function create(): BrowserWindow {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    // Match the page background so there's no white flash in dark mode.
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#202020' : '#f5f5f5',
+    // Match the page background (--color-surface) so there's no white flash.
+    backgroundColor: '#202020',
     title: 'Stint quick switcher',
   })
   w.setAlwaysOnTop(true, 'floating')

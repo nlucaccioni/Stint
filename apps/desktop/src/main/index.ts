@@ -70,9 +70,7 @@ const TITLE_BAR_HEIGHT = 36
 
 /** Starting colors for the window buttons; the renderer swaps in the design tokens on load. */
 function titleBarColors(): { color: string; symbolColor: string } {
-  return nativeTheme.shouldUseDarkColors
-    ? { color: '#161616', symbolColor: '#ededed' }
-    : { color: '#ffffff', symbolColor: '#1a1a1a' }
+  return { color: '#161616', symbolColor: '#ededed' }
 }
 
 function createMainWindow(): BrowserWindow {
@@ -305,6 +303,10 @@ let startHidden =
 void app.whenReady().then(() => {
   // Windows uses this ID to group taskbar icons and show notifications.
   app.setAppUserModelId('com.nlucaccioni.stint')
+
+  // Stint is dark-only for now: native menus, dialogs and scrollbars follow suit
+  // even when the system is in light mode.
+  nativeTheme.themeSource = 'dark'
 
   // Stint never needs camera, mic, location, etc.
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, callback) => callback(false))
