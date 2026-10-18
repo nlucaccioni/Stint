@@ -1,8 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* The timer pill in the tab bar (Figma: Menu Timer). --client-color is set inline
-   while running. Same height running or idle: the 24px stop button sets it. */
+   while running. */
 .pill {
   display: flex;
+  /* Fixed to the running height (two 14px text lines + padding + border), so the
+     pill doesn't shift when a timer starts or stops. */
+  box-sizing: border-box;
+  height: calc(28px + 2 * var(--space-2) + 2px);
   flex: none;
   align-items: center;
   justify-content: flex-end;
@@ -14,24 +18,11 @@
 }
 
 /* Running: the client's color as the border, a 10% tint of it as the fill, and a
-   glow (Figma: 50px drop shadow at 25%). As on client cards, the glow is a blurred
-   layer under the pill so it also tints the pill, as Figma's shadow does. */
+   glow around the outside only (Figma: 50px drop shadow at 25%). */
 .pill[data-running] {
-  position: relative;
-  isolation: isolate;
   border-color: var(--client-color, var(--color-border));
   background: color-mix(in srgb, var(--client-color, transparent) 10%, transparent);
-}
-
-.pill[data-running]::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--client-color, transparent) 25%, transparent);
-  filter: blur(25px);
-  pointer-events: none;
+  box-shadow: 0 0 50px 0 color-mix(in srgb, var(--client-color, transparent) 25%, transparent);
 }
 
 .details {
@@ -40,7 +31,8 @@
   align-items: flex-end;
   min-width: 0;
   max-width: 200px;
-  line-height: normal;
+  /* Explicit line heights keep the two lines at 28px, which the pill height uses. */
+  line-height: 14px;
   text-align: right;
 }
 
