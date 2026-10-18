@@ -3,6 +3,9 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  /* Trim text to its cap height and baseline (as in Figma), so spacing and
+     alignment are measured from the letters rather than the line box. */
+  text-box: trim-both cap alphabetic;
 }
 
 html,
@@ -10,7 +13,7 @@ body {
   margin: 0;
   height: 100%;
   font-family: var(--font-sans);
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   background: var(--color-bg);
   color: var(--color-text);
 }

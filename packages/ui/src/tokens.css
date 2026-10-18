@@ -15,11 +15,12 @@
   --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
 
-  --text-xxs: 6px;
-  --text-xs: 8px;
-  --text-sm: 10px;
-  --text-md: 12px;
-  --text-lg: 16px;
+  --text-xxs: 8px;
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-md: 16px;
+  /* Not in the Figma variables yet (page headings); 1.25 × md. */
+  --text-lg: 20px;
   --text-xl: 32px;
 
   --space-1: 4px;
@@ -35,6 +36,8 @@
 
   --color-bg: #161616;
   --color-surface: #202020;
+  /* Hovered rows inside a surface (project bars). */
+  --color-surface-hover: #262626;
   --color-border: #333333;
   --color-text: #ededed;
   --color-text-muted: #9a9a9a;
@@ -43,5 +46,7 @@
   --color-accent: #ededed;
   --color-accent-text: #161616;
   --color-danger: #ef5350;
+  /* Hover wash on outlined buttons: text-muted at 10%. */
+  --color-hover-wash: rgb(154 154 154 / 0.1);
   --color-warning: #f6ad55;
 }
