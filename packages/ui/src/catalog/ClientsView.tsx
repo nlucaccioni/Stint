@@ -1,46 +1,75 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Clients and their projects: list, add, edit, archive. Receives data and
-// callbacks as props, so desktop and (later) web can both use it.
-import { useState } from 'react'
+// The Projects tab: one card per client, with its projects, their unbilled time,
+// timers and budgets (SPEC.md §7). Receives data and callbacks as props, so
+// desktop and (later) web can both use it.
+import { useState, type CSSProperties } from 'react'
 import {
   favoriteSlot,
+  formatClock,
   formatMoney,
+  projectSummaries,
+  toHoursInput,
+  type BudgetUsage,
   type Client,
   type ClientEdits,
   type ClientInput,
   type Project,
   type ProjectEdits,
   type ProjectInput,
+  type ProjectSummary,
+  type Session,
+  type WeekStartDay,
 } from '@stint/core'
+import {
+  ChevronDown,
+  ChevronUp,
+  PanelTopOpen,
+  Play,
+  Plus,
+  Search,
+  Star,
+  UserPlus,
+} from 'lucide-react'
 import { Button } from '../components/Button'
-import { Checkbox } from '../components/Field'
-import { Play, Plus, Square, Star } from 'lucide-react'
+import { IconButton } from '../components/IconButton'
+import { Menu } from '../components/Menu'
+import { Tag } from '../components/Tag'
+import { useNow } from '../timer/useNow'
 import { ClientForm } from './ClientForm'
+import { ConfirmDelete, type DeleteTarget } from './ConfirmDelete'
 import { ProjectForm } from './ProjectForm'
 import styles from './ClientsView.module.css'
 
 /** Suggested colors for new clients, cycled in order. */
 const PALETTE = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#14b8a6',
-  '#64748b',
+  '#55e6f6',
+  '#55f69d',
+  '#f6c955',
+  '#f67a55',
+  '#a78bfa',
+  '#f472b6',
+  '#2dd4bf',
+  '#94a3b8',
 ]
 
 export interface ClientsViewProps {
   clients: readonly Client[]
   projects: readonly Project[]
-  /** Projects with recorded time: these (and their clients) can't be deleted. */
-  projectIdsWithTime: ReadonlySet<string>
+  /** Every non-deleted session: totals, budgets and delete checks come from these. */
+  sessions: readonly Session[]
   defaultCurrency: string
   /** Project whose timer is running, if any. */
   runningProjectId: string | null
   /** Favorite slots (index 0 = slot 1); assigned in Settings. */
   favorites: readonly (string | null)[]
+  /** For rolling budgets. */
+  zone: string
+  weekStartsOn: WeekStartDay
+  /** Clients whose cards are collapsed (remembered by the app). */
+  collapsedClientIds: ReadonlySet<string>
+  onToggleCollapsed: (clientId: string) => void
+  /** Search button: opens the quick switcher. */
+  onSearch: () => void
   onToggleTimer: (projectId: string) => Promise<unknown>
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
@@ -58,28 +87,22 @@ type Editing =
 export function ClientsView(props: ClientsViewProps) {
   const { clients, projects } = props
   const [editing, setEditing] = useState<Editing>(null)
+  const [deleting, setDeleting] = useState<DeleteTarget | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const now = useNow(props.runningProjectId !== null)
 
+  const summaries = projectSummaries({
+    sessions: props.sessions,
+    projects,
+    clients,
+    now,
+    zone: props.zone,
+    weekStartsOn: props.weekStartsOn,
+  })
   const hasArchived = clients.some((c) => c.archived) || projects.some((p) => p.archived)
   const visibleClients = clients.filter((c) => showArchived || !c.archived)
   const close = () => setEditing(null)
-
-  function clientDeletion(client: Client) {
-    const own = projects.filter((p) => p.clientId === client.id)
-    const n = own.length
-    return {
-      allowed: !own.some((p) => props.projectIdsWithTime.has(p.id)),
-      question:
-        n === 0
-          ? `Delete "${client.name}"?`
-          : `Delete "${client.name}" and its ${n} project${n === 1 ? '' : 's'}?`,
-      onDelete: async () => {
-        await props.onDeleteClient(client.id)
-        close()
-      },
-    }
-  }
 
   /** For actions taken straight from the list (no form to show the error in). */
   function act(action: Promise<unknown>) {
@@ -87,20 +110,30 @@ export function ClientsView(props: ClientsViewProps) {
     action.catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }
 
+  function deleteTarget(name: string, kind: DeleteTarget['kind'], own: readonly Project[]) {
+    const parts = own.map((p) => summaries.get(p.id)!)
+    return {
+      kind,
+      name,
+      projectCount: own.length,
+      recordedMs: parts.reduce((n, s) => n + s.recordedMs, 0),
+      sessionCount: parts.reduce((n, s) => n + s.sessionCount, 0),
+      hasBilledTime: parts.some((s) => s.hasBilledTime),
+    }
+  }
+
   return (
     <section className={styles.view}>
       <header className={styles.header}>
-        <h1 className={styles.heading}>Clients & projects</h1>
-        {hasArchived && (
-          <Checkbox
-            label="Show archived"
-            checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
-          />
-        )}
-        <Button variant="primary" onClick={() => setEditing({ kind: 'client' })}>
-          Add client
-        </Button>
+        <h1 className={styles.heading}>Clients &amp; Projects</h1>
+        <div className={styles.headerActions}>
+          <Button variant="secondary" onClick={props.onSearch}>
+            Search <Search aria-hidden />
+          </Button>
+          <Button variant="primary" onClick={() => setEditing({ kind: 'client' })}>
+            Add Client <UserPlus aria-hidden />
+          </Button>
+        </div>
       </header>
 
       {error && (
@@ -115,26 +148,55 @@ export function ClientsView(props: ClientsViewProps) {
         </div>
       ) : (
         <ul className={styles.clients}>
-          {visibleClients.map((client) => (
-            <ClientCard
-              key={client.id}
-              client={client}
-              projects={projects.filter(
-                (p) => p.clientId === client.id && (showArchived || !p.archived),
-              )}
-              onEdit={() => setEditing({ kind: 'client', client })}
-              onArchive={() => act(props.onUpdateClient(client.id, { archived: !client.archived }))}
-              onAddProject={() => setEditing({ kind: 'project', client })}
-              onEditProject={(project) => setEditing({ kind: 'project', client, project })}
-              runningProjectId={props.runningProjectId}
-              favorites={props.favorites}
-              onToggleTimer={(project) => act(props.onToggleTimer(project.id))}
-              onArchiveProject={(project) =>
-                act(props.onUpdateProject(project.id, { archived: !project.archived }))
-              }
-            />
-          ))}
+          {visibleClients.map((client) => {
+            const all = projects.filter((p) => p.clientId === client.id)
+            const shown = all.filter((p) => showArchived || !p.archived)
+            return (
+              <ClientCard
+                key={client.id}
+                client={client}
+                projects={shown}
+                summaries={summaries}
+                collapsed={props.collapsedClientIds.has(client.id)}
+                onToggleCollapsed={() => props.onToggleCollapsed(client.id)}
+                runningProjectId={props.runningProjectId}
+                favorites={props.favorites}
+                onToggleTimer={(project) => act(props.onToggleTimer(project.id))}
+                onEdit={() => setEditing({ kind: 'client', client })}
+                onArchive={() =>
+                  act(props.onUpdateClient(client.id, { archived: !client.archived }))
+                }
+                onDelete={() =>
+                  setDeleting({
+                    ...deleteTarget(client.name, 'client', all),
+                    onDelete: () => props.onDeleteClient(client.id),
+                    onArchive: () => props.onUpdateClient(client.id, { archived: true }),
+                  })
+                }
+                onAddProject={() => setEditing({ kind: 'project', client })}
+                onEditProject={(project) => setEditing({ kind: 'project', client, project })}
+                onArchiveProject={(project) =>
+                  act(props.onUpdateProject(project.id, { archived: !project.archived }))
+                }
+                onDeleteProject={(project) =>
+                  setDeleting({
+                    ...deleteTarget(project.name, 'project', [project]),
+                    onDelete: () => props.onDeleteProject(project.id),
+                    onArchive: () => props.onUpdateProject(project.id, { archived: true }),
+                  })
+                }
+              />
+            )
+          })}
         </ul>
+      )}
+
+      {hasArchived && (
+        <div className={styles.archiveRow}>
+          <Button size="sm" variant="subtle" onClick={() => setShowArchived(!showArchived)}>
+            {showArchived ? 'Hide Archived' : 'Show Archived'} <PanelTopOpen aria-hidden />
+          </Button>
+        </div>
       )}
 
       {editing?.kind === 'client' && (
@@ -147,7 +209,6 @@ export function ClientsView(props: ClientsViewProps) {
             else await props.onCreateClient(values)
           }}
           onClose={close}
-          deletion={editing.client && clientDeletion(editing.client)}
         />
       )}
       {editing?.kind === 'project' && (
@@ -159,18 +220,9 @@ export function ClientsView(props: ClientsViewProps) {
             else await props.onCreateProject({ ...values, clientId: editing.client.id })
           }}
           onClose={close}
-          deletion={
-            editing.project && {
-              allowed: !props.projectIdsWithTime.has(editing.project.id),
-              question: `Delete "${editing.project.name}"?`,
-              onDelete: async () => {
-                await props.onDeleteProject(editing.project!.id)
-                close()
-              },
-            }
-          }
         />
       )}
+      {deleting && <ConfirmDelete target={deleting} onClose={() => setDeleting(null)} />}
     </section>
   )
 }
@@ -178,122 +230,201 @@ export function ClientsView(props: ClientsViewProps) {
 interface ClientCardProps {
   client: Client
   projects: readonly Project[]
+  summaries: ReadonlyMap<string, ProjectSummary>
+  collapsed: boolean
+  onToggleCollapsed: () => void
   runningProjectId: string | null
   favorites: readonly (string | null)[]
   onToggleTimer: (project: Project) => void
   onEdit: () => void
   onArchive: () => void
+  onDelete: () => void
   onAddProject: () => void
   onEditProject: (project: Project) => void
   onArchiveProject: (project: Project) => void
+  onDeleteProject: (project: Project) => void
 }
 
-function ClientCard({ client, projects, runningProjectId, favorites, ...on }: ClientCardProps) {
+function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCardProps) {
+  const running = projects.some((p) => p.id === on.runningProjectId)
+  const totalMs = projects.reduce((n, p) => n + (summaries.get(p.id)?.unbilledMs ?? 0), 0)
   return (
-    <li className={styles.card} data-archived={client.archived || undefined}>
-      <div className={styles.clientRow}>
-        <Swatch color={client.color} />
-        <span className={styles.clientName}>{client.name}</span>
-        {client.archived && <span className={styles.tag}>Archived</span>}
-        <span className={styles.meta}>{rateLabel(client.hourlyRateCents, client.currency)}</span>
-        <span className={styles.actions}>
-          <Button size="sm" variant="ghost" onClick={on.onEdit}>
-            Edit
-          </Button>
-          <Button size="sm" variant="ghost" onClick={on.onArchive}>
-            {client.archived ? 'Unarchive' : 'Archive'}
-          </Button>
-        </span>
-      </div>
-
-      <ul className={styles.projects}>
-        {projects.map((project) => (
-          <li
-            key={project.id}
-            className={styles.projectRow}
-            data-archived={project.archived || undefined}
-            data-running={project.id === runningProjectId || undefined}
-          >
-            <TimerToggle
-              project={project}
-              running={project.id === runningProjectId}
-              // Archived projects can't be started (but a running one can be stopped).
-              disabled={(project.archived || client.archived) && project.id !== runningProjectId}
-              onClick={() => on.onToggleTimer(project)}
+    <li
+      className={styles.card}
+      data-archived={client.archived || undefined}
+      data-running={running || undefined}
+      style={{ '--client-color': client.color } as CSSProperties}
+    >
+      <span className={styles.colorBar} aria-hidden />
+      <div className={styles.body}>
+        <div className={styles.row}>
+          <div className={styles.names}>
+            <span className={styles.name}>{client.name}</span>
+            {client.archived && <Tag>Archived</Tag>}
+          </div>
+          <div className={styles.meta}>
+            <span className={styles.rate}>
+              {rateLabel(client.hourlyRateCents, client.currency)}
+            </span>
+            <Menu
+              label={`Actions for ${client.name}`}
+              items={[
+                { label: 'Edit', onSelect: on.onEdit },
+                { label: client.archived ? 'Unarchive' : 'Archive', onSelect: on.onArchive },
+                { label: 'Delete…', onSelect: on.onDelete, danger: true },
+              ]}
             />
-            <Swatch color={client.color} />
-            <span className={styles.projectName}>{project.name}</span>
-            <FavoriteBadge slot={favoriteSlot(favorites, project.id)} />
-            {project.archived && <span className={styles.tag}>Archived</span>}
-            {!project.billableByDefault && <span className={styles.tag}>Non-billable</span>}
-            <span className={styles.meta}>
-              {project.hourlyRateCents === null
-                ? ''
-                : rateLabel(project.hourlyRateCents, client.currency)}
+            <span className={styles.divider} aria-hidden />
+            <span className={styles.clock}>
+              <span>Total</span>
+              <span>{formatClock(totalMs)}</span>
             </span>
-            <span className={styles.actions}>
-              <Button size="sm" variant="ghost" onClick={() => on.onEditProject(project)}>
-                Edit
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => on.onArchiveProject(project)}>
-                {project.archived ? 'Unarchive' : 'Archive'}
-              </Button>
-            </span>
-          </li>
-        ))}
-      </ul>
+            <IconButton
+              label={collapsed ? `Show projects for ${client.name}` : `Hide projects`}
+              aria-expanded={!collapsed}
+              onClick={on.onToggleCollapsed}
+            >
+              {collapsed ? <ChevronDown aria-hidden /> : <ChevronUp aria-hidden />}
+            </IconButton>
+          </div>
+        </div>
 
-      {!client.archived && (
-        <Button size="sm" variant="ghost" className={styles.addProject} onClick={on.onAddProject}>
-          <Plus size={14} /> Add project
-        </Button>
-      )}
+        {!collapsed && (
+          <>
+            <hr className={styles.rule} />
+            {projects.length > 0 && (
+              <ul className={styles.projects}>
+                {projects.map((project) => (
+                  <ProjectRow
+                    key={project.id}
+                    client={client}
+                    project={project}
+                    summary={summaries.get(project.id)}
+                    running={project.id === on.runningProjectId}
+                    slot={favoriteSlot(on.favorites, project.id)}
+                    onToggleTimer={() => on.onToggleTimer(project)}
+                    onEdit={() => on.onEditProject(project)}
+                    onArchive={() => on.onArchiveProject(project)}
+                    onDelete={() => on.onDeleteProject(project)}
+                  />
+                ))}
+              </ul>
+            )}
+            {!client.archived && (
+              <div className={styles.addRow}>
+                <Button size="sm" variant="outline" onClick={on.onAddProject}>
+                  <Plus aria-hidden /> Add Project
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </li>
   )
 }
 
-function TimerToggle(props: {
+function ProjectRow(props: {
+  client: Client
   project: Project
+  summary: ProjectSummary | undefined
   running: boolean
-  disabled: boolean
-  onClick: () => void
+  slot: number | null
+  onToggleTimer: () => void
+  onEdit: () => void
+  onArchive: () => void
+  onDelete: () => void
 }) {
-  const label = props.running
-    ? `Stop timer for ${props.project.name}`
-    : `Start timer for ${props.project.name}`
+  const { client, project, summary, running } = props
+  // Archived projects can't be started (but a running one can be stopped).
+  const startable = !(project.archived || client.archived) || running
+  const toggleLabel = `${running ? 'Stop' : 'Start'} timer for ${project.name}`
   return (
-    <Button
-      size="sm"
-      variant={props.running ? 'primary' : 'ghost'}
-      className={styles.toggle}
-      aria-label={label}
-      title={label}
-      disabled={props.disabled}
-      onClick={props.onClick}
-    >
-      {props.running ? (
-        <Square size={12} fill="currentColor" />
-      ) : (
-        <Play size={12} fill="currentColor" />
-      )}
-    </Button>
+    <li className={styles.project} data-archived={project.archived || undefined}>
+      <div className={styles.row}>
+        <div className={styles.names}>
+          <span className={styles.name}>{project.name}</span>
+          {props.slot !== null && (
+            <span className={styles.favorite} title={`Favorite ${props.slot}`}>
+              <Star size={8} fill="currentColor" aria-hidden />
+              {props.slot}
+            </span>
+          )}
+          {!project.billableByDefault && <Tag tone="tertiary">Non-billable</Tag>}
+          {project.archived && <Tag>Archived</Tag>}
+        </div>
+        <div className={styles.meta}>
+          {project.hourlyRateCents !== null && (
+            <span className={styles.rate}>
+              {rateLabel(project.hourlyRateCents, client.currency)}
+            </span>
+          )}
+          <Menu
+            label={`Actions for ${project.name}`}
+            items={[
+              { label: 'Edit', onSelect: props.onEdit },
+              { label: project.archived ? 'Unarchive' : 'Archive', onSelect: props.onArchive },
+              { label: 'Delete…', onSelect: props.onDelete, danger: true },
+            ]}
+          />
+          <span className={styles.divider} aria-hidden />
+          <span className={styles.clock}>{formatClock(summary?.unbilledMs ?? 0)}</span>
+          <button
+            type="button"
+            className={styles.toggle}
+            data-running={running || undefined}
+            aria-label={toggleLabel}
+            title={toggleLabel}
+            disabled={!startable}
+            onClick={props.onToggleTimer}
+          >
+            {running ? (
+              <span className={styles.stopIcon} aria-hidden />
+            ) : (
+              <Play size={8} fill="currentColor" aria-hidden />
+            )}
+          </button>
+        </div>
+      </div>
+      {summary?.budget && <BudgetBar usage={summary.budget} currency={client.currency} />}
+    </li>
   )
 }
 
-function FavoriteBadge({ slot }: { slot: number | null }) {
-  if (slot === null) return null
+function BudgetBar({ usage, currency }: { usage: BudgetUsage; currency: string }) {
+  const { budget, fraction } = usage
+  const amount =
+    budget.unit === 'minutes'
+      ? `${toHoursInput(budget.amount)}hr`
+      : formatMoney(budget.amount, currency)
+  const kind =
+    budget.period === 'week'
+      ? 'weekly budget'
+      : budget.period === 'month'
+        ? 'monthly budget'
+        : 'budget'
+  const over = fraction !== null && fraction >= 1
+  const label =
+    fraction === null
+      ? `No rate for the ${amount} ${kind}`
+      : `${Math.round(fraction * 100)}% of ${amount} ${kind}`
   return (
-    <span className={styles.favorite} title={`Favorite ${slot}`}>
-      <Star size={12} fill="currentColor" aria-hidden />
-      {slot}
-    </span>
+    <div className={styles.budget} data-over={over || undefined}>
+      <div
+        className={styles.track}
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={fraction === null ? undefined : Math.round(fraction * 100)}
+      >
+        <div className={styles.fill} style={{ width: `${Math.min(1, fraction ?? 0) * 100}%` }} />
+      </div>
+      <span className={styles.budgetLabel}>{label}</span>
+    </div>
   )
-}
-
-function Swatch({ color }: { color: string }) {
-  return <span className={styles.swatch} style={{ background: color }} aria-hidden />
 }
 
 function rateLabel(cents: number | null, currency: string): string {
-  return cents === null ? 'No rate' : `${formatMoney(cents, currency)}/h`
+  return cents === null ? 'No rate' : `${formatMoney(cents, currency)}/hr`
 }

@@ -8,12 +8,11 @@ import type {
   ProjectEdits,
   ProjectInput,
 } from '@stint/core'
-import { api, onEvent } from './api'
+import { api } from './api'
 
 interface CatalogState {
   clients: Client[]
   projects: Project[]
-  projectIdsWithTime: ReadonlySet<string>
   loaded: boolean
   loadError: string | null
 }
@@ -21,22 +20,16 @@ interface CatalogState {
 const initial: CatalogState = {
   clients: [],
   projects: [],
-  projectIdsWithTime: new Set(),
   loaded: false,
   loadError: null,
 }
 
 async function fetchCatalog(): Promise<CatalogState> {
   try {
-    const [clients, projects, withTime] = await Promise.all([
-      api.listClients(),
-      api.listProjects(),
-      api.listProjectIdsWithTime(),
-    ])
+    const [clients, projects] = await Promise.all([api.listClients(), api.listProjects()])
     return {
       clients,
       projects,
-      projectIdsWithTime: new Set(withTime),
       loaded: true,
       loadError: null,
     }
@@ -53,11 +46,8 @@ export function useCatalog() {
     let active = true
     const load = () => void fetchCatalog().then((next) => active && setState(next))
     load()
-    // A timer change can add recorded time to a project (which affects deletability).
-    const unsubscribe = onEvent('timerChanged', load)
     return () => {
       active = false
-      unsubscribe()
     }
   }, [])
 

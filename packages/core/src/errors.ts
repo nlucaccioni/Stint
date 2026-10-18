@@ -16,7 +16,7 @@ export type StintErrorCode =
   | 'invalid-currency'
   | 'invalid-amount'
   | 'not-found'
-  | 'has-recorded-time'
+  | 'has-billed-time'
   | 'archived'
   | 'invalid-preference'
   | 'not-available'

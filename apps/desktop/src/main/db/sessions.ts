@@ -29,6 +29,18 @@ export function listBilledSessions(db: Db): Session[] {
     .map((row) => fromRow(t, row))
 }
 
+/** Every live session of the given projects. */
+export function listProjectSessions(db: Db, projectIds: readonly string[]): Session[] {
+  if (projectIds.length === 0) return []
+  return db
+    .prepare(
+      `SELECT ${selectList(t)} FROM sessions
+       WHERE deleted_at IS NULL AND project_id IN (${projectIds.map(() => '?').join(', ')})`,
+    )
+    .all(...projectIds)
+    .map((row) => fromRow(t, row))
+}
+
 /** The sessions in one billing batch, oldest first. */
 export function listBatchSessions(db: Db, batchId: string): Session[] {
   return db

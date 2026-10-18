@@ -161,35 +161,41 @@ describe('deleting', () => {
     expect(api.listProjects().map((p) => p.id)).toEqual([used.id])
   })
 
-  it('refuses to delete a project with recorded time', () => {
+  it('deletes a project with recorded time, and its sessions (stopping its timer)', () => {
     const { used } = setup()
-    expect(toResult(() => api.deleteProject(used.id))).toMatchObject({
-      ok: false,
-      error: { code: 'has-recorded-time' },
-    })
+    api.deleteProject(used.id)
+    expect(api.listProjects().map((p) => p.name)).toEqual(['Empty'])
+    expect(api.listSessions({ start: 0, end: NOW + 1 })).toEqual([])
+    expect(api.getTimerState()).toEqual({ running: null })
   })
 
-  it('refuses to delete a client when any of its projects has time', () => {
-    const { client } = setup()
-    expect(toResult(() => api.deleteClient(client.id))).toMatchObject({
+  it('refuses to delete a project with billed time', () => {
+    const { used } = setup()
+    db.exec(`UPDATE sessions SET billing_batch_id = 'b1'`)
+    expect(toResult(() => api.deleteProject(used.id))).toMatchObject({
       ok: false,
-      error: { code: 'has-recorded-time' },
+      error: { code: 'has-billed-time' },
     })
     expect(api.listProjects()).toHaveLength(2)
   })
 
-  it('deletes a client and its empty projects together', () => {
-    const client = api.createClient(acme)
-    api.createProject({ ...projectFields, clientId: client.id })
+  it('refuses to delete a client when any of its projects has billed time', () => {
+    const { client } = setup()
+    db.exec(`UPDATE sessions SET billing_batch_id = 'b1'`)
+    expect(toResult(() => api.deleteClient(client.id))).toMatchObject({
+      ok: false,
+      error: { code: 'has-billed-time' },
+    })
+    expect(api.listProjects()).toHaveLength(2)
+    expect(api.listClients()).toHaveLength(1)
+  })
+
+  it('deletes a client with its projects and their sessions', () => {
+    const { client } = setup()
     api.deleteClient(client.id)
     expect(api.listClients()).toEqual([])
     expect(api.listProjects()).toEqual([])
-  })
-
-  it('counts deleted time as no time', () => {
-    const { used } = setup()
-    db.exec('UPDATE sessions SET deleted_at = 1')
-    expect(() => api.deleteProject(used.id)).not.toThrow()
+    expect(api.listSessions({ start: 0, end: NOW + 1 })).toEqual([])
   })
 })
 

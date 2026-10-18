@@ -7,101 +7,21 @@
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .heading {
-  flex: 1;
   margin: 0;
   font-size: var(--text-lg);
-}
-
-.empty {
-  padding: var(--space-6);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.clients,
-.projects {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.clients {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.card {
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-}
-
-.clientRow,
-.projectRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 32px;
-}
-
-.projectRow {
-  padding-left: var(--space-4);
-}
-
-[data-archived] > .clientRow,
-.projectRow[data-archived] {
-  opacity: 0.6;
-}
-
-.clientName {
   font-weight: 600;
 }
 
-.projectName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.meta {
-  margin-left: auto;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  white-space: nowrap;
-}
-
-.actions {
+.headerActions {
   display: flex;
-  gap: var(--space-1);
-}
-
-.tag {
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
-.swatch {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.addProject {
-  margin-top: var(--space-1);
-  margin-left: var(--space-4);
+  gap: var(--space-2);
 }
 
 .error {
@@ -112,23 +32,233 @@
   color: var(--color-danger);
 }
 
-.projectRow[data-running] {
+.empty {
+  padding: var(--space-6);
+  border: 1px dashed var(--color-border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
-.toggle {
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+.empty p {
+  margin: 0;
+}
+
+.clients,
+.projects {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
   padding: 0;
+  list-style: none;
+}
+
+.clients {
+  gap: var(--space-4);
+}
+
+.projects {
+  gap: var(--space-2);
+}
+
+/* One client. --client-color is set inline. */
+.card {
+  display: flex;
+  overflow: clip;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  transition: box-shadow 0.3s;
+}
+
+/* A timer for this client is running: a soft glow in its color. */
+.card[data-running] {
+  box-shadow: 0 0 100px 0 color-mix(in srgb, var(--client-color) 10%, transparent);
+}
+
+.colorBar {
+  flex: none;
+  width: 4px;
+  background: var(--client-color);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 20px;
+  padding: 0 var(--space-2);
+}
+
+.names,
+.meta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.names {
+  gap: var(--space-1);
+}
+
+.meta {
+  flex: none;
+  gap: var(--space-2);
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.names .name {
+  margin-right: var(--space-1);
+}
+
+.rate {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.clock {
+  display: flex;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rule {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .favorite {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 2px;
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
+}
+
+.card[data-archived],
+.project[data-archived] {
+  opacity: 0.6;
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Start/stop: a play arrow, or a red square while running. */
+.toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.toggle:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.toggle:disabled {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+.toggle[data-running],
+.toggle[data-running]:hover {
+  background: var(--color-danger);
+}
+
+.stopIcon {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: #ffffff;
+}
+
+.budget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+}
+
+.track {
+  overflow: hidden;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--client-color);
+}
+
+.budgetLabel {
+  color: var(--color-text-muted);
+  font-size: var(--text-xxs);
+  font-weight: 500;
+}
+
+.budget[data-over] .fill {
+  background: var(--color-danger);
+}
+
+.budget[data-over] .budgetLabel {
+  color: var(--color-danger);
+}
+
+.addRow {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--space-2);
+}
+
+.archiveRow {
+  display: flex;
+  justify-content: center;
 }

@@ -27,6 +27,7 @@ import { SystemSettings } from './SystemSettings'
 import { TitleBar } from './TitleBar'
 import { useBilling } from './useBilling'
 import { useCatalog } from './useCatalog'
+import { useCollapsedClients } from './useCollapsedClients'
 import { useIdle } from './useIdle'
 import { usePreferences } from './usePreferences'
 import { useSessions } from './useSessions'
@@ -45,6 +46,9 @@ const TABS: { tab: Tab; label: string }[] = [
   { tab: 'billing', label: 'Billing' },
 ]
 type Editing = { session?: Session } | null
+
+/** Every session, for the Projects tab's unbilled totals and budgets. */
+const ALL_TIME = { start: 0, end: Number.MAX_SAFE_INTEGER }
 
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null)
@@ -71,6 +75,8 @@ export function App() {
   })
   const totalsRange = resolveRange(totalsSelection, now, zone, weekStartsOn)
   const totalsSessions = useSessions(totalsRange)
+  const allSessions = useSessions(ALL_TIME)
+  const collapsedClients = useCollapsedClients()
 
   useEffect(() => {
     void api.getAppInfo().then(setInfo)
@@ -131,10 +137,15 @@ export function App() {
                 <ClientsView
                   clients={catalog.clients}
                   projects={catalog.projects}
-                  projectIdsWithTime={catalog.projectIdsWithTime}
+                  sessions={allSessions}
                   defaultCurrency={prefs.preferences.defaultCurrency}
                   runningProjectId={timer.running?.projectId ?? null}
                   favorites={prefs.preferences.favorites}
+                  zone={zone}
+                  weekStartsOn={weekStartsOn}
+                  collapsedClientIds={collapsedClients.collapsed}
+                  onToggleCollapsed={collapsedClients.toggle}
+                  onSearch={() => void api.showSwitcher()}
                   onToggleTimer={timer.toggle}
                   onCreateClient={catalog.createClient}
                   onUpdateClient={catalog.updateClient}

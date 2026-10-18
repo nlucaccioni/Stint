@@ -124,3 +124,23 @@ export function deleteSession(session: Session, ctx: ChangeContext): SessionChan
   assertEditable(session)
   return update(ctx, session.id, { deletedAt: ctx.now })
 }
+
+/**
+ * Deleting a project or client takes its sessions with it (SPEC.md §6 "Deleting
+ * clients and projects"), unless any are billed: those belong to an invoice.
+ */
+export function deleteProjectSessions(
+  sessions: readonly Session[],
+  projectIds: ReadonlySet<string>,
+  kind: 'client' | 'project',
+  ctx: ChangeContext,
+): SessionChange[] {
+  const own = sessions.filter((s) => projectIds.has(s.projectId) && s.deletedAt === null)
+  if (own.some(isLocked)) {
+    throw new StintError(
+      'has-billed-time',
+      `This ${kind} has billed time, so it can't be deleted. Archive it instead.`,
+    )
+  }
+  return own.map((s) => deleteSession(s, ctx))
+}

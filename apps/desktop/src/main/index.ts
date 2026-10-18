@@ -357,6 +357,7 @@ void app.whenReady().then(() => {
           app.setLoginItemSettings({ openAtLogin: enabled, args: enabled ? ['--hidden'] : [] }),
       },
       hideSwitcher,
+      showSwitcher,
       titleBar: {
         showMenu: (x, y) => {
           if (mainWindow) popUpAppMenu(mainWindow, x, y)

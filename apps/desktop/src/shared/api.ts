@@ -160,6 +160,8 @@ export interface StintApi {
   listRecentProjectIds(limit: number): Promise<string[]>
   /** Close the quick switcher (after a pick or Esc). */
   hideSwitcher(): Promise<void>
+  /** Open the quick switcher (the Projects tab's Search button). */
+  showSwitcher(): Promise<void>
   /** Open the app menu (File, Edit, View, Window) at a point in the window. Windows/Linux. */
   showAppMenu(x: number, y: number): Promise<void>
   /** Color the window buttons drawn by Windows/Linux to match the title bar. */
@@ -219,6 +221,7 @@ export const apiMethods = [
   'setLaunchAtLogin',
   'listRecentProjectIds',
   'hideSwitcher',
+  'showSwitcher',
   'showAppMenu',
   'setTitleBarColors',
   'listBatches',

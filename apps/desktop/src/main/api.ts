@@ -13,6 +13,7 @@ import {
   unlockSession,
   clientPatch,
   createManualSession,
+  deleteProjectSessions,
   deleteSession,
   editSession,
   findOverlaps,
@@ -57,6 +58,7 @@ import {
   getSession,
   listBatchSessions,
   listBilledSessions,
+  listProjectSessions,
   listSessions,
   listUnbilledSessions,
   projectIdsWithTime,
@@ -94,6 +96,7 @@ export interface ApiDeps {
   /** Start Stint when the user logs in (an OS setting for this machine). */
   loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
   hideSwitcher?: () => void
+  showSwitcher?: () => void
   /** The main window's own title bar (see renderer TitleBar.tsx). */
   titleBar?: {
     showMenu: (x: number, y: number) => void
@@ -510,6 +513,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     hideSwitcher: () => deps.hideSwitcher?.(),
+    showSwitcher: () => deps.showSwitcher?.(),
 
     showAppMenu: (...args) => {
       const [x, y] = z.tuple([z.number().int().min(0), z.number().int().min(0)]).parse(args)
@@ -611,38 +615,44 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       if (lastExportPath) deps.revealFile?.(lastExportPath)
     },
 
-    // Deleting is only for mistakes: anything with recorded time must be archived
-    // instead, so no time is ever left pointing at a missing project.
+    // Deleting takes the project's sessions with it (soft delete), so no time is
+    // left pointing at a missing project. Billed time blocks it: archive instead.
     deleteProject: (...args) => {
       const [projectId] = z.tuple([id]).parse(args)
       existingProject(projectId)
-      transaction(db, () => {
-        if (projectIdsWithTime(db).includes(projectId)) throw hasTime('project')
+      changeSessions(() => {
+        const changes = deleteProjectSessions(
+          listProjectSessions(db, [projectId]),
+          new Set([projectId]),
+          'project',
+          ctx(),
+        )
         updateProject(db, projectId, { deletedAt: ctx().now, ...stamp() })
         dropFavorites([projectId])
+        return changes
       })
     },
 
-    /** Also deletes the client's projects, which must all be empty. */
+    /** Also deletes the client's projects and their sessions. */
     deleteClient: (...args) => {
       const [clientId] = z.tuple([id]).parse(args)
       existingClient(clientId)
-      transaction(db, () => {
-        const withTime = new Set(projectIdsWithTime(db))
-        const projects = listProjects(db).filter((p) => p.clientId === clientId)
-        if (projects.some((p) => withTime.has(p.id))) throw hasTime('client')
+      changeSessions(() => {
+        const projectIds = listProjects(db)
+          .filter((p) => p.clientId === clientId)
+          .map((p) => p.id)
+        const changes = deleteProjectSessions(
+          listProjectSessions(db, projectIds),
+          new Set(projectIds),
+          'client',
+          ctx(),
+        )
         const now = ctx().now
-        for (const p of projects) updateProject(db, p.id, { deletedAt: now, ...stamp() })
+        for (const p of projectIds) updateProject(db, p, { deletedAt: now, ...stamp() })
         updateClient(db, clientId, { deletedAt: now, ...stamp() })
-        dropFavorites(projects.map((p) => p.id))
+        dropFavorites(projectIds)
+        return changes
       })
     },
   }
-}
-
-function hasTime(kind: 'client' | 'project'): StintError {
-  return new StintError(
-    'has-recorded-time',
-    `This ${kind} has recorded time, so it can't be deleted. Archive it instead.`,
-  )
 }
