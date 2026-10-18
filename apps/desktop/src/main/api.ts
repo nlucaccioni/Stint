@@ -129,7 +129,6 @@ const clientEdits = z.strictObject({
 const projectInput = z.strictObject({
   clientId: id,
   name,
-  color: color.nullable(),
   hourlyRateCents: rate,
   billableByDefault: z.boolean(),
 })
@@ -193,7 +192,6 @@ function isTimeZone(zone: string): boolean {
 
 const projectEdits = z.strictObject({
   name: name.optional(),
-  color: color.nullable().optional(),
   hourlyRateCents: rate.optional(),
   billableByDefault: z.boolean().optional(),
   archived: z.boolean().optional(),

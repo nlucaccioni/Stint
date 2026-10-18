@@ -19,8 +19,6 @@ export type ClientEdits = Partial<ClientInput & { archived: boolean }>
 export interface ProjectInput {
   clientId: string
   name: string
-  /** null = use the client's color. */
-  color: string | null
   /** null = use the client's rate. */
   hourlyRateCents: number | null
   billableByDefault: boolean
@@ -57,7 +55,6 @@ export function newProject(input: ProjectInput, ctx: ChangeContext): Project {
     ...syncFields(ctx),
     clientId: input.clientId,
     name: validName(input.name),
-    color: input.color === null ? null : validColor(input.color),
     hourlyRateCents: validRate(input.hourlyRateCents),
     billableByDefault: input.billableByDefault,
     archived: false,
@@ -67,16 +64,10 @@ export function newProject(input: ProjectInput, ctx: ChangeContext): Project {
 export function projectPatch(edits: ProjectEdits, ctx: ChangeContext): Partial<Project> {
   const patch: Partial<Project> = { updatedAt: ctx.now, deviceId: ctx.deviceId }
   if (edits.name !== undefined) patch.name = validName(edits.name)
-  if (edits.color !== undefined) patch.color = edits.color === null ? null : validColor(edits.color)
   if (edits.hourlyRateCents !== undefined) patch.hourlyRateCents = validRate(edits.hourlyRateCents)
   if (edits.billableByDefault !== undefined) patch.billableByDefault = edits.billableByDefault
   if (edits.archived !== undefined) patch.archived = edits.archived
   return patch
-}
-
-/** A project's display color: its own, or its client's. */
-export function projectColor(project: Pick<Project, 'color'>, client: Pick<Client, 'color'>) {
-  return project.color ?? client.color
 }
 
 function syncFields(ctx: ChangeContext) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The running timer, shown on the right of the main window's tab bar.
 import { useState } from 'react'
-import { formatClock, projectColor, type Client, type Project, type Session } from '@stint/core'
+import { formatClock, type Client, type Project, type Session } from '@stint/core'
 import { Button } from '../components/Button'
 import { Clock, Square } from 'lucide-react'
 import { StopAtDialog } from './StopAtDialog'
@@ -39,11 +39,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
     >
       {running ? (
         <>
-          <span
-            className={styles.swatch}
-            style={{ background: project && client ? projectColor(project, client) : undefined }}
-            aria-hidden
-          />
+          <span className={styles.swatch} style={{ background: client?.color }} aria-hidden />
           <span className={styles.what}>
             <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
             {client && <span className={styles.client}>{client.name}</span>}

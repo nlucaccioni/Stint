@@ -31,7 +31,6 @@ beforeEach(() => {
   project = api.createProject({
     clientId: client.id,
     name: 'P',
-    color: null,
     hourlyRateCents: null,
     billableByDefault: true,
   })

@@ -5,7 +5,6 @@ import { useState } from 'react'
 import {
   favoriteSlot,
   formatMoney,
-  projectColor,
   type Client,
   type ClientEdits,
   type ClientInput,
@@ -222,7 +221,7 @@ function ClientCard({ client, projects, runningProjectId, favorites, ...on }: Cl
               disabled={(project.archived || client.archived) && project.id !== runningProjectId}
               onClick={() => on.onToggleTimer(project)}
             />
-            <Swatch color={projectColor(project, client)} />
+            <Swatch color={client.color} />
             <span className={styles.projectName}>{project.name}</span>
             <FavoriteBadge slot={favoriteSlot(favorites, project.id)} />
             {project.archived && <span className={styles.tag}>Archived</span>}

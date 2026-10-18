@@ -29,7 +29,7 @@ export const projectsTable = defineTable<Project>({
     ...syncColumns,
     clientId: 'client_id',
     name: 'name',
-    color: 'color',
+    // The projects.color column from the first schema is no longer used.
     hourlyRateCents: 'hourly_rate_cents',
     billableByDefault: 'billable_by_default',
     archived: 'archived',

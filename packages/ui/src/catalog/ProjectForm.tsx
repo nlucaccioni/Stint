@@ -29,8 +29,6 @@ export interface ProjectFormProps {
 
 export function ProjectForm({ client, project, onSubmit, onClose, deletion }: ProjectFormProps) {
   const [name, setName] = useState(project?.name ?? '')
-  const [useClientColor, setUseClientColor] = useState(project ? project.color === null : true)
-  const [color, setColor] = useState(project?.color ?? client.color)
   const [rate, setRate] = useState(
     project?.hourlyRateCents != null ? toMoneyInput(project.hourlyRateCents, client.currency) : '',
   )
@@ -47,7 +45,6 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
     void run(async () => {
       await onSubmit({
         name,
-        color: useClientColor ? null : color,
         hourlyRateCents: parseMoney(rate, client.currency),
         billableByDefault: billable,
       })
@@ -61,20 +58,6 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
         <Field label="Name">
           <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
         </Field>
-        <div className={styles.row}>
-          <Checkbox
-            label="Use client color"
-            checked={useClientColor}
-            onChange={(e) => setUseClientColor(e.target.checked)}
-          />
-          <input
-            type="color"
-            aria-label="Project color"
-            value={useClientColor ? client.color : color}
-            disabled={useClientColor}
-            onChange={(e) => setColor(e.target.value)}
-          />
-        </div>
         <Field label={`Hourly rate (${client.currency})`} hint={`Leave empty: ${clientRate}.`}>
           <input
             value={rate}

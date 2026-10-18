@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import {
   formatClock,
   groupByDay,
-  projectColor,
   sessionDuration,
   toLocalParts,
   billingStatus,
@@ -99,7 +98,7 @@ export function SessionLog(props: SessionLogProps) {
                     <span
                       className={styles.swatch}
                       style={{
-                        background: project && client ? projectColor(project, client) : undefined,
+                        background: client?.color,
                       }}
                       aria-hidden
                     />

@@ -31,7 +31,6 @@ export function project(overrides: Partial<Project> = {}): Project {
     id: 'p1',
     clientId: 'c1',
     name: 'Website',
-    color: null,
     hourlyRateCents: null,
     billableByDefault: true,
     archived: false,

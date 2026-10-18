@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { clientPatch, newClient, newProject, projectColor, projectPatch } from '../src/catalog'
+import { clientPatch, newClient, newProject, projectPatch } from '../src/catalog'
 import { ctx } from './fixtures'
 
 const now = 1_000
@@ -18,7 +18,6 @@ const clientInput = { name: '  Acme  ', color: '#3366CC', hourlyRateCents: 10_00
 const projectInput = {
   clientId: 'c1',
   name: 'Website',
-  color: null,
   hourlyRateCents: null,
   billableByDefault: true,
 }
@@ -81,38 +80,28 @@ describe('clientPatch', () => {
 })
 
 describe('projects', () => {
-  it('creates a project that inherits color and rate by default', () => {
+  it('creates a project that inherits the client rate by default', () => {
     expect(newProject(projectInput, ctx(now))).toMatchObject({
       id: 'new-1',
       clientId: 'c1',
       name: 'Website',
-      color: null,
       hourlyRateCents: null,
       billableByDefault: true,
       archived: false,
     })
   })
 
-  it('validates an own color and rate', () => {
-    expect(code(() => newProject({ ...projectInput, color: 'nope' }, ctx(now)))).toBe(
-      'invalid-color',
-    )
+  it('validates an own rate', () => {
     expect(code(() => newProject({ ...projectInput, hourlyRateCents: -5 }, ctx(now)))).toBe(
       'invalid-rate',
     )
   })
 
-  it('patches fields, including going back to the client color', () => {
-    expect(projectPatch({ color: null, billableByDefault: false }, ctx(now))).toEqual({
-      color: null,
+  it('patches only the given fields', () => {
+    expect(projectPatch({ billableByDefault: false }, ctx(now))).toEqual({
       billableByDefault: false,
       updatedAt: now,
       deviceId: 'dev-A',
     })
-  })
-
-  it('falls back to the client color', () => {
-    expect(projectColor({ color: null }, { color: '#111111' })).toBe('#111111')
-    expect(projectColor({ color: '#222222' }, { color: '#111111' })).toBe('#222222')
   })
 })

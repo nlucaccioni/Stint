@@ -67,7 +67,6 @@ describe('favorites', () => {
     return api.createProject({
       clientId: client.id,
       name,
-      color: null,
       hourlyRateCents: null,
       billableByDefault: true,
     })

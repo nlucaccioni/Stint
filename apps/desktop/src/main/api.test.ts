@@ -67,12 +67,11 @@ describe('projects', () => {
     const project = api.createProject({
       clientId: client.id,
       name: 'Website',
-      color: null,
       hourlyRateCents: null,
       billableByDefault: true,
     })
     expect(api.listProjects()).toEqual([project])
-    expect(api.updateProject(project.id, { color: '#aa0000' }).color).toBe('#aa0000')
+    expect(api.updateProject(project.id, { name: 'Site' }).name).toBe('Site')
   })
 
   it('refuses a project for a missing client', () => {
@@ -80,7 +79,6 @@ describe('projects', () => {
       api.createProject({
         clientId: 'nope',
         name: 'X',
-        color: null,
         hourlyRateCents: null,
         billableByDefault: true,
       }),
@@ -90,7 +88,7 @@ describe('projects', () => {
 })
 
 describe('deleting', () => {
-  const projectFields = { name: 'P', color: null, hourlyRateCents: null, billableByDefault: true }
+  const projectFields = { name: 'P', hourlyRateCents: null, billableByDefault: true }
 
   function setup() {
     const client = api.createClient(acme)
@@ -147,7 +145,7 @@ describe('timer', () => {
   const getSessionEnd = () =>
     (db.prepare('SELECT ended_at FROM sessions').get() as { ended_at: number }).ended_at
 
-  const fields = { color: null, hourlyRateCents: null, billableByDefault: true }
+  const fields = { hourlyRateCents: null, billableByDefault: true }
   function setup() {
     const client = api.createClient(acme)
     const a = api.createProject({ ...fields, clientId: client.id, name: 'A' })

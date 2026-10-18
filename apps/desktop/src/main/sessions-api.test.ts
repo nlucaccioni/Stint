@@ -35,7 +35,6 @@ beforeEach(() => {
   })
   const fields = {
     clientId: client.id,
-    color: null,
     hourlyRateCents: null,
     billableByDefault: true,
   }

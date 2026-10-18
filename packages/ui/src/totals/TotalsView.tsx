@@ -7,7 +7,6 @@ import {
   dailyTotals,
   formatClock,
   formatMoney,
-  projectColor,
   toLocalParts,
   type Client,
   type Money,
@@ -204,9 +203,7 @@ export function TotalsView(props: TotalsViewProps) {
                   return (
                     <tr key={pt.projectId} className={styles.projectRow}>
                       <th scope="row">
-                        <Name color={project && client ? projectColor(project, client) : undefined}>
-                          {project?.name ?? 'Unknown project'}
-                        </Name>
+                        <Name color={client?.color}>{project?.name ?? 'Unknown project'}</Name>
                       </th>
                       <td className={styles.num}>{formatClock(pt.ms)}</td>
                       <td className={styles.num}>{formatClock(pt.billableMs)}</td>

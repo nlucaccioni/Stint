@@ -3,14 +3,7 @@
 // (or switch to it, or stop it if it's already running).
 import { useMemo, useState, type KeyboardEvent } from 'react'
 import { Search, Square, Star } from 'lucide-react'
-import {
-  favoriteSlot,
-  fuzzySearch,
-  projectColor,
-  type Client,
-  type Project,
-  type Session,
-} from '@stint/core'
+import { favoriteSlot, fuzzySearch, type Client, type Project, type Session } from '@stint/core'
 import styles from './QuickSwitcher.module.css'
 
 export interface QuickSwitcherProps {
@@ -144,7 +137,7 @@ export function QuickSwitcher(props: QuickSwitcherProps) {
               ) : (
                 <span
                   className={styles.swatch}
-                  style={{ background: projectColor(row.project, row.client) }}
+                  style={{ background: row.client.color }}
                   aria-hidden
                 />
               )}

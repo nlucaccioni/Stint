@@ -21,11 +21,10 @@ export interface Client extends SyncFields {
   archived: boolean
 }
 
+/** Projects have no color of their own; they use their client's. */
 export interface Project extends SyncFields {
   clientId: string
   name: string
-  /** Falls back to the client's color when null. */
-  color: string | null
   /** Overrides the client's rate when set. */
   hourlyRateCents: number | null
   /** Default for `billable` on new sessions in this project. */
