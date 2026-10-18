@@ -30,7 +30,17 @@ export interface Project extends SyncFields {
   /** Default for `billable` on new sessions in this project. */
   billableByDefault: boolean
   archived: boolean
+  /** Hours budget, in minutes. At most one of budgetMinutes/budgetCents is set. */
+  budgetMinutes: number | null
+  /** Money budget, in the client's currency. */
+  budgetCents: number | null
+  budgetPeriod: BudgetPeriod
+  /** Day of the month (1–28) a monthly budget resets. */
+  budgetResetDay: number
 }
+
+/** `total` = a fixed cap for the life of the project; `week`/`month` = a rolling cap. */
+export type BudgetPeriod = 'total' | 'week' | 'month'
 
 export type SessionSource = 'timer' | 'manual' | 'split'
 

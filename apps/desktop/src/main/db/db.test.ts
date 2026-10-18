@@ -31,6 +31,10 @@ const site: Project = {
   hourlyRateCents: null,
   billableByDefault: true,
   archived: false,
+  budgetMinutes: null,
+  budgetCents: null,
+  budgetPeriod: 'total',
+  budgetResetDay: 1,
 }
 const app: Project = { ...site, id: 'p2', name: 'App', billableByDefault: false }
 

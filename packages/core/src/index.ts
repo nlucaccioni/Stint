@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 export * from './billing'
+export * from './budget'
 export * from './catalog'
 export * from './changes'
 export * from './csv'

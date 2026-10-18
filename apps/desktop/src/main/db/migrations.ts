@@ -100,4 +100,14 @@ export const migrations: readonly string[] = [
   ) STRICT;
   CREATE INDEX billing_batches_client_id ON billing_batches (client_id);
   `,
+
+  // 4 — project budgets: a cap in minutes or cents, fixed or rolling weekly/monthly.
+  `
+  ALTER TABLE projects ADD COLUMN budget_minutes INTEGER CHECK (budget_minutes > 0);
+  ALTER TABLE projects ADD COLUMN budget_cents INTEGER CHECK (budget_cents > 0);
+  ALTER TABLE projects ADD COLUMN budget_period TEXT NOT NULL DEFAULT 'total'
+    CHECK (budget_period IN ('total', 'week', 'month'));
+  ALTER TABLE projects ADD COLUMN budget_reset_day INTEGER NOT NULL DEFAULT 1
+    CHECK (budget_reset_day BETWEEN 1 AND 28);
+  `,
 ]

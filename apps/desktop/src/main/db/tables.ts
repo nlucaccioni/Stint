@@ -33,6 +33,10 @@ export const projectsTable = defineTable<Project>({
     hourlyRateCents: 'hourly_rate_cents',
     billableByDefault: 'billable_by_default',
     archived: 'archived',
+    budgetMinutes: 'budget_minutes',
+    budgetCents: 'budget_cents',
+    budgetPeriod: 'budget_period',
+    budgetResetDay: 'budget_reset_day',
   },
   booleans: ['billableByDefault', 'archived'],
 })

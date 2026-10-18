@@ -74,6 +74,58 @@ describe('projects', () => {
     expect(api.updateProject(project.id, { name: 'Site' }).name).toBe('Site')
   })
 
+  it('saves, edits and clears a budget', () => {
+    const client = api.createClient(acme)
+    const budget = { unit: 'minutes', amount: 1200, period: 'month', resetDay: 15 } as const
+    const project = api.createProject({
+      clientId: client.id,
+      name: 'Retainer',
+      hourlyRateCents: null,
+      billableByDefault: true,
+      budget,
+    })
+    expect(project).toMatchObject({
+      budgetMinutes: 1200,
+      budgetPeriod: 'month',
+      budgetResetDay: 15,
+    })
+    expect(api.listProjects()).toEqual([project])
+    const money = { unit: 'cents', amount: 500_000, period: 'total', resetDay: 1 } as const
+    expect(api.updateProject(project.id, { budget: money })).toMatchObject({
+      budgetMinutes: null,
+      budgetCents: 500_000,
+      budgetPeriod: 'total',
+    })
+    expect(api.updateProject(project.id, { budget: null })).toMatchObject({
+      budgetMinutes: null,
+      budgetCents: null,
+    })
+  })
+
+  it('refuses a money budget when there is no rate', () => {
+    const client = api.createClient({ ...acme, hourlyRateCents: null })
+    const money = { unit: 'cents', amount: 500_000, period: 'total', resetDay: 1 } as const
+    const fields = {
+      clientId: client.id,
+      name: 'P',
+      hourlyRateCents: null,
+      billableByDefault: true,
+    }
+    expect(toResult(() => api.createProject({ ...fields, budget: money }))).toMatchObject({
+      ok: false,
+      error: { code: 'invalid-budget' },
+    })
+    const project = api.createProject(fields)
+    expect(toResult(() => api.updateProject(project.id, { budget: money }))).toMatchObject({
+      ok: false,
+      error: { code: 'invalid-budget' },
+    })
+    // With a project rate it's fine.
+    expect(
+      api.updateProject(project.id, { hourlyRateCents: 9000, budget: money }).budgetCents,
+    ).toBe(500_000)
+  })
+
   it('refuses a project for a missing client', () => {
     const result = toResult(() =>
       api.createProject({

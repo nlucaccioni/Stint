@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import {
   addToBatch,
+  assertBudgetHasRate,
   createBatch,
   editBatch,
   unbillBatch,
@@ -117,6 +118,14 @@ const id = z.string().min(1).max(100)
 const name = z.string().max(1000)
 const color = z.string().max(20)
 const rate = z.number().nullable()
+const budget = z
+  .strictObject({
+    unit: z.enum(['minutes', 'cents']),
+    amount: z.number(),
+    period: z.enum(['total', 'week', 'month']),
+    resetDay: z.number(),
+  })
+  .nullable()
 
 const clientInput = z.strictObject({ name, color, hourlyRateCents: rate, currency: z.string() })
 const clientEdits = z.strictObject({
@@ -131,6 +140,7 @@ const projectInput = z.strictObject({
   name,
   hourlyRateCents: rate,
   billableByDefault: z.boolean(),
+  budget: budget.optional(),
 })
 const time = z.number().int().nonnegative()
 const note = z.string().max(10_000)
@@ -195,6 +205,7 @@ const projectEdits = z.strictObject({
   hourlyRateCents: rate.optional(),
   billableByDefault: z.boolean().optional(),
   archived: z.boolean().optional(),
+  budget: budget.optional(),
 })
 
 export function createApiHandlers(deps: ApiDeps): ApiHandlers {
@@ -323,16 +334,22 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
 
     createProject: (...args) => {
       const [input] = z.tuple([projectInput]).parse(args)
-      existingClient(input.clientId)
+      const client = existingClient(input.clientId)
       const project = newProject(input, ctx())
+      assertBudgetHasRate(project, client)
       insertProject(db, project)
       return project
     },
 
     updateProject: (...args) => {
       const [projectId, edits] = z.tuple([id, projectEdits]).parse(args)
-      existingProject(projectId)
-      updateProject(db, projectId, projectPatch(edits, ctx()))
+      const project = existingProject(projectId)
+      const patch = projectPatch(edits, ctx())
+      // Only checked when the budget changes: a rate removed later just shows "No rate".
+      if (edits.budget !== undefined) {
+        assertBudgetHasRate({ ...project, ...patch }, existingClient(project.clientId))
+      }
+      updateProject(db, projectId, patch)
       return existingProject(projectId)
     },
 

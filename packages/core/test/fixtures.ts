@@ -34,6 +34,10 @@ export function project(overrides: Partial<Project> = {}): Project {
     hourlyRateCents: null,
     billableByDefault: true,
     archived: false,
+    budgetMinutes: null,
+    budgetCents: null,
+    budgetPeriod: 'total',
+    budgetResetDay: 1,
     ...overrides,
   }
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Creating and editing clients and projects. Each function validates, then returns
 // a complete record (new) or the fields to change (edit), stamped with sync fields.
+import { budgetFields, type Budget } from './budget'
 import { newId as defaultNewId } from './ids'
 import type { ChangeContext } from './changes'
 import { StintError } from './errors'
@@ -22,6 +23,8 @@ export interface ProjectInput {
   /** null = use the client's rate. */
   hourlyRateCents: number | null
   billableByDefault: boolean
+  /** null or omitted = no budget. */
+  budget?: Budget | null
 }
 
 export type ProjectEdits = Partial<Omit<ProjectInput, 'clientId'> & { archived: boolean }>
@@ -58,6 +61,7 @@ export function newProject(input: ProjectInput, ctx: ChangeContext): Project {
     hourlyRateCents: validRate(input.hourlyRateCents),
     billableByDefault: input.billableByDefault,
     archived: false,
+    ...budgetFields(input.budget ?? null),
   }
 }
 
@@ -67,6 +71,7 @@ export function projectPatch(edits: ProjectEdits, ctx: ChangeContext): Partial<P
   if (edits.hourlyRateCents !== undefined) patch.hourlyRateCents = validRate(edits.hourlyRateCents)
   if (edits.billableByDefault !== undefined) patch.billableByDefault = edits.billableByDefault
   if (edits.archived !== undefined) patch.archived = edits.archived
+  if (edits.budget !== undefined) Object.assign(patch, budgetFields(edits.budget))
   return patch
 }
 

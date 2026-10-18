@@ -12,6 +12,7 @@ export type StintErrorCode =
   | 'invalid-name'
   | 'invalid-color'
   | 'invalid-rate'
+  | 'invalid-budget'
   | 'invalid-currency'
   | 'invalid-amount'
   | 'not-found'
