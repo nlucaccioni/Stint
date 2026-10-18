@@ -115,10 +115,16 @@ All synced records are designed for future sync from day one.
 ### Client
 
 - `id`, `name`, `color`, `hourlyRateCents` (nullable), `currency` (defaults to the default-currency setting), `archived`, sync fields.
+- The client's color identifies it everywhere: its card, its projects, the running timer, totals.
 
 ### Project
 
-- `id`, `clientId`, `name`, `color` (optional, falls back to client color), `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, sync fields.
+- `id`, `clientId`, `name`, `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, budget fields (below), sync fields.
+- Projects have no color of their own; they always use their client's color. (The original schema has a `color` column on projects; it is no longer read or written.)
+- **Budget** (optional hard cap, see §6):
+  - `budgetMinutes` or `budgetCents` (nullable; at most one is set). Neither set = no budget. A money budget uses the client's currency.
+  - `budgetPeriod`: `total` (a fixed cap for a one-off project) | `week` | `month` (a rolling cap for a retainer).
+  - `budgetResetDay` (1–28, default 1): the day of the month a `month` budget resets. A `week` budget resets on the week-start preference.
 
 ### Session
 
@@ -194,6 +200,22 @@ All editing is allowed on unbilled sessions:
 - Partial payments are out of scope for v1.
 - **Rounding** (setting, off by default): round each billed session up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.
 
+### Deleting clients and projects
+
+- Clients and projects can be deleted from their ⋯ menu, with a confirmation. If there is recorded time, the confirmation says how much and that its sessions will be deleted too (soft delete, like everything else).
+- If any of the project's (or client's) sessions are in a billing batch, deleting is blocked so past invoices stay intact; the dialog offers Archive instead.
+
+### Budgets
+
+- A budget is a cap the user watches, not a limit Stint enforces: it never stops or blocks a timer and sends no notifications.
+- Only billable sessions count, including a running one.
+- `total`: every billable session on the project, billed or not, ever.
+- `week` / `month`: billable time within the current period only, so it resets automatically when a new period starts (no billing needed). Period boundaries use the local time zone; sessions crossing a boundary are clipped, as with totals.
+- Hours budget: the sum of actual durations (billing rounding doesn't apply).
+- Money budget: actual duration × rate, where billed sessions use their `billedRateCents` and unbilled ones the effective rate (project rate, else client rate). A money budget can't be set while the project has no effective rate; if the rate is removed later, the bar shows "No rate" instead of a percentage.
+- Shown as a progress bar under the project row with a label like "45% of 20h" or "45% of $5,000". At 100% and above the bar turns the danger color and the label shows how far over it is (e.g. "112% of 20h").
+- Usage is derived from sessions, never stored.
+
 ### Totals & reporting
 
 - Totals for today, this week, custom range; grouped by client and by project.
@@ -206,7 +228,15 @@ All editing is allowed on unbilled sessions:
 
 ## 7. Desktop UX surfaces
 
-**Main window:** running timer at the top; client/project list with start buttons; session log (grouped by day) with inline editing; totals; billing view.
+**Main window:** a tab bar (Projects, Time, Totals, Billing) with settings and the running timer on its right; client/project list with start buttons; session log (grouped by day) with inline editing; totals; billing view.
+
+- **Running timer pill:** shows the project, client, elapsed time, "Stop at…" and Stop. While running, its border is the client's color and its background a translucent tint of it. While idle it stays in place, muted and disabled, so nothing moves when a timer starts or stops.
+- **Projects tab:** one card per client with the client's color as a bar on its left edge. The header shows name, rate, a ⋯ menu, the total, and a chevron to collapse the card. Collapsed cards stay collapsed across restarts (remembered per device).
+  - Project rows show name, favorite slot badge, rate, a ⋯ menu, time, and a start/stop button. A "Non-billable" pill appears only on non-billable projects. Projects with a budget show the budget bar.
+  - The ⋯ menus hold Edit, Archive/Unarchive, and Delete.
+  - Time on a project row is its unbilled billable time (all time, including a running session), so it resets when the client is billed. The client total is the sum of its projects'.
+  - While one of a client's projects is running, its card has a soft glow in the client's color.
+  - Search opens the quick switcher. "Show archived" toggles archived clients and projects.
 
 **Tray / menu bar:**
 
@@ -231,7 +261,7 @@ All editing is allowed on unbilled sessions:
 - Quick switcher: small always-on-top palette; type to fuzzy-search client/project, Enter to start.
 - Handle registration failures gracefully (another app may own a shortcut) and show which ones failed in settings.
 
-**Visual design:** Nicholas will provide the visual design. Build with a clean, neutral placeholder style driven by design tokens (CSS variables) in `packages/ui` so the design can be applied later without restructuring components. Support light and dark mode. UI icons use the Lucide library (`lucide-react`, ISC). App and tray icons are placeholders until Nicholas supplies them.
+**Visual design:** Nicholas will provide the visual design. All styling is driven by design tokens (CSS variables) in `packages/ui`. Dark mode only for now; light mode can be added later as a second set of token values. Text uses Geist and Geist Mono (timers and times), bundled with the app (SIL Open Font License 1.1). UI icons use the Lucide library (`lucide-react`, ISC). App and tray icons are placeholders until Nicholas supplies them.
 
 ---
 
@@ -332,7 +362,7 @@ Stint is open source under **GPL-3.0-or-later** and hosted publicly at `github.c
 - `LICENSE` at the repo root contains the full, unmodified GPL-3.0 text.
 - SPDX header in source files: `// SPDX-License-Identifier: GPL-3.0-or-later`.
 - `"license": "GPL-3.0-or-later"` in every `package.json`.
-- **Dependency compatibility:** only add dependencies whose licenses are GPL-3.0-compatible (MIT, BSD, ISC, Apache-2.0, MPL-2.0, LGPL, GPL are fine). Flag anything else before adding it. CI runs a license check.
+- **Dependency compatibility:** only add dependencies whose licenses are GPL-3.0-compatible (MIT, BSD, ISC, Apache-2.0, MPL-2.0, LGPL, GPL are fine). Flag anything else before adding it. CI runs a license check. Approved exception: the Geist fonts (SIL OFL 1.1), bundled as separate font files.
 - **Keypad plugin:** licensed **MIT**, separately from the app. It is a separate program that talks to Stint only over the WebSocket protocol, so it is not a derivative of the GPL app, and MIT lets it link with Logitech's proprietary `PluginApi.dll` without a GPL exception. `plugins/logi-keypad/LICENSE` holds the MIT text and plugin files use `// SPDX-License-Identifier: MIT`. Never commit Logitech's DLLs or other SDK binaries; reference them from the local Logi Options+ install at build time.
 - **Future sync server (Phase 5):** may be licensed AGPL-3.0 (compatible with GPL-3.0) if protection against closed hosted forks is wanted. Decide then.
 - **App stores:** GPL conflicts with Mac App Store terms. If store distribution is ever wanted, outside contributions would need a CLA so the owner can dual-license.
