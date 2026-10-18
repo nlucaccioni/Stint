@@ -124,9 +124,9 @@ export function ClientsView(props: ClientsViewProps) {
   }
 
   return (
-    <section className={styles.view}>
-      <header className={styles.header}>
-        <h1 className={styles.heading}>Clients &amp; Projects</h1>
+    <section className={styles.projectsView}>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Clients &amp; Projects</h1>
         <div className={styles.headerActions}>
           <Button variant="secondary" onClick={props.onSearch}>
             Search <Search aria-hidden />
@@ -144,11 +144,11 @@ export function ClientsView(props: ClientsViewProps) {
       )}
 
       {clients.length === 0 ? (
-        <div className={styles.empty}>
+        <div className={styles.emptyState}>
           <p>No clients yet. Add a client, then create projects to track time against.</p>
         </div>
       ) : (
-        <ul className={styles.clients}>
+        <ul className={styles.clientList}>
           {visibleClients.map((client) => {
             const all = projects.filter((p) => p.clientId === client.id)
             const shown = all.filter((p) => showArchived || !p.archived)
@@ -193,7 +193,7 @@ export function ClientsView(props: ClientsViewProps) {
       )}
 
       {hasArchived && (
-        <div className={styles.archiveRow}>
+        <div className={styles.archivedToggleRow}>
           <Button size="sm" variant="subtle" onClick={() => setShowArchived(!showArchived)}>
             {showArchived ? (
               <>
@@ -259,18 +259,18 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
   const totalMs = projects.reduce((n, p) => n + (summaries.get(p.id)?.unbilledMs ?? 0), 0)
   return (
     <li
-      className={styles.card}
+      className={styles.clientCard}
       data-archived={client.archived || undefined}
       data-running={running || undefined}
       style={{ '--client-color': client.color } as CSSProperties}
     >
       <span className={styles.colorBar} aria-hidden />
-      <div className={styles.body}>
+      <div className={styles.clientCardBody}>
         <div className={styles.clientBar}>
-          <div className={styles.names}>
+          <div className={styles.nameGroup}>
             <span className={styles.clientName}>{client.name}</span>
           </div>
-          <div className={styles.meta}>
+          <div className={styles.stats}>
             <span className={styles.rate}>
               {rateLabel(client.hourlyRateCents, client.currency)}
             </span>
@@ -282,10 +282,10 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
                 { label: 'Delete…', onSelect: on.onDelete, danger: true },
               ]}
             />
-            <span className={styles.divider} aria-hidden />
-            <span className={styles.total}>
-              <span className={styles.totalLabel}>Total</span>
-              <span className={styles.clock}>{formatClock(totalMs)}</span>
+            <span className={styles.statsDivider} aria-hidden />
+            <span className={styles.clientTotal}>
+              <span className={styles.clientTotalLabel}>Total</span>
+              <span className={styles.elapsed}>{formatClock(totalMs)}</span>
             </span>
             <IconButton
               label={collapsed ? `Show projects for ${client.name}` : `Hide projects`}
@@ -299,9 +299,9 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
 
         {!collapsed && (
           <>
-            <hr className={styles.rule} />
+            <hr className={styles.clientBarRule} />
             {projects.length > 0 && (
-              <ul className={styles.projects}>
+              <ul className={styles.projectList}>
                 {projects.map((project) => (
                   <ProjectRow
                     key={project.id}
@@ -319,7 +319,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
               </ul>
             )}
             {!client.archived && (
-              <div className={styles.addRow}>
+              <div className={styles.addProjectRow}>
                 <Button size="sm" variant="tertiary" onClick={on.onAddProject}>
                   <Plus aria-hidden /> Add Project
                 </Button>
@@ -349,16 +349,16 @@ function ProjectRow(props: {
   const toggleLabel = `${running ? 'Stop' : 'Start'} timer for ${project.name}`
   return (
     <li
-      className={styles.project}
+      className={styles.projectBar}
       data-archived={project.archived || undefined}
       data-capped={summary?.budget ? '' : undefined}
     >
       {/* Name, with the budget bar under it when the project has one. */}
-      <div className={styles.projectInfo}>
-        <div className={styles.names}>
-          <span className={styles.name}>{project.name}</span>
+      <div className={styles.projectDetails}>
+        <div className={styles.nameGroup}>
+          <span className={styles.projectName}>{project.name}</span>
           {props.slot !== null && (
-            <span className={styles.favorite} title={`Favorite ${props.slot}`}>
+            <span className={styles.favoriteBadge} title={`Favorite ${props.slot}`}>
               <Star size={10} fill="currentColor" aria-hidden />
               {props.slot}
             </span>
@@ -367,7 +367,7 @@ function ProjectRow(props: {
         </div>
         {summary?.budget && <BudgetBar usage={summary.budget} currency={client.currency} />}
       </div>
-      <div className={styles.meta}>
+      <div className={styles.stats}>
         {project.hourlyRateCents !== null && (
           <span className={styles.rate}>{rateLabel(project.hourlyRateCents, client.currency)}</span>
         )}
@@ -379,11 +379,11 @@ function ProjectRow(props: {
             { label: 'Delete…', onSelect: props.onDelete, danger: true },
           ]}
         />
-        <span className={styles.divider} aria-hidden />
-        <span className={styles.clock}>{formatClock(summary?.unbilledMs ?? 0)}</span>
+        <span className={styles.statsDivider} aria-hidden />
+        <span className={styles.elapsed}>{formatClock(summary?.unbilledMs ?? 0)}</span>
         <button
           type="button"
-          className={styles.toggle}
+          className={styles.startStop}
           data-running={running || undefined}
           aria-label={toggleLabel}
           title={toggleLabel}
@@ -421,14 +421,17 @@ function BudgetBar({ usage, currency }: { usage: BudgetUsage; currency: string }
   return (
     <div className={styles.budget} data-over={over || undefined}>
       <div
-        className={styles.track}
+        className={styles.budgetTrack}
         role="meter"
         aria-label={label}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={fraction === null ? undefined : Math.round(fraction * 100)}
       >
-        <div className={styles.fill} style={{ width: `${Math.min(1, fraction ?? 0) * 100}%` }} />
+        <div
+          className={styles.budgetFill}
+          style={{ width: `${Math.min(1, fraction ?? 0) * 100}%` }}
+        />
       </div>
       <span className={styles.budgetLabel}>{label}</span>
     </div>

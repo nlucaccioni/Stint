@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-.view {
+.projectsView {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.header {
+.pageHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -13,7 +13,7 @@
   gap: var(--space-2);
 }
 
-.heading {
+.pageTitle {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: 600;
@@ -32,7 +32,7 @@
   color: var(--color-danger);
 }
 
-.empty {
+.emptyState {
   padding: var(--space-6);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius);
@@ -40,12 +40,12 @@
   text-align: center;
 }
 
-.empty p {
+.emptyState p {
   margin: 0;
 }
 
-.clients,
-.projects {
+.clientList,
+.projectList {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -53,18 +53,18 @@
   list-style: none;
 }
 
-.clients {
+.clientList {
   gap: var(--space-4);
   /* Own stacking layer, so a card's glow can sit behind every card. */
   isolation: isolate;
 }
 
-.projects {
+.projectList {
   gap: var(--space-1);
 }
 
 /* One client. --client-color is set inline. */
-.card {
+.clientCard {
   position: relative;
   display: flex;
   border-radius: var(--radius);
@@ -72,8 +72,8 @@
 }
 
 /* A timer for this client is running: a soft glow in its color. It's drawn on a
-   layer below all the cards (z-index -1 inside .clients) so it never covers one. */
-.card::before {
+   layer below all the cards (z-index -1 inside .clientList) so it never covers one. */
+.clientCard::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -85,7 +85,7 @@
   pointer-events: none;
 }
 
-.card[data-running]::before {
+.clientCard[data-running]::before {
   opacity: 1;
 }
 
@@ -96,7 +96,7 @@
   background: var(--client-color);
 }
 
-.body {
+.clientCardBody {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -113,24 +113,24 @@
   padding: var(--space-2);
 }
 
-.names,
-.meta {
+.nameGroup,
+.stats {
   display: flex;
   align-items: center;
   min-width: 0;
 }
 
-.names {
+.nameGroup {
   gap: var(--space-1);
 }
 
-.meta {
+.stats {
   flex: none;
   gap: var(--space-2);
 }
 
 .clientName,
-.name {
+.projectName {
   overflow: hidden;
   font-size: var(--text-sm);
   text-overflow: ellipsis;
@@ -141,7 +141,7 @@
   font-weight: 700;
 }
 
-.name {
+.projectName {
   margin-right: var(--space-1);
   font-weight: 500;
 }
@@ -153,13 +153,13 @@
   white-space: nowrap;
 }
 
-.divider {
+.statsDivider {
   align-self: stretch;
   width: 1px;
   background: var(--color-border);
 }
 
-.total {
+.clientTotal {
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -167,26 +167,26 @@
   white-space: nowrap;
 }
 
-.totalLabel {
+.clientTotalLabel {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
 
-.clock {
+.elapsed {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.rule {
+.clientBarRule {
   width: 100%;
   margin: 0;
   border: 0;
   border-top: 1px solid var(--color-border);
 }
 
-.favorite {
+.favoriteBadge {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -197,17 +197,17 @@
 }
 
 /* Archived: everything drops to the muted grey (Figma: Archive=True). */
-.card[data-archived] .clientName,
-.card[data-archived] .total,
-.card[data-archived] .clientBar button,
-.project[data-archived] .name,
-.project[data-archived] .clock,
-.project[data-archived] .meta > button:not(.toggle) {
+.clientCard[data-archived] .clientName,
+.clientCard[data-archived] .clientTotal,
+.clientCard[data-archived] .clientBar button,
+.projectBar[data-archived] .projectName,
+.projectBar[data-archived] .elapsed,
+.projectBar[data-archived] .stats > button:not(.startStop) {
   color: var(--color-text-muted);
 }
 
 /* One project bar: name (and budget) on the left, rate, time and start/stop on the right. */
-.project {
+.projectBar {
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -216,11 +216,11 @@
   transition: background-color 0.15s;
 }
 
-.project[data-capped] {
+.projectBar[data-capped] {
   padding: var(--space-2);
 }
 
-.projectInfo {
+.projectDetails {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -228,13 +228,13 @@
   min-width: 0;
 }
 
-.project:hover {
+.projectBar:hover {
   background: var(--color-surface-hover);
 }
 
 /* Start/stop: a grey play button (on hover the fill drops away and the arrow turns
    white), or red with a square while running. */
-.toggle {
+.startStop {
   display: grid;
   flex: none;
   place-items: center;
@@ -251,22 +251,22 @@
     color 0.15s;
 }
 
-.toggle:hover:not(:disabled) {
+.startStop:hover:not(:disabled) {
   background: transparent;
   color: var(--color-text);
 }
 
-.toggle:focus-visible {
+.startStop:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
 
-.toggle:disabled {
+.startStop:disabled {
   cursor: default;
 }
 
-.toggle[data-running],
-.toggle[data-running]:hover:not(:disabled) {
+.startStop[data-running],
+.startStop[data-running]:hover:not(:disabled) {
   background: var(--color-danger);
 }
 
@@ -283,14 +283,14 @@
   gap: var(--space-1);
 }
 
-.track {
+.budgetTrack {
   overflow: hidden;
   height: 2px;
   border-radius: var(--radius-pill);
   background: var(--color-border);
 }
 
-.fill {
+.budgetFill {
   height: 100%;
   border-radius: var(--radius-pill);
   background: var(--client-color);
@@ -302,7 +302,7 @@
   font-weight: 500;
 }
 
-.budget[data-over] .fill {
+.budget[data-over] .budgetFill {
   background: var(--color-danger);
 }
 
@@ -310,13 +310,13 @@
   color: var(--color-danger);
 }
 
-.addRow {
+.addProjectRow {
   display: flex;
   justify-content: flex-end;
   padding: var(--space-1) var(--space-3) var(--space-3);
 }
 
-.archiveRow {
+.archivedToggleRow {
   display: flex;
   justify-content: center;
 }

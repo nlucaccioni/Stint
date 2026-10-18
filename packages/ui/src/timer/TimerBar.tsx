@@ -33,20 +33,20 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
   // when a timer starts or stops. While running, the pill takes the client's color.
   return (
     <div
-      className={styles.bar}
+      className={styles.pill}
       data-running={running ? '' : undefined}
       data-idle={running ? undefined : ''}
       style={running && client ? ({ '--client-color': client.color } as CSSProperties) : undefined}
     >
       {running ? (
-        <span className={styles.what}>
-          <span className={styles.project}>{project?.name ?? 'Unknown project'}</span>
-          {client && <span className={styles.client}>{client.name}</span>}
+        <span className={styles.details}>
+          <span className={styles.projectName}>{project?.name ?? 'Unknown project'}</span>
+          {client && <span className={styles.clientName}>{client.name}</span>}
         </span>
       ) : (
-        <span className={styles.muted}>No Timer Active</span>
+        <span className={styles.idleLabel}>No Timer Active</span>
       )}
-      <span className={styles.clock} role="timer" aria-live="off">
+      <span className={styles.elapsed} role="timer" aria-live="off">
         {running ? formatClock(now - running.startedAt) : '0:00:00'}
       </span>
       {error && (
@@ -63,7 +63,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
       </IconButton>
       <button
         type="button"
-        className={styles.stop}
+        className={styles.stopButton}
         aria-label="Stop"
         title="Stop"
         disabled={!running}

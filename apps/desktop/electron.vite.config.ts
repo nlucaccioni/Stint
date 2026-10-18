@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
@@ -23,5 +23,13 @@ export default defineConfig({
   renderer: {
     resolve: { alias: { '@renderer': resolve('src/renderer') } },
     plugins: [react()],
+    css: {
+      modules: {
+        // Readable class names in DevTools: "TimerBar__pill" instead of "_pill_6hwkh_3".
+        // Each class is prefixed with its file's name, so names stay unique per component.
+        generateScopedName: (name, filename) =>
+          `${basename(filename).replace(/\.module\.css(\?.*)?$/, '')}__${name}`,
+      },
+    },
   },
 })
