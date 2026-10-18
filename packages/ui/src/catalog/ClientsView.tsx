@@ -21,7 +21,6 @@ import {
   type WeekStartDay,
 } from '@stint/core'
 import {
-  ChevronDown,
   ChevronUp,
   PanelTopClose,
   PanelTopOpen,
@@ -260,6 +259,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
   return (
     <li
       className={styles.clientCard}
+      data-collapsed={collapsed || undefined}
       data-archived={client.archived || undefined}
       data-running={running || undefined}
       style={{ '--client-color': client.color } as CSSProperties}
@@ -292,13 +292,15 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
               aria-expanded={!collapsed}
               onClick={on.onToggleCollapsed}
             >
-              {collapsed ? <ChevronDown aria-hidden /> : <ChevronUp aria-hidden />}
+              <ChevronUp className={styles.chevron} aria-hidden />
             </IconButton>
           </div>
         </div>
 
-        {!collapsed && (
-          <>
+        {/* Stays mounted so opening and closing can animate; `inert` keeps the hidden
+            projects out of the tab order and away from screen readers. */}
+        <div className={styles.collapsible} inert={collapsed}>
+          <div className={styles.collapsibleInner}>
             <hr className={styles.clientBarRule} />
             {projects.length > 0 && (
               <ul className={styles.projectList}>
@@ -325,8 +327,8 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
                 </Button>
               </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </li>
   )

@@ -114,7 +114,6 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-1);
   min-width: 0;
   padding: var(--space-2);
 }
@@ -194,6 +193,50 @@
   white-space: nowrap;
 }
 
+/* Opening and closing a card: the grid row animates between 0fr and 1fr (the
+   content's own height), so no fixed height is needed. */
+.collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.clientCard[data-collapsed] .collapsible {
+  grid-template-rows: 0fr;
+}
+
+.collapsibleInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 0;
+  padding-top: var(--space-1);
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.clientCard[data-collapsed] .collapsibleInner {
+  opacity: 0;
+}
+
+/* The caret points up when open and turns to point down when closed. */
+.chevron {
+  transition: transform 0.25s ease;
+}
+
+.clientCard[data-collapsed] .chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible,
+  .collapsibleInner,
+  .chevron {
+    transition: none;
+  }
+}
+
 .clientBarRule {
   width: 100%;
   margin: 0;
@@ -228,7 +271,7 @@
   gap: var(--space-4);
   padding: var(--space-1) var(--space-2);
   border-radius: 10px;
-  transition: background-color 0.15s;
+  transition: background-color 0.225s;
 }
 
 .projectBar[data-capped] {
