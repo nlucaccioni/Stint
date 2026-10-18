@@ -29,7 +29,7 @@
 }
 
 .topbarEnd > button[aria-current='page'] {
-  background: var(--color-surface);
+  background: var(--color-wash);
 }
 
 .main {

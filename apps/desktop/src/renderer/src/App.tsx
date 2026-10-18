@@ -106,6 +106,7 @@ export function App() {
         </nav>
         <div className={styles.topbarEnd}>
           <IconButton
+            size="md"
             label="Settings"
             aria-current={tab === 'settings' ? 'page' : undefined}
             onClick={() => setTab('settings')}

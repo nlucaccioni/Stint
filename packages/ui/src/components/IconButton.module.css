@@ -3,9 +3,6 @@
   display: inline-grid;
   flex: none;
   place-items: center;
-  /* 12px icons in a 16px hit area, so rows keep the Figma heights. */
-  width: 16px;
-  height: 16px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-pill);
@@ -14,13 +11,24 @@
   cursor: pointer;
 }
 
+.md {
+  width: 24px;
+  height: 24px;
+}
+
+/* 12px icons in a 16px hit area, so rows keep the Figma heights. */
+.sm {
+  width: 16px;
+  height: 16px;
+}
+
 .button > svg {
   width: 12px;
   height: 12px;
 }
 
 .button:hover:not(:disabled) {
-  background: var(--color-border);
+  background: var(--color-wash);
 }
 
 .button:focus-visible {

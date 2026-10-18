@@ -55,7 +55,7 @@
   height: 10px;
 }
 
-/* Filled; on hover it opens up to an outline. */
+/* Filled light; on hover it goes dark with a light outline. */
 .primary {
   border-color: var(--color-text);
   background: var(--color-text);
@@ -63,24 +63,32 @@
 }
 
 .primary:hover:not(:disabled) {
-  background: transparent;
+  background: var(--color-border);
   color: var(--color-text);
 }
 
+/* Muted outline; on hover the outline and text brighten over a wash. */
 .secondary {
   border-color: var(--color-text-muted);
   color: var(--color-text-muted);
 }
 
-/* Outlined in the text color, e.g. "Add Project". */
-.tertiary {
+.secondary:hover:not(:disabled) {
   border-color: var(--color-text);
+  background: var(--color-hover-wash);
   color: var(--color-text);
 }
 
-.secondary:hover:not(:disabled),
+/* Borderless on a light wash ("Add Project"); fills light on hover. */
+.tertiary {
+  border: 0;
+  background: var(--color-wash);
+  color: var(--color-text);
+}
+
 .tertiary:hover:not(:disabled) {
-  background: var(--color-hover-wash);
+  background: var(--color-text);
+  color: var(--color-surface);
 }
 
 /* Quiet: hairline border, muted text ("Show Archived"). */
