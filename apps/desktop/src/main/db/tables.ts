@@ -15,6 +15,7 @@ export const clientsTable = defineTable<Client>({
   columns: {
     ...syncColumns,
     name: 'name',
+    sortKey: 'sort_key',
     color: 'color',
     hourlyRateCents: 'hourly_rate_cents',
     currency: 'currency',
@@ -29,6 +30,7 @@ export const projectsTable = defineTable<Project>({
     ...syncColumns,
     clientId: 'client_id',
     name: 'name',
+    sortKey: 'sort_key',
     // The projects.color column from the first schema is no longer used.
     hourlyRateCents: 'hourly_rate_cents',
     billableByDefault: 'billable_by_default',

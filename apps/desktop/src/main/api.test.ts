@@ -139,6 +139,43 @@ describe('projects', () => {
   })
 })
 
+describe('ordering', () => {
+  const fields = { hourlyRateCents: null, billableByDefault: true }
+
+  it('adds new clients and projects at the end, and moves them', () => {
+    const zed = api.createClient({ ...acme, name: 'Zed' })
+    const abe = api.createClient({ ...acme, name: 'Abe' })
+    // Not alphabetical any more: creation order.
+    expect(api.listClients().map((c) => c.name)).toEqual(['Zed', 'Abe'])
+    api.moveClient(abe.id, zed.id)
+    expect(api.listClients().map((c) => c.name)).toEqual(['Abe', 'Zed'])
+    api.moveClient(abe.id, null)
+    expect(api.listClients().map((c) => c.name)).toEqual(['Zed', 'Abe'])
+
+    const one = api.createProject({ ...fields, clientId: zed.id, name: 'One' })
+    const two = api.createProject({ ...fields, clientId: zed.id, name: 'Two' })
+    api.createProject({ ...fields, clientId: abe.id, name: 'Elsewhere' })
+    api.moveProject(two.id, one.id)
+    expect(
+      api
+        .listProjects()
+        .filter((p) => p.clientId === zed.id)
+        .map((p) => p.name),
+    ).toEqual(['Two', 'One'])
+  })
+
+  it("won't move a project next to another client's project", () => {
+    const a = api.createClient(acme)
+    const b = api.createClient(acme)
+    const pa = api.createProject({ ...fields, clientId: a.id, name: 'A' })
+    const pb = api.createProject({ ...fields, clientId: b.id, name: 'B' })
+    expect(toResult(() => api.moveProject(pa.id, pb.id))).toMatchObject({
+      ok: false,
+      error: { code: 'not-found' },
+    })
+  })
+})
+
 describe('deleting', () => {
   const projectFields = { name: 'P', hourlyRateCents: null, billableByDefault: true }
 

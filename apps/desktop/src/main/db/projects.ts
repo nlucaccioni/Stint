@@ -7,9 +7,7 @@ import { projectsTable as t } from './tables'
 /** All non-deleted projects, including archived ones, by name. */
 export function listProjects(db: Db): Project[] {
   return db
-    .prepare(
-      `SELECT ${selectList(t)} FROM projects WHERE deleted_at IS NULL ORDER BY name COLLATE NOCASE`,
-    )
+    .prepare(`SELECT ${selectList(t)} FROM projects WHERE deleted_at IS NULL ORDER BY sort_key, id`)
     .all()
     .map((row) => fromRow(t, row))
 }

@@ -3,6 +3,7 @@
 // a complete record (new) or the fields to change (edit), stamped with sync fields.
 import { budgetFields, type Budget } from './budget'
 import { newId as defaultNewId } from './ids'
+import { keyBetween } from './order'
 import type { ChangeContext } from './changes'
 import { StintError } from './errors'
 import { isSupportedCurrency } from './money'
@@ -32,10 +33,16 @@ export type ProjectEdits = Partial<Omit<ProjectInput, 'clientId'> & { archived: 
 const MAX_NAME = 100
 const MAX_RATE_CENTS = 100_000_000 // $1,000,000/h: anything above is a typo
 
-export function newClient(input: ClientInput, ctx: ChangeContext): Client {
+/** `sortKey` places it in the list; the API passes one after the last client. */
+export function newClient(
+  input: ClientInput,
+  ctx: ChangeContext,
+  sortKey = keyBetween(null, null),
+): Client {
   return {
     ...syncFields(ctx),
     name: validName(input.name),
+    sortKey,
     color: validColor(input.color),
     hourlyRateCents: validRate(input.hourlyRateCents),
     currency: validCurrency(input.currency),
@@ -53,11 +60,17 @@ export function clientPatch(edits: ClientEdits, ctx: ChangeContext): Partial<Cli
   return patch
 }
 
-export function newProject(input: ProjectInput, ctx: ChangeContext): Project {
+/** `sortKey` places it among the client's projects; the API passes one after the last. */
+export function newProject(
+  input: ProjectInput,
+  ctx: ChangeContext,
+  sortKey = keyBetween(null, null),
+): Project {
   return {
     ...syncFields(ctx),
     clientId: input.clientId,
     name: validName(input.name),
+    sortKey,
     hourlyRateCents: validRate(input.hourlyRateCents),
     billableByDefault: input.billableByDefault,
     archived: false,

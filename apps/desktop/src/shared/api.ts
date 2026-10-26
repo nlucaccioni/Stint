@@ -110,9 +110,13 @@ export interface StintApi {
   listClients(): Promise<Client[]>
   createClient(input: ClientInput): Promise<Client>
   updateClient(id: string, edits: ClientEdits): Promise<Client>
+  /** Move a client to just before `beforeId` in the order (null = to the end). */
+  moveClient(id: string, beforeId: string | null): Promise<Client>
   listProjects(): Promise<Project[]>
   createProject(input: ProjectInput): Promise<Project>
   updateProject(id: string, edits: ProjectEdits): Promise<Project>
+  /** Move a project among its client's projects (before `beforeId`, null = end). */
+  moveProject(id: string, beforeId: string | null): Promise<Project>
   /** Projects that have recorded time (and so can't be deleted). */
   listProjectIdsWithTime(): Promise<string[]>
   /** Only allowed when the project has no recorded time. */
@@ -206,9 +210,11 @@ export const apiMethods = [
   'listClients',
   'createClient',
   'updateClient',
+  'moveClient',
   'listProjects',
   'createProject',
   'updateProject',
+  'moveProject',
   'listProjectIdsWithTime',
   'deleteProject',
   'deleteClient',

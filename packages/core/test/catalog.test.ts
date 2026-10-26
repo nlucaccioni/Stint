@@ -24,13 +24,14 @@ const projectInput = {
 
 describe('newClient', () => {
   it('creates a normalized client with sync fields', () => {
-    expect(newClient(clientInput, ctx(now))).toEqual({
+    expect(newClient(clientInput, ctx(now), 'k')).toEqual({
       id: 'new-1',
       createdAt: now,
       updatedAt: now,
       deviceId: 'dev-A',
       deletedAt: null,
       name: 'Acme',
+      sortKey: 'k',
       color: '#3366cc',
       hourlyRateCents: 10_000,
       currency: 'USD',

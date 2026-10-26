@@ -7,6 +7,8 @@ import { z } from 'zod'
 import {
   addToBatch,
   assertBudgetHasRate,
+  keyAtEnd,
+  keyForMove,
   createBatch,
   editBatch,
   unbillBatch,
@@ -328,9 +330,19 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
 
     createClient: (...args) => {
       const [input] = z.tuple([clientInput]).parse(args)
-      const client = newClient(input, ctx())
+      // New clients go at the end of the user's order.
+      const client = newClient(input, ctx(), keyAtEnd(listClients(db)))
       insertClient(db, client)
       return client
+    },
+
+    moveClient: (...args) => {
+      const [clientId, beforeId] = z.tuple([id, id.nullable()]).parse(args)
+      existingClient(clientId)
+      if (beforeId !== null) existingClient(beforeId)
+      const sortKey = keyForMove(listClients(db), clientId, beforeId)
+      updateClient(db, clientId, { sortKey, ...stamp() })
+      return existingClient(clientId)
     },
 
     updateClient: (...args) => {
@@ -345,10 +357,24 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     createProject: (...args) => {
       const [input] = z.tuple([projectInput]).parse(args)
       const client = existingClient(input.clientId)
-      const project = newProject(input, ctx())
+      const siblings = listProjects(db).filter((p) => p.clientId === client.id)
+      const project = newProject(input, ctx(), keyAtEnd(siblings))
       assertBudgetHasRate(project, client)
       insertProject(db, project)
       return project
+    },
+
+    /** Reorders a project among its own client's projects. */
+    moveProject: (...args) => {
+      const [projectId, beforeId] = z.tuple([id, id.nullable()]).parse(args)
+      const project = existingProject(projectId)
+      const siblings = listProjects(db).filter((p) => p.clientId === project.clientId)
+      if (beforeId !== null && !siblings.some((p) => p.id === beforeId)) {
+        throw new StintError('not-found', "That project isn't under the same client.")
+      }
+      const sortKey = keyForMove(siblings, projectId, beforeId)
+      updateProject(db, projectId, { sortKey, ...stamp() })
+      return existingProject(projectId)
     },
 
     updateProject: (...args) => {

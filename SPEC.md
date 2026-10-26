@@ -116,10 +116,12 @@ All synced records are designed for future sync from day one.
 
 - `id`, `name`, `color`, `hourlyRateCents` (nullable), `currency` (defaults to the default-currency setting), `archived`, sync fields.
 - The client's color identifies it everywhere: its card, its projects, the running timer, totals.
+- `sortKey`: the client's place in the user's order (see Ordering below).
 
 ### Project
 
 - `id`, `clientId`, `name`, `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, budget fields (below), sync fields.
+- `sortKey`: the project's place among its client's projects (see Ordering below).
 - Projects have no color of their own; they always use their client's color. (The original schema has a `color` column on projects; it is no longer read or written.)
 - **Budget** (optional hard cap, see §6):
   - `budgetMinutes` or `budgetCents` (nullable; at most one is set). Neither set = no budget. A money budget uses the client's currency.
@@ -150,6 +152,12 @@ Settings are split by whether they belong to the user or to one machine.
 **Device-local settings** (JSON file in the app data folder; never synced):
 
 - `deviceId`, local API port and token, window position, hotkey registration results.
+
+### Ordering
+
+- Clients, and projects within each client, are in an order the user sets (drag, or Move Up / Move Down). Every list follows it: the Projects tab, Quick Switcher, project pickers, favorites, Totals and Billing.
+- Each record stores a `sortKey`: a short string from fractional indexing. Lists sort by `sortKey`, then `id`. Moving an item gives only that item a new key between its new neighbours', so moves on different devices don't conflict.
+- New clients and projects go at the end.
 
 ### Derived billing status of a session
 

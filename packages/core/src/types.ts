@@ -15,6 +15,8 @@ export interface SyncFields {
 
 export interface Client extends SyncFields {
   name: string
+  /** Position in the user's order (see order.ts). */
+  sortKey: string
   color: string
   hourlyRateCents: number | null
   currency: string
@@ -25,6 +27,8 @@ export interface Client extends SyncFields {
 export interface Project extends SyncFields {
   clientId: string
   name: string
+  /** Position among its client's projects (see order.ts). */
+  sortKey: string
   /** Overrides the client's rate when set. */
   hourlyRateCents: number | null
   /** Default for `billable` on new sessions in this project. */

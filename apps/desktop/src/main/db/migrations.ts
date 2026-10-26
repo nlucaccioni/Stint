@@ -110,4 +110,22 @@ export const migrations: readonly string[] = [
   ALTER TABLE projects ADD COLUMN budget_reset_day INTEGER NOT NULL DEFAULT 1
     CHECK (budget_reset_day BETWEEN 1 AND 28);
   `,
+
+  // 5 — user-defined order for clients and projects (core order.ts). Existing rows
+  // keep today's A–Z order: fixed-width keys from their alphabetical position.
+  `
+  ALTER TABLE clients ADD COLUMN sort_key TEXT NOT NULL DEFAULT '';
+  ALTER TABLE projects ADD COLUMN sort_key TEXT NOT NULL DEFAULT '';
+  UPDATE clients SET sort_key = (
+    SELECT 'a' || printf('%06d', r.n) FROM (
+      SELECT id, row_number() OVER (ORDER BY name COLLATE NOCASE, id) AS n FROM clients
+    ) AS r WHERE r.id = clients.id
+  );
+  UPDATE projects SET sort_key = (
+    SELECT 'a' || printf('%06d', r.n) FROM (
+      SELECT id, row_number() OVER (PARTITION BY client_id ORDER BY name COLLATE NOCASE, id) AS n
+      FROM projects
+    ) AS r WHERE r.id = projects.id
+  );
+  `,
 ]

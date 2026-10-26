@@ -4,12 +4,10 @@ import type { Db } from './connection'
 import { fromRow, getById, insertRow, selectList, updateRow } from './table'
 import { clientsTable as t } from './tables'
 
-/** All non-deleted clients, including archived ones, by name. */
+/** All non-deleted clients, including archived ones, in the user's order. */
 export function listClients(db: Db): Client[] {
   return db
-    .prepare(
-      `SELECT ${selectList(t)} FROM clients WHERE deleted_at IS NULL ORDER BY name COLLATE NOCASE`,
-    )
+    .prepare(`SELECT ${selectList(t)} FROM clients WHERE deleted_at IS NULL ORDER BY sort_key, id`)
     .all()
     .map((row) => fromRow(t, row))
 }
