@@ -105,8 +105,8 @@
   font-weight: 600;
 }
 
-.projectRow.projectRow > th {
-  padding-left: calc(var(--space-3) + var(--space-4));
+.projectRow.projectRow > th:first-child {
+  padding-left: calc(var(--space-1) + var(--space-4));
 }
 
 /* Days with no time. */

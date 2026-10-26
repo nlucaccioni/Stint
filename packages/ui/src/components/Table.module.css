@@ -6,17 +6,27 @@
   font-size: var(--text-sm);
 }
 
+/* Figma: rows have 8px top/bottom and 4px ends, with 12px between columns
+   (6px on each side of a cell). The header row is 4px all round. */
 .table th,
 .table td {
-  padding: 13px var(--space-3);
+  padding: var(--space-2) 6px;
   font-weight: normal;
   text-align: left;
 }
 
 .table thead th {
-  padding: 9px var(--space-3);
+  padding: var(--space-1) 6px;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-muted);
+}
+
+.table tr > :first-child {
+  padding-left: var(--space-1);
+}
+
+.table tr > :last-child {
+  padding-right: var(--space-1);
 }
 
 /* Lines between rows (and between row groups), not after the last. */
@@ -42,8 +52,6 @@
 /* A narrow column of buttons at the end of a row. */
 .table .actions {
   width: 1%;
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
   text-align: right;
   white-space: nowrap;
 }

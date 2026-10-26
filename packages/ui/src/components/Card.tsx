@@ -11,7 +11,7 @@ export interface CardProps {
   actions?: ReactNode
   /** When set, the card is empty: dashed outline, this message, no children. */
   empty?: string | false
-  /** 4px under the title instead of 12px: for a card holding a table (Billing). */
+  /** 8px under the title instead of 12px: for a card holding a table (Billing). */
   compact?: boolean
   children?: ReactNode
 }
