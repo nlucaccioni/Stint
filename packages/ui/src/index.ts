@@ -4,6 +4,8 @@
 export { Button, type ButtonProps } from './components/Button'
 export { IconButton, type IconButtonProps } from './components/IconButton'
 export { Menu, type MenuItem, type MenuProps } from './components/Menu'
+export { Select, type SelectOption, type SelectProps } from './components/Select'
+export { ColorPicker, type ColorPickerProps } from './components/ColorPicker'
 export { Tag, type TagProps } from './components/Tag'
 export { Checkbox, Field, type FieldProps } from './components/Field'
 export { Dialog, type DialogProps } from './components/Dialog'

@@ -1,0 +1,174 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* The swatch in the form (Figma: 71 × 36, hairline border). */
+.swatch {
+  width: 71px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* The picker panel, under the swatch (right edges aligned), flipping above if needed. */
+.panel {
+  inset: auto;
+  margin: 0;
+  margin-top: var(--space-1);
+  position-area: bottom span-left;
+  position-try-fallbacks: flip-block;
+  display: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 280px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow:
+    0 12px 16px -4px rgb(0 0 0 / 0.35),
+    0 4px 6px -2px rgb(0 0 0 / 0.2);
+}
+
+.panel:popover-open {
+  display: flex;
+}
+
+/* Saturation left→right, brightness top→bottom, over the current hue. */
+.area {
+  position: relative;
+  height: 112px;
+  border-radius: 8px;
+  background:
+    linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent),
+    var(--hue);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.area:focus-visible,
+.hue:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* White ring handles, as in the design. */
+.areaHandle,
+.hueHandle {
+  position: absolute;
+  box-sizing: content-box;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.areaHandle {
+  width: 8px;
+  height: 8px;
+}
+
+.hueHandle {
+  top: 50%;
+  width: 6px;
+  height: 6px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eyedropper {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.eyedropper > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.eyedropper:hover {
+  background: var(--color-wash);
+}
+
+.hue {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    #f00 0%,
+    #ff0 16.67%,
+    #0f0 33.33%,
+    #0ff 50%,
+    #00f 66.67%,
+    #f0f 83.33%,
+    #f00 100%
+  );
+  cursor: pointer;
+  touch-action: none;
+}
+
+.mode {
+  width: 72px;
+  flex: none;
+  height: 36px;
+  background: var(--color-bg);
+}
+
+/* Joined value boxes, 1px apart, rounded only at the outer ends. */
+.values {
+  display: flex;
+  flex: 1;
+  gap: 1px;
+  align-self: stretch;
+}
+
+.value {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.value:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.value:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.value:only-child {
+  border-radius: var(--radius);
+}
+
+.value:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
