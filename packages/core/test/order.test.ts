@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { compareOrder, keyAtEnd, keyBetween, keyForMove, type Ordered } from '../src/order'
+import {
+  compareOrder,
+  inListOrder,
+  keyAtEnd,
+  keyBetween,
+  keyForMove,
+  type Ordered,
+} from '../src/order'
 
 describe('keyBetween', () => {
   it('starts in the middle and leaves room on both sides', () => {
@@ -93,5 +100,13 @@ describe('ordering lists', () => {
     ]
     const key = keyForMove(tied, 'c', 'b')
     expect(key > 'm').toBe(true)
+  })
+})
+
+describe('inListOrder', () => {
+  it('orders derived rows like the list, unknown ids last', () => {
+    const rows = [{ clientId: 'b' }, { clientId: 'x' }, { clientId: 'a' }]
+    const sorted = inListOrder(rows, [{ id: 'a' }, { id: 'b' }], (r) => r.clientId)
+    expect(sorted.map((r) => r.clientId)).toEqual(['a', 'b', 'x'])
   })
 })

@@ -6,6 +6,7 @@ import {
   billingSummary,
   daysWaiting,
   formatClock,
+  inListOrder,
   unbilledByClient,
   type BillingBatch,
   type Client,
@@ -43,8 +44,14 @@ export function BillingView(props: BillingViewProps) {
   const [open, setOpen] = useState<Open>(null)
   const clientById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients])
 
+  // In the user's client order (SPEC.md §5 "Ordering").
   const unbilled = useMemo(
-    () => unbilledByClient(unbilledSessions, projects, clients, rounding, now),
+    () =>
+      inListOrder(
+        unbilledByClient(unbilledSessions, projects, clients, rounding, now),
+        clients,
+        (row) => row.clientId,
+      ),
     [unbilledSessions, projects, clients, rounding, now],
   )
 

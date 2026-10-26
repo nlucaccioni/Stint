@@ -75,3 +75,17 @@ export function keyForMove(items: readonly Ordered[], id: string, beforeId: stri
   if (prev !== null && next !== null && prev >= next) return keyBetween(prev, null)
   return keyBetween(prev, next)
 }
+
+/**
+ * `rows` (e.g. totals per client) put in the order of `ordered` (clients or
+ * projects as listed, already in the user's order). Rows for unknown ids go last.
+ */
+export function inListOrder<T>(
+  rows: readonly T[],
+  ordered: readonly { id: string }[],
+  idOf: (row: T) => string,
+): T[] {
+  const rank = new Map(ordered.map((item, i) => [item.id, i]))
+  const at = (row: T) => rank.get(idOf(row)) ?? ordered.length
+  return [...rows].sort((a, b) => at(a) - at(b))
+}

@@ -7,6 +7,7 @@ import {
   dailyTotals,
   formatClock,
   formatMoney,
+  inListOrder,
   toLocalParts,
   type Client,
   type Money,
@@ -186,9 +187,13 @@ export function TotalsView(props: TotalsViewProps) {
               </th>
             </tr>
           </thead>
-          {totals.byClient.map((ct) => {
+          {inListOrder(totals.byClient, clients, (ct) => ct.clientId).map((ct) => {
             const client = clientById.get(ct.clientId)
-            const own = totals.byProject.filter((pt) => pt.clientId === ct.clientId)
+            const own = inListOrder(
+              totals.byProject.filter((pt) => pt.clientId === ct.clientId),
+              projects,
+              (pt) => pt.projectId,
+            )
             return (
               <tbody key={ct.clientId}>
                 <tr className={styles.clientRow}>
