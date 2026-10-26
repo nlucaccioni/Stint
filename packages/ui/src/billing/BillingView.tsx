@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Billing tab: what's unbilled per client, batches waiting for payment, and
 // paid history. All figures are derived from sessions (core), never stored.
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   billingSummary,
   daysWaiting,
@@ -75,10 +75,10 @@ export function BillingView(props: BillingViewProps) {
     <section className={styles.view}>
       <h1 className={styles.heading}>Billing</h1>
 
-      <h2 className={styles.section}>Unbilled</h2>
-      {unbilled.length === 0 ? (
-        <p className={styles.empty}>Everything billable has been billed.</p>
-      ) : (
+      <Section
+        title="Unbilled"
+        empty={unbilled.length === 0 && 'Everything billable has been billed.'}
+      >
         <table className={styles.table}>
           <thead>
             <tr>
@@ -107,9 +107,10 @@ export function BillingView(props: BillingViewProps) {
                   <td className={styles.actions}>
                     <Button
                       size="sm"
+                      variant="tertiary"
                       onClick={() => setOpen({ kind: 'create', clientId: row.clientId })}
                     >
-                      Create Batch…
+                      Create Batch
                     </Button>
                   </td>
                 </tr>
@@ -117,12 +118,12 @@ export function BillingView(props: BillingViewProps) {
             })}
           </tbody>
         </table>
-      )}
+      </Section>
 
-      <h2 className={styles.section}>Waiting for Payment</h2>
-      {outstanding.length === 0 ? (
-        <p className={styles.empty}>Nothing outstanding.</p>
-      ) : (
+      <Section
+        title="Waiting for Payment"
+        empty={outstanding.length === 0 && 'Nothing outstanding.'}
+      >
         <BatchTable
           batches={outstanding}
           summaries={summaries}
@@ -132,15 +133,12 @@ export function BillingView(props: BillingViewProps) {
             const days = daysWaiting(b, now)
             return `${formatDay(b.billedAt, zone)} · ${days === 1 ? '1 day' : `${days} days`}`
           }}
-          dateHeading="Billed · waiting"
+          dateHeading="Billed · Waiting"
           onOpen={(b) => setOpen({ kind: 'batch', batchId: b.id })}
         />
-      )}
+      </Section>
 
-      <h2 className={styles.section}>Paid</h2>
-      {paid.length === 0 ? (
-        <p className={styles.empty}>No paid batches yet.</p>
-      ) : (
+      <Section title="Paid" empty={paid.length === 0 && 'No paid batches yet.'}>
         <BatchTable
           batches={paid}
           summaries={summaries}
@@ -150,7 +148,7 @@ export function BillingView(props: BillingViewProps) {
           dateHeading="Paid On"
           onOpen={(b) => setOpen({ kind: 'batch', batchId: b.id })}
         />
-      )}
+      </Section>
 
       {open?.kind === 'create' && clientById.get(open.clientId) && (
         <CreateBatchDialog
@@ -220,7 +218,7 @@ function BatchTable(props: {
               <th scope="row">
                 <ClientName client={props.clientById.get(b.clientId)} />
               </th>
-              <td>{b.reference || <span className={styles.muted}>No Reference</span>}</td>
+              <td className={styles.muted}>{b.reference || 'No Reference'}</td>
               <td className={styles.muted}>{props.dateColumn(b)}</td>
               <td className={styles.num}>{sum ? formatClock(sum.billedMs) : '—'}</td>
               <td className={styles.num}>{amountLabel(sum?.amount ?? null)}</td>
@@ -232,10 +230,30 @@ function BatchTable(props: {
   )
 }
 
+/**
+ * One card (Figma: Billing). With nothing to show it becomes a dashed outline
+ * with the message beside the title, and its table isn't rendered.
+ */
+function Section(props: { title: string; empty: string | false; children: ReactNode }) {
+  return (
+    <section className={styles.card} data-empty={props.empty ? '' : undefined}>
+      <header className={styles.cardHeader}>
+        <h2 className={styles.cardTitle}>{props.title}</h2>
+        {props.empty && <p className={styles.emptyNote}>{props.empty}</p>}
+      </header>
+      {!props.empty && props.children}
+    </section>
+  )
+}
+
 function ClientName({ client }: { client: Client | undefined }) {
   return (
     <span className={styles.name}>
-      <span className={styles.swatch} style={{ background: client?.color }} aria-hidden />
+      <span
+        className={styles.swatch}
+        style={{ '--client-color': client?.color } as CSSProperties}
+        aria-hidden
+      />
       {client?.name ?? 'Unknown Client'}
     </span>
   )
