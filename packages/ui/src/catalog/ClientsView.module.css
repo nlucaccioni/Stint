@@ -98,16 +98,20 @@
   opacity: 1;
 }
 
+/* Brighter while running. */
 .clientCard[data-running] .colorBar {
-  box-shadow: 0 0 8px 0 color-mix(in srgb, var(--client-color) 50%, transparent);
+  box-shadow: 0 0 16px 0 color-mix(in srgb, var(--client-color) 70%, transparent);
 }
 
+/* Always a soft glow in the client's color, like the client dots elsewhere. */
 .colorBar {
   flex: none;
   width: 4px;
   /* Inside the card's 1px border, so 1px less rounding. */
   border-radius: calc(var(--radius) - 1px) 0 0 calc(var(--radius) - 1px);
   background: var(--client-color);
+  box-shadow: 0 0 12px 0 color-mix(in srgb, var(--client-color) 50%, transparent);
+  transition: box-shadow 0.3s;
 }
 
 .clientCardBody {
