@@ -185,17 +185,20 @@ export function BatchDialog(props: BatchDialogProps) {
               <Field label="Paid On">
                 <DateInput value={paidOn} onChange={setPaidOn} />
               </Field>
-              <Button
-                variant="primary"
-                onClick={() =>
-                  void run(() =>
-                    props.onUpdateBatch(batch.id, { paidAt: day(paidOn) }).then(() => {}),
-                  )
-                }
-              >
-                Mark Paid
-              </Button>
-              {!adding && <Button onClick={() => setAdding(true)}>Add Sessions…</Button>}
+              {/* Same height as the date box, so the buttons sit centered on it. */}
+              <div className={styles.paidActions}>
+                <Button
+                  variant="primary"
+                  onClick={() =>
+                    void run(() =>
+                      props.onUpdateBatch(batch.id, { paidAt: day(paidOn) }).then(() => {}),
+                    )
+                  }
+                >
+                  Mark Paid
+                </Button>
+                {!adding && <Button onClick={() => setAdding(true)}>Add Sessions…</Button>}
+              </div>
             </>
           )}
         </div>
