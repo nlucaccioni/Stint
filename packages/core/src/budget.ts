@@ -14,7 +14,10 @@ export interface Budget {
   unit: 'minutes' | 'cents'
   amount: number
   period: BudgetPeriod
-  /** Day of the month (1–28) a monthly budget resets. Ignored for other periods. */
+  /**
+   * When a rolling budget resets. Monthly: day of the month, 1–28. Weekly: ISO
+   * weekday, 1 = Monday … 7 = Sunday. Ignored for a fixed budget.
+   */
   resetDay: number
 }
 
@@ -51,9 +54,15 @@ export function budgetFields(budget: Budget | null): BudgetFields {
   if (!['total', 'week', 'month'].includes(budget.period)) {
     throw new StintError('invalid-budget', 'Unknown budget period.')
   }
-  const resetDay = budget.period === 'month' ? budget.resetDay : 1
-  if (!Number.isInteger(resetDay) || resetDay < 1 || resetDay > 28) {
-    throw new StintError('invalid-budget', 'Reset day must be between 1 and 28.')
+  const resetDay = budget.period === 'total' ? 1 : budget.resetDay
+  const maxDay = budget.period === 'week' ? 7 : 28
+  if (!Number.isInteger(resetDay) || resetDay < 1 || resetDay > maxDay) {
+    throw new StintError(
+      'invalid-budget',
+      budget.period === 'week'
+        ? 'Reset day must be a weekday.'
+        : 'Reset day must be between 1 and 28.',
+    )
   }
   return {
     budgetMinutes: budget.unit === 'minutes' ? budget.amount : null,
@@ -76,21 +85,30 @@ export function assertBudgetHasRate(
   }
 }
 
+/** ISO weekday (1 = Monday … 7 = Sunday) → date-fns weekday (0 = Sunday … 6). */
+export function isoToWeekStartDay(isoDay: number): WeekStartDay {
+  return (isoDay % 7) as WeekStartDay
+}
+
+/** date-fns weekday (0 = Sunday … 6) → ISO weekday (1 = Monday … 7 = Sunday). */
+export function weekStartDayToIso(day: WeekStartDay): number {
+  return day === 0 ? 7 : day
+}
+
 /**
  * The time a budget currently covers: null for a fixed (lifetime) budget, the
- * current local week, or the month starting on the reset day.
+ * local week starting on the reset weekday, or the month starting on the reset day.
  */
 export function budgetRange(
   budget: Pick<Budget, 'period' | 'resetDay'>,
   now: number,
   zone: string,
-  weekStartsOn: WeekStartDay,
 ): TimeRange | null {
   switch (budget.period) {
     case 'total':
       return null
     case 'week':
-      return weekRange(now, zone, weekStartsOn)
+      return weekRange(now, zone, isoToWeekStartDay(budget.resetDay))
     case 'month': {
       const opts = { in: tz(zone) }
       const resetThisMonth = setDate(startOfMonth(now, opts), budget.resetDay, opts)
@@ -118,7 +136,6 @@ export interface BudgetUsageInput {
   sessions: readonly Session[]
   now: number
   zone: string
-  weekStartsOn: WeekStartDay
 }
 
 /** How much of a project's budget is used, or null if the project has no budget. */
@@ -126,7 +143,7 @@ export function budgetUsage(input: BudgetUsageInput): BudgetUsage | null {
   const { project, client, now } = input
   const budget = projectBudget(project)
   if (!budget) return null
-  const range = budgetRange(budget, now, input.zone, input.weekStartsOn)
+  const range = budgetRange(budget, now, input.zone)
   const rate = effectiveRate(project, client)
   if (budget.unit === 'cents' && rate === null) return { budget, range, used: null, fraction: null }
 

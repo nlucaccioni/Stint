@@ -7,7 +7,7 @@ import { projectSummaries } from '../src/summary'
 import { HOUR, at, client, ctx, project, session } from './fixtures'
 
 const now = at(2026, 3, 18, 15)
-const base = { clients: [client()], now, zone: 'America/New_York', weekStartsOn: 1 as const }
+const base = { clients: [client()], now, zone: 'America/New_York' }
 
 describe('projectSummaries', () => {
   it('splits unbilled billable time from everything recorded', () => {

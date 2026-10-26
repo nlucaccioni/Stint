@@ -4,7 +4,7 @@
 // from sessions; a running session counts up to `now`.
 import { isLocked } from './billing'
 import { budgetUsage, type BudgetUsage } from './budget'
-import { sessionDuration, type WeekStartDay } from './time'
+import { sessionDuration } from './time'
 import type { Client, Project, Session } from './types'
 
 export interface ProjectSummary {
@@ -25,7 +25,6 @@ export interface SummaryInput {
   clients: readonly Client[]
   now: number
   zone: string
-  weekStartsOn: WeekStartDay
 }
 
 /** Summaries keyed by project id; every project in `projects` gets one. */
@@ -64,7 +63,6 @@ export function projectSummaries(input: SummaryInput): Map<string, ProjectSummar
             sessions,
             now: input.now,
             zone: input.zone,
-            weekStartsOn: input.weekStartsOn,
           })
         : null,
     })

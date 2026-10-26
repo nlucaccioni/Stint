@@ -124,7 +124,7 @@ All synced records are designed for future sync from day one.
 - **Budget** (optional hard cap, see §6):
   - `budgetMinutes` or `budgetCents` (nullable; at most one is set). Neither set = no budget. A money budget uses the client's currency.
   - `budgetPeriod`: `total` (a fixed cap for a one-off project) | `week` | `month` (a rolling cap for a retainer).
-  - `budgetResetDay` (1–28, default 1): the day of the month a `month` budget resets. A `week` budget resets on the week-start preference.
+  - `budgetResetDay`: when a rolling budget resets. `month`: day of the month, 1–28 (default 1). `week`: ISO weekday, 1 = Monday … 7 = Sunday (defaults to the week-start preference when the budget is created).
 
 ### Session
 

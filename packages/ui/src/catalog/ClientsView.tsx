@@ -64,6 +64,7 @@ export interface ClientsViewProps {
   favorites: readonly (string | null)[]
   /** For rolling budgets. */
   zone: string
+  /** Default reset weekday for new weekly budgets. */
   weekStartsOn: WeekStartDay
   /** Clients whose cards are collapsed (remembered by the app). */
   collapsedClientIds: ReadonlySet<string>
@@ -98,7 +99,6 @@ export function ClientsView(props: ClientsViewProps) {
     clients,
     now,
     zone: props.zone,
-    weekStartsOn: props.weekStartsOn,
   })
   const hasArchived = clients.some((c) => c.archived) || projects.some((p) => p.archived)
   const visibleClients = clients.filter((c) => showArchived || !c.archived)

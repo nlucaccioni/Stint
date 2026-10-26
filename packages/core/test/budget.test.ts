@@ -5,9 +5,11 @@ import {
   budgetFields,
   budgetRange,
   budgetUsage,
+  isoToWeekStartDay,
   parseHours,
   projectBudget,
   toHoursInput,
+  weekStartDayToIso,
   type Budget,
 } from '../src/budget'
 import { StintError } from '../src/errors'
@@ -50,8 +52,12 @@ describe('budgetFields', () => {
     expect(projectBudget(project(budgetFields(b)))).toEqual(b)
   })
 
-  it('ignores the reset day unless the budget is monthly', () => {
-    expect(budgetFields(hours(5, 'week', 40)).budgetResetDay).toBe(1)
+  it('ignores the reset day for a fixed budget', () => {
+    expect(budgetFields(hours(5, 'total', 40)).budgetResetDay).toBe(1)
+  })
+
+  it('keeps a weekday (1–7) for a weekly budget', () => {
+    expect(budgetFields(hours(5, 'week', 7)).budgetResetDay).toBe(7)
   })
 
   it.each([
@@ -61,6 +67,8 @@ describe('budgetFields', () => {
     [{ period: 'year' as Budget['period'] }],
     [{ period: 'month' as const, resetDay: 29 }],
     [{ period: 'month' as const, resetDay: 0 }],
+    [{ period: 'week' as const, resetDay: 0 }],
+    [{ period: 'week' as const, resetDay: 8 }],
   ])('rejects %o', (bad) => {
     expect(code(() => budgetFields({ ...hours(10), ...bad }))).toBe('invalid-budget')
   })
@@ -88,25 +96,35 @@ describe('budgetRange', () => {
   const now = at(2026, 3, 18, 15) // Wednesday 2026-03-18, 11:00 in New York
 
   it('is unbounded for a fixed budget', () => {
-    expect(budgetRange(hours(1), now, NY, 1)).toBeNull()
+    expect(budgetRange(hours(1), now, NY)).toBeNull()
   })
 
   it('is the current local week for a weekly budget', () => {
-    expect(budgetRange(hours(1, 'week'), now, NY, 1)).toEqual({
+    expect(budgetRange(hours(1, 'week'), now, NY)).toEqual({
       start: at(2026, 3, 16, 4), // Monday midnight EDT
       end: at(2026, 3, 23, 4),
     })
   })
 
+  it('starts a weekly budget on its reset weekday', () => {
+    // Reset on Wednesday (3): the week runs Wednesday to Wednesday.
+    expect(budgetRange(hours(1, 'week', 3), now, NY)).toEqual({
+      start: at(2026, 3, 18, 4),
+      end: at(2026, 3, 25, 4),
+    })
+    // Reset on Sunday (7): the week began last Sunday.
+    expect(budgetRange(hours(1, 'week', 7), now, NY)?.start).toBe(at(2026, 3, 15, 4))
+  })
+
   it('starts on this month’s reset day once it has passed', () => {
-    expect(budgetRange(hours(1, 'month', 15), now, NY, 1)).toEqual({
+    expect(budgetRange(hours(1, 'month', 15), now, NY)).toEqual({
       start: at(2026, 3, 15, 4),
       end: at(2026, 4, 15, 4),
     })
   })
 
   it('starts on last month’s reset day before it comes round', () => {
-    expect(budgetRange(hours(1, 'month', 20), now, NY, 1)).toEqual({
+    expect(budgetRange(hours(1, 'month', 20), now, NY)).toEqual({
       start: at(2026, 2, 20, 5), // EST before the DST change
       end: at(2026, 3, 20, 4),
     })
@@ -114,13 +132,13 @@ describe('budgetRange', () => {
 
   it('resets exactly at local midnight on the reset day', () => {
     const midnight = at(2026, 3, 20, 4)
-    expect(budgetRange(hours(1, 'month', 20), midnight, NY, 1)?.start).toBe(midnight)
+    expect(budgetRange(hours(1, 'month', 20), midnight, NY)?.start).toBe(midnight)
   })
 })
 
 describe('budgetUsage', () => {
   const now = at(2026, 3, 18, 15)
-  const base = { client: client(), now, zone: NY, weekStartsOn: 1 as const }
+  const base = { client: client(), now, zone: NY }
 
   it('is null without a budget', () => {
     expect(budgetUsage({ ...base, project: project(), sessions: [] })).toBeNull()
@@ -245,5 +263,14 @@ describe('parseHours / toHoursInput', () => {
     expect(toHoursInput(1200)).toBe('20')
     expect(toHoursInput(750)).toBe('12.5')
     expect(toHoursInput(100)).toBe('1.67')
+  })
+})
+
+describe('ISO weekdays', () => {
+  it('converts to and from date-fns weekdays (0 = Sunday)', () => {
+    expect(isoToWeekStartDay(1)).toBe(1)
+    expect(isoToWeekStartDay(7)).toBe(0)
+    expect(weekStartDayToIso(0)).toBe(7)
+    expect(weekStartDayToIso(6)).toBe(6)
   })
 })
