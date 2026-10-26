@@ -73,7 +73,7 @@
 }
 
 /* A timer for this client is running: a soft glow in its color (Figma: a 100px
-   drop shadow at 10%). Figma draws it behind the card's translucent fill too,
+   drop shadow at 10%; doubled to 20% here by request). Figma draws it behind the card's translucent fill too,
    tinting the card; a CSS box-shadow never paints under its own box, so the glow
    is a blurred copy of the card instead (blur 50px ≈ Figma's 100px). It sits on a
    layer below all the cards (z-index -1 inside .clientList), so it never covers one. */
@@ -83,7 +83,7 @@
   z-index: -1;
   inset: 0;
   border-radius: inherit;
-  background: color-mix(in srgb, var(--client-color) 10%, transparent);
+  background: color-mix(in srgb, var(--client-color) 20%, transparent);
   filter: blur(50px);
   /* A faint trace of the glow at all times; full strength while running. */
   opacity: 0.3;
