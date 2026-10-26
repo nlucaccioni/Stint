@@ -53,16 +53,19 @@
   outline-offset: 2px;
 }
 
-.custom {
-  display: inline-flex;
-  align-items: center;
+/* The chips, and the custom From – To dates under them: 8px apart, so they read
+   as one control (the page's sections are 16px apart). */
+.rangePicker {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  margin-left: var(--space-2);
 }
 
-/* Compact date buttons in the range bar (the 40px form size is too tall here). */
-.rangeDate {
-  height: 32px;
+.custom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
 }
 
 /* Headline figures */

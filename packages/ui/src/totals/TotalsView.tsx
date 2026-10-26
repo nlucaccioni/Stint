@@ -109,44 +109,45 @@ export function TotalsView(props: TotalsViewProps) {
         </Button>
       </header>
 
-      <div className={styles.filters} role="group" aria-label="Date Range">
-        {PRESETS.map(({ preset, label }) => (
+      <div className={styles.rangePicker}>
+        <div className={styles.filters} role="group" aria-label="Date Range">
+          {PRESETS.map(({ preset, label }) => (
+            <button
+              key={preset}
+              type="button"
+              className={styles.chip}
+              aria-pressed={selection.kind === 'preset' && selection.preset === preset}
+              onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
+            >
+              {label}
+            </button>
+          ))}
           <button
-            key={preset}
             type="button"
             className={styles.chip}
-            aria-pressed={selection.kind === 'preset' && selection.preset === preset}
-            onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
+            aria-pressed={selection.kind === 'custom'}
+            onClick={() =>
+              props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
+            }
           >
-            {label}
+            Custom
           </button>
-        ))}
-        <button
-          type="button"
-          className={styles.chip}
-          aria-pressed={selection.kind === 'custom'}
-          onClick={() =>
-            props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
-          }
-        >
-          Custom
-        </button>
+        </div>
+        {/* Its own row under the chips, starting at the left edge. */}
         {selection.kind === 'custom' && (
-          <span className={styles.custom}>
+          <div className={styles.custom}>
             <DateInput
-              className={styles.rangeDate}
               aria-label="From"
               value={selection.from}
               onChange={(from) => props.onSelectionChange({ ...selection, from })}
             />
             <span aria-hidden>–</span>
             <DateInput
-              className={styles.rangeDate}
               aria-label="To"
               value={selection.to}
               onChange={(to) => props.onSelectionChange({ ...selection, to })}
             />
-          </span>
+          </div>
         )}
       </div>
 
