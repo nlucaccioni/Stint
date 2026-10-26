@@ -158,6 +158,8 @@ export function App() {
                   onUpdateProject={catalog.updateProject}
                   onDeleteClient={catalog.deleteClient}
                   onDeleteProject={catalog.deleteProject}
+                  onMoveClient={catalog.moveClient}
+                  onMoveProject={catalog.moveProject}
                 />
               )}
               {tab === 'time' && (

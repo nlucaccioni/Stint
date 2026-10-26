@@ -378,3 +378,73 @@
   display: flex;
   justify-content: center;
 }
+
+/* Drag to reorder. The grip sits in the left padding, left of the name, and shows
+   on hover. A line marks where the dragged item will land. */
+.clientBar,
+.projectBar {
+  position: relative;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 20px;
+  color: var(--color-text-muted);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.15s;
+  cursor: grab;
+}
+
+.dragHandle > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.clientBar:hover > .dragHandle,
+.projectBar:hover > .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.clientCard[data-drop],
+.projectBar[data-drop] {
+  position: relative;
+}
+
+.clientCard[data-drop]::after,
+.projectBar[data-drop]::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-text);
+  pointer-events: none;
+}
+
+/* Halfway into the gap between cards (16px) or project bars (4px). */
+.clientCard[data-drop='before']::after {
+  top: -9px;
+}
+
+.clientCard[data-drop='after']::after {
+  bottom: -9px;
+}
+
+.projectBar[data-drop='before']::after {
+  top: -3px;
+}
+
+.projectBar[data-drop='after']::after {
+  bottom: -3px;
+}

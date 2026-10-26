@@ -22,6 +22,7 @@ import {
 } from '@stint/core'
 import {
   ChevronUp,
+  GripVertical,
   PanelTopClose,
   PanelTopOpen,
   Play,
@@ -35,6 +36,7 @@ import { IconButton } from '../components/IconButton'
 import { Menu } from '../components/Menu'
 import { Tag } from '../components/Tag'
 import { useNow } from '../timer/useNow'
+import { useReorder } from './useReorder'
 import { ClientForm } from './ClientForm'
 import { ConfirmDelete, type DeleteTarget } from './ConfirmDelete'
 import { ProjectForm } from './ProjectForm'
@@ -80,6 +82,9 @@ export interface ClientsViewProps {
   onUpdateProject: (id: string, edits: ProjectEdits) => Promise<unknown>
   onDeleteClient: (id: string) => Promise<unknown>
   onDeleteProject: (id: string) => Promise<unknown>
+  /** Reorder: put the item just before `beforeId` (null = at the end). */
+  onMoveClient: (id: string, beforeId: string | null) => Promise<unknown>
+  onMoveProject: (id: string, beforeId: string | null) => Promise<unknown>
 }
 
 type Editing =
@@ -105,6 +110,11 @@ export function ClientsView(props: ClientsViewProps) {
   const hasArchived = clients.some((c) => c.archived) || projects.some((p) => p.archived)
   const visibleClients = clients.filter((c) => showArchived || !c.archived)
   const close = () => setEditing(null)
+  const clientOrder = useReorder(
+    'clients',
+    visibleClients.map((c) => c.id),
+    (id, beforeId) => act(props.onMoveClient(id, beforeId)),
+  )
 
   /** For actions taken straight from the list (no form to show the error in). */
   function act(action: Promise<unknown>) {
@@ -159,6 +169,8 @@ export function ClientsView(props: ClientsViewProps) {
                 client={client}
                 projects={shown}
                 summaries={summaries}
+                reorder={clientOrder}
+                onMoveProject={(id, beforeId) => act(props.onMoveProject(id, beforeId))}
                 collapsed={props.collapsedClientIds.has(client.id)}
                 onToggleCollapsed={() => props.onToggleCollapsed(client.id)}
                 runningProjectId={props.runningProjectId}
@@ -243,6 +255,9 @@ interface ClientCardProps {
   client: Client
   projects: readonly Project[]
   summaries: ReadonlyMap<string, ProjectSummary>
+  /** The client list's drag-to-reorder. */
+  reorder: ReturnType<typeof useReorder>
+  onMoveProject: (id: string, beforeId: string | null) => void
   collapsed: boolean
   onToggleCollapsed: () => void
   runningProjectId: string | null
@@ -257,8 +272,13 @@ interface ClientCardProps {
   onDeleteProject: (project: Project) => void
 }
 
-function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCardProps) {
+function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: ClientCardProps) {
   const running = projects.some((p) => p.id === on.runningProjectId)
+  const projectOrder = useReorder(
+    `projects:${client.id}`,
+    projects.map((p) => p.id),
+    on.onMoveProject,
+  )
   const totalMs = projects.reduce((n, p) => n + (summaries.get(p.id)?.unbilledMs ?? 0), 0)
   return (
     <li
@@ -267,10 +287,15 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
       data-archived={client.archived || undefined}
       data-running={running || undefined}
       style={{ '--client-color': client.color } as CSSProperties}
+      {...reorder.itemProps(client.id)}
     >
       <span className={styles.colorBar} aria-hidden />
       <div className={styles.clientCardBody}>
         <div className={styles.clientBar}>
+          <DragHandle
+            label={`Drag to reorder ${client.name}`}
+            {...reorder.handleProps(client.id)}
+          />
           <div className={styles.nameGroup}>
             <span className={styles.clientName}>{client.name}</span>
           </div>
@@ -282,6 +307,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
               label={`Actions for ${client.name}`}
               items={[
                 { label: 'Edit', onSelect: on.onEdit },
+                ...reorder.menuItems(client.id),
                 { label: client.archived ? 'Unarchive' : 'Archive', onSelect: on.onArchive },
                 { label: 'Delete…', onSelect: on.onDelete, danger: true },
               ]}
@@ -316,6 +342,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
                     summary={summaries.get(project.id)}
                     running={project.id === on.runningProjectId}
                     slot={favoriteSlot(on.favorites, project.id)}
+                    reorder={projectOrder}
                     onToggleTimer={() => on.onToggleTimer(project)}
                     onEdit={() => on.onEditProject(project)}
                     onArchive={() => on.onArchiveProject(project)}
@@ -344,6 +371,7 @@ function ProjectRow(props: {
   summary: ProjectSummary | undefined
   running: boolean
   slot: number | null
+  reorder: ReturnType<typeof useReorder>
   onToggleTimer: () => void
   onEdit: () => void
   onArchive: () => void
@@ -358,7 +386,12 @@ function ProjectRow(props: {
       className={styles.projectBar}
       data-archived={project.archived || undefined}
       data-capped={summary?.budget ? '' : undefined}
+      {...props.reorder.itemProps(project.id)}
     >
+      <DragHandle
+        label={`Drag to reorder ${project.name}`}
+        {...props.reorder.handleProps(project.id)}
+      />
       {/* Name, with the budget bar under it when the project has one. */}
       <div className={styles.projectDetails}>
         <div className={styles.nameGroup}>
@@ -381,6 +414,7 @@ function ProjectRow(props: {
           label={`Actions for ${project.name}`}
           items={[
             { label: 'Edit', onSelect: props.onEdit },
+            ...props.reorder.menuItems(project.id),
             { label: project.archived ? 'Unarchive' : 'Archive', onSelect: props.onArchive },
             { label: 'Delete…', onSelect: props.onDelete, danger: true },
           ]}
@@ -441,6 +475,21 @@ function BudgetBar({ usage, currency }: { usage: BudgetUsage; currency: string }
       </div>
       <span className={styles.budgetLabel}>{label}</span>
     </div>
+  )
+}
+
+/**
+ * The grip that starts a drag. Shown on hover; from the keyboard, Move Up and
+ * Move Down in the ⋯ menu do the same thing.
+ */
+function DragHandle({
+  label,
+  ...drag
+}: { label: string } & ReturnType<ReturnType<typeof useReorder>['handleProps']>) {
+  return (
+    <span className={styles.dragHandle} title={label} aria-hidden {...drag}>
+      <GripVertical />
+    </span>
   )
 }
 
