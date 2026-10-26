@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Totals for a chosen date range: headline figures, a client → project breakdown,
 // and time per day. Everything is computed from sessions (core), never stored.
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   computeTotals,
   dailyTotals,
@@ -258,7 +258,11 @@ function Tile({ label, value }: { label: string; value: string | string[] }) {
 function Name({ color, children }: { color: string | undefined; children: ReactNode }) {
   return (
     <span className={styles.name}>
-      <span className={styles.swatch} style={{ background: color }} aria-hidden />
+      <span
+        className={styles.swatch}
+        style={{ '--client-color': color } as CSSProperties}
+        aria-hidden
+      />
       {children}
     </span>
   )

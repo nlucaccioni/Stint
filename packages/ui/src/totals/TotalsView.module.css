@@ -14,6 +14,7 @@
 .heading {
   margin: 0;
   font-size: var(--text-lg);
+  font-weight: 600;
 }
 
 .range {
@@ -27,14 +28,16 @@
   gap: var(--space-1);
 }
 
+/* Range chips, styled like the tabs: muted, the chosen one on the wash. */
 .chip {
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border: 0;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
   font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -43,8 +46,7 @@
 }
 
 .chip[aria-pressed='true'] {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  background: var(--color-wash);
   color: var(--color-text);
 }
 
@@ -82,7 +84,7 @@
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background: var(--color-surface-translucent-active);
 }
 
 .tileLabel {
@@ -157,11 +159,14 @@
   gap: var(--space-2);
 }
 
+/* The client's dot, with a soft glow in its color (as on Billing). */
 .swatch {
   flex: none;
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  background: var(--client-color);
+  box-shadow: 0 0 34px 0 var(--client-color);
 }
 
 .tileValue[data-several] {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Command-palette style switcher: type to find a project, Enter to start it
 // (or switch to it, or stop it if it's already running).
-import { useMemo, useState, type KeyboardEvent } from 'react'
+import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Search, Square, Star } from 'lucide-react'
 import { favoriteSlot, fuzzySearch, type Client, type Project, type Session } from '@stint/core'
 import styles from './QuickSwitcher.module.css'
@@ -137,7 +137,7 @@ export function QuickSwitcher(props: QuickSwitcherProps) {
               ) : (
                 <span
                   className={styles.swatch}
-                  style={{ background: row.client.color }}
+                  style={{ '--client-color': row.client.color } as CSSProperties}
                   aria-hidden
                 />
               )}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Recorded time for one week, grouped by day (newest first). Click a row to edit.
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import {
   formatClock,
   groupByDay,
@@ -97,9 +97,7 @@ export function SessionLog(props: SessionLogProps) {
                   >
                     <span
                       className={styles.swatch}
-                      style={{
-                        background: client?.color,
-                      }}
+                      style={{ '--client-color': client?.color } as CSSProperties}
                       aria-hidden
                     />
                     <span className={styles.what}>
@@ -109,10 +107,10 @@ export function SessionLog(props: SessionLogProps) {
                       </span>
                       {s.note && <span className={styles.note}>{s.note}</span>}
                     </span>
-                    {!s.billable && <span className={styles.tag}>Non-billable</span>}
+                    {!s.billable && <span className={styles.tag}>Non-Billable</span>}
                     {s.billingBatchId && (
                       <span className={styles.tag} title="Billed sessions are locked">
-                        <Lock size={11} aria-hidden />{' '}
+                        <Lock size={8} aria-hidden />{' '}
                         {billingStatus(s, batches) === 'paid' ? 'Paid' : 'Billed'}
                       </span>
                     )}
