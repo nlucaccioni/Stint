@@ -35,7 +35,10 @@ export function hexToRgb(hex: string): Rgb | null {
 }
 
 export function rgbToHex({ r, g, b }: Rgb): string {
-  const part = (n: number) => Math.round(clamp(n, 0, 255)).toString(16).padStart(2, '0')
+  const part = (n: number) =>
+    Math.round(clamp(n, 0, 255))
+      .toString(16)
+      .padStart(2, '0')
   return `#${part(r)}${part(g)}${part(b)}`
 }
 
