@@ -352,7 +352,8 @@
   overflow: hidden;
   height: 2px;
   border-radius: var(--radius-pill);
-  background: var(--color-border);
+  /* Translucent, so it reads on top of the card's glow in any client color. */
+  background: var(--color-wash-strong);
 }
 
 .budgetFill {
