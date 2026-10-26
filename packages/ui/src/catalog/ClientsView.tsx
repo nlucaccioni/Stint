@@ -71,6 +71,8 @@ export interface ClientsViewProps {
   onToggleCollapsed: (clientId: string) => void
   /** Search button: opens the quick switcher. */
   onSearch: () => void
+  /** The app's own screen color picker, if it has one (see ColorPicker). */
+  pickScreenColor?: () => Promise<string | null>
   onToggleTimer: (projectId: string) => Promise<unknown>
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
@@ -212,6 +214,7 @@ export function ClientsView(props: ClientsViewProps) {
           client={editing.client}
           defaultColor={PALETTE[clients.length % PALETTE.length]!}
           defaultCurrency={props.defaultCurrency}
+          pickScreenColor={props.pickScreenColor}
           onSubmit={async (values) => {
             if (editing.client) await props.onUpdateClient(editing.client.id, values)
             else await props.onCreateClient(values)

@@ -31,6 +31,8 @@ export interface ClientFormProps {
   defaultCurrency: string
   onSubmit: (values: ClientInput) => Promise<void>
   onClose: () => void
+  /** The app's own screen color picker, if it has one (see ColorPicker). */
+  pickScreenColor?: () => Promise<string | null>
 }
 
 export function ClientForm({
@@ -39,6 +41,7 @@ export function ClientForm({
   defaultCurrency,
   onSubmit,
   onClose,
+  pickScreenColor,
 }: ClientFormProps) {
   const [name, setName] = useState(client?.name ?? '')
   const [color, setColor] = useState(client?.color ?? defaultColor)
@@ -76,7 +79,7 @@ export function ClientForm({
             </Field>
           </div>
           <Field label="Color">
-            <ColorPicker value={color} onChange={setColor} />
+            <ColorPicker value={color} onChange={setColor} pickScreenColor={pickScreenColor} />
           </Field>
         </div>
         <div className={styles.row}>

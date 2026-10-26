@@ -43,6 +43,12 @@ export interface ColorPickerProps {
   className?: string
   'aria-describedby'?: string
   'aria-label'?: string
+  /**
+   * The app's own screen picker, if it has one (Stint on Windows/Linux, where the
+   * browser eyedropper shows no magnifier outside the window). Resolves with
+   * "#rrggbb", or null if cancelled. Without it, the browser's EyeDropper is used.
+   */
+  pickScreenColor?: () => Promise<string | null>
 }
 
 export function ColorPicker(props: ColorPickerProps) {
@@ -76,11 +82,16 @@ export function ColorPicker(props: ColorPickerProps) {
   const hex = rgbToHex(rgb)
   const hueColor = rgbToHex(hsvToRgb({ h: hsv.h, s: 100, v: 100 }))
 
+  const canPick = Boolean(props.pickScreenColor || window.EyeDropper)
+
   async function pickFromScreen() {
-    if (!window.EyeDropper) return
     try {
-      const { sRGBHex } = await new window.EyeDropper().open()
-      setFromHex(sRGBHex)
+      const picked = props.pickScreenColor
+        ? await props.pickScreenColor()
+        : window.EyeDropper
+          ? (await new window.EyeDropper().open()).sRGBHex
+          : null
+      if (picked) setFromHex(picked)
     } catch {
       // Cancelled with Esc.
     }
@@ -109,7 +120,7 @@ export function ColorPicker(props: ColorPickerProps) {
       >
         <SaturationArea hsv={hsv} hueColor={hueColor} onChange={update} />
         <div className={styles.row}>
-          {window.EyeDropper && (
+          {canPick && (
             <button
               type="button"
               className={styles.eyedropper}

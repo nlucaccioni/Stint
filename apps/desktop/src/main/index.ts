@@ -40,6 +40,7 @@ import type { TrayCommand, TrayModel } from './tray-menu'
 import { IdleWatcher } from './idle'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
+import { finishScreenPick, pickScreenColor, screenCapture } from './screen-picker'
 import { hideSwitcher, showSwitcher } from './switcher'
 import { checkForUpdatesNow, startUpdateChecks } from './updates'
 import { createSecureWindow, loadRenderer } from './windows'
@@ -365,6 +366,7 @@ void app.whenReady().then(() => {
       },
       hideSwitcher,
       showSwitcher,
+      screenPicker: { pick: pickScreenColor, capture: screenCapture, finish: finishScreenPick },
       titleBar: {
         showMenu: (x, y) => {
           if (mainWindow) popUpAppMenu(mainWindow, x, y)

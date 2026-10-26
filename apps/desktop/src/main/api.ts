@@ -43,6 +43,7 @@ import type {
   HotkeyState,
   IdleAway,
   LaunchAtLogin,
+  ScreenCapture,
   StintApi,
   TimerState,
 } from '../shared/api'
@@ -97,6 +98,12 @@ export interface ApiDeps {
   loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
   hideSwitcher?: () => void
   showSwitcher?: () => void
+  /** The screen color picker overlays (see main/screen-picker.ts). */
+  screenPicker?: {
+    pick: () => Promise<string | null>
+    capture: (displayId: number) => ScreenCapture | null
+    finish: (hex: string | null) => void
+  }
   /** The main window's own title bar (see renderer TitleBar.tsx). */
   titleBar?: {
     showMenu: (x: number, y: number) => void
@@ -105,7 +112,7 @@ export interface ApiDeps {
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
-type AsyncMethod = 'exportCsv'
+type AsyncMethod = 'exportCsv' | 'pickScreenColor'
 
 /**
  * Each handler takes raw arguments and returns the value (or throws). Most are
@@ -514,6 +521,28 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
 
     hideSwitcher: () => deps.hideSwitcher?.(),
     showSwitcher: () => deps.showSwitcher?.(),
+
+    pickScreenColor: async (...args) => {
+      z.tuple([]).parse(args)
+      return deps.screenPicker ? deps.screenPicker.pick() : null
+    },
+
+    getScreenCapture: (...args) => {
+      const [displayId] = z.tuple([z.number().int()]).parse(args)
+      return deps.screenPicker?.capture(displayId) ?? null
+    },
+
+    finishScreenColorPick: (...args) => {
+      const [hex] = z
+        .tuple([
+          z
+            .string()
+            .regex(/^#[0-9a-f]{6}$/i)
+            .nullable(),
+        ])
+        .parse(args)
+      deps.screenPicker?.finish(hex === null ? null : hex.toLowerCase())
+    },
 
     showAppMenu: (...args) => {
       const [x, y] = z.tuple([z.number().int().min(0), z.number().int().min(0)]).parse(args)

@@ -74,6 +74,13 @@ export interface OverlapQuery {
   endedAt: number | null
 }
 
+/** One display's screenshot for the screen color picker, as RGBA pixels. */
+export interface ScreenCapture {
+  width: number
+  height: number
+  pixels: Uint8Array
+}
+
 export interface AppInfo {
   version: string
   platform: 'darwin' | 'win32' | 'linux'
@@ -162,6 +169,15 @@ export interface StintApi {
   hideSwitcher(): Promise<void>
   /** Open the quick switcher (the Projects tab's Search button). */
   showSwitcher(): Promise<void>
+  /**
+   * Pick a color from anywhere on screen (Windows/Linux; macOS uses the system
+   * picker). Resolves with "#rrggbb", or null if cancelled.
+   */
+  pickScreenColor(): Promise<string | null>
+  /** For a picker overlay window: its display's screenshot. */
+  getScreenCapture(displayId: number): Promise<ScreenCapture | null>
+  /** For a picker overlay window: the picked color, or null to cancel. */
+  finishScreenColorPick(hex: string | null): Promise<void>
   /** Open the app menu (File, Edit, View, Window) at a point in the window. Windows/Linux. */
   showAppMenu(x: number, y: number): Promise<void>
   /** Color the window buttons drawn by Windows/Linux to match the title bar. */
@@ -222,6 +238,9 @@ export const apiMethods = [
   'listRecentProjectIds',
   'hideSwitcher',
   'showSwitcher',
+  'pickScreenColor',
+  'getScreenCapture',
+  'finishScreenColorPick',
   'showAppMenu',
   'setTitleBarColors',
   'listBatches',

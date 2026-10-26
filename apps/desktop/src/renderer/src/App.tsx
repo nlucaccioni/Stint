@@ -147,6 +147,10 @@ export function App() {
                   collapsedClientIds={collapsedClients.collapsed}
                   onToggleCollapsed={collapsedClients.toggle}
                   onSearch={() => void api.showSwitcher()}
+                  // macOS's own picker already magnifies and holds the click.
+                  pickScreenColor={
+                    info && info.platform !== 'darwin' ? () => api.pickScreenColor() : undefined
+                  }
                   onToggleTimer={timer.toggle}
                   onCreateClient={catalog.createClient}
                   onUpdateClient={catalog.updateClient}
