@@ -176,31 +176,30 @@ export function BatchDialog(props: BatchDialogProps) {
             <Field label="Paid On">
               <DateInput value={paidOn} onChange={setPaidOn} />
             </Field>
-            {/* Same height as the date box, so the button sits centered on it. */}
+            {/* Same height as the date box, so the buttons sit centered on it. */}
             {!adding && (
               <div className={styles.paidActions}>
-                <Button onClick={() => setAdding(true)}>Add Sessions…</Button>
+                <Button onClick={() => setAdding(true)}>Add Sessions</Button>
               </div>
             )}
+            <div className={`${styles.paidActions} ${styles.unbill}`}>
+              <DeleteAction
+                kind="session"
+                onError={setError}
+                deletion={{
+                  allowed: true,
+                  question: 'Un-bill this batch? All its sessions become unbilled again.',
+                  onDelete: async () => {
+                    await props.onUnbillBatch(batch.id)
+                    props.onClose()
+                  },
+                }}
+                label="Un-bill Batch"
+                confirmLabel="Un-bill"
+                warning=""
+              />
+            </div>
           </div>
-        )}
-
-        {!isPaid && (
-          <DeleteAction
-            kind="session"
-            onError={setError}
-            deletion={{
-              allowed: true,
-              question: 'Un-bill this batch? All its sessions become unbilled again.',
-              onDelete: async () => {
-                await props.onUnbillBatch(batch.id)
-                props.onClose()
-              },
-            }}
-            label="Un-bill Batch…"
-            confirmLabel="Un-bill"
-            warning=""
-          />
         )}
 
         {error && (
