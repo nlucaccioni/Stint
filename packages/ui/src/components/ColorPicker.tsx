@@ -5,7 +5,6 @@
 // The panel is a native popover anchored to the swatch, like Menu and Select. The
 // picker works in HSV internally so the hue survives dragging through greys.
 import {
-  useEffect,
   useId,
   useRef,
   useState,
@@ -53,14 +52,14 @@ export function ColorPicker(props: ColorPickerProps) {
   const [hsv, setHsv] = useState<Hsv>(() => rgbToHsv(hexToRgb(value) ?? { r: 0, g: 0, b: 0 }))
   const [mode, setMode] = useState<Mode>('hsl')
 
-  // Follow outside changes to `value`, but keep our hue when the hex is the same.
-  useEffect(() => {
-    if (rgbToHex(hsvToRgb(hsv)) !== value.toLowerCase()) {
-      const rgb = hexToRgb(value)
-      if (rgb) setHsv(rgbToHsv(rgb))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when value changes
-  }, [value])
+  // Follow outside changes to `value` (adjusting state during render, React's
+  // recommended pattern), but keep our hue when the hex is the same.
+  const [seenValue, setSeenValue] = useState(value)
+  if (value !== seenValue) {
+    setSeenValue(value)
+    const rgb = hexToRgb(value)
+    if (rgb && rgbToHex(hsvToRgb(hsv)) !== value.toLowerCase()) setHsv(rgbToHsv(rgb))
+  }
 
   function update(next: Hsv) {
     setHsv(next)
