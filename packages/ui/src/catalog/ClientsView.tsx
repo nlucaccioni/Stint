@@ -288,7 +288,7 @@ function ClientCard({ client, projects, summaries, collapsed, ...on }: ClientCar
               <span className={styles.elapsed}>{formatClock(totalMs)}</span>
             </span>
             <IconButton
-              label={collapsed ? `Show projects for ${client.name}` : `Hide projects`}
+              label={collapsed ? `Show Projects for ${client.name}` : `Hide Projects`}
               aria-expanded={!collapsed}
               onClick={on.onToggleCollapsed}
             >
@@ -441,5 +441,5 @@ function BudgetBar({ usage, currency }: { usage: BudgetUsage; currency: string }
 }
 
 function rateLabel(cents: number | null, currency: string): string {
-  return cents === null ? 'No rate' : `${formatMoney(cents, currency)}/hr`
+  return cents === null ? 'No Rate' : `${formatMoney(cents, currency)}/hr`
 }

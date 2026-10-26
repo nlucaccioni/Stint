@@ -23,10 +23,10 @@ import styles from './TotalsView.module.css'
 const PRESETS: { preset: RangePreset; label: string }[] = [
   { preset: 'today', label: 'Today' },
   { preset: 'yesterday', label: 'Yesterday' },
-  { preset: 'thisWeek', label: 'This week' },
-  { preset: 'lastWeek', label: 'Last week' },
-  { preset: 'thisMonth', label: 'This month' },
-  { preset: 'lastMonth', label: 'Last month' },
+  { preset: 'thisWeek', label: 'This Week' },
+  { preset: 'lastWeek', label: 'Last Week' },
+  { preset: 'thisMonth', label: 'This Month' },
+  { preset: 'lastMonth', label: 'Last Month' },
 ]
 
 /** Longest range that gets a per-day list. */
@@ -94,7 +94,7 @@ export function TotalsView(props: TotalsViewProps) {
           <span className={styles.exported} role="status">
             Exported {exportStatus.count} {exportStatus.count === 1 ? 'session' : 'sessions'}.{' '}
             <Button size="sm" variant="ghost" onClick={props.onShowExport}>
-              Show file
+              Show File
             </Button>
           </span>
         )}
@@ -108,7 +108,7 @@ export function TotalsView(props: TotalsViewProps) {
         </Button>
       </header>
 
-      <div className={styles.filters} role="group" aria-label="Date range">
+      <div className={styles.filters} role="group" aria-label="Date Range">
         {PRESETS.map(({ preset, label }) => (
           <button
             key={preset}
@@ -154,10 +154,10 @@ export function TotalsView(props: TotalsViewProps) {
       </div>
 
       <div className={styles.tiles}>
-        <Tile label="Total time" value={formatClock(totals.ms)} />
-        <Tile label="Billable time" value={formatClock(totals.billableMs)} />
+        <Tile label="Total Time" value={formatClock(totals.ms)} />
+        <Tile label="Billable Time" value={formatClock(totals.billableMs)} />
         <Tile
-          label="Billable amount"
+          label="Billable Amount"
           value={
             totals.amounts.length === 0
               ? '—'
@@ -170,7 +170,7 @@ export function TotalsView(props: TotalsViewProps) {
         <p className={styles.empty}>No time recorded in this range.</p>
       ) : (
         <table className={styles.table}>
-          <caption className={styles.caption}>By client and project</caption>
+          <caption className={styles.caption}>By Client and Project</caption>
           <thead>
             <tr>
               <th scope="col">Client / project</th>
@@ -192,7 +192,7 @@ export function TotalsView(props: TotalsViewProps) {
               <tbody key={ct.clientId}>
                 <tr className={styles.clientRow}>
                   <th scope="row">
-                    <Name color={client?.color}>{client?.name ?? 'Unknown client'}</Name>
+                    <Name color={client?.color}>{client?.name ?? 'Unknown Client'}</Name>
                   </th>
                   <td className={styles.num}>{formatClock(ct.ms)}</td>
                   <td className={styles.num}>{formatClock(ct.billableMs)}</td>
@@ -203,7 +203,7 @@ export function TotalsView(props: TotalsViewProps) {
                   return (
                     <tr key={pt.projectId} className={styles.projectRow}>
                       <th scope="row">
-                        <Name color={client?.color}>{project?.name ?? 'Unknown project'}</Name>
+                        <Name color={client?.color}>{project?.name ?? 'Unknown Project'}</Name>
                       </th>
                       <td className={styles.num}>{formatClock(pt.ms)}</td>
                       <td className={styles.num}>{formatClock(pt.billableMs)}</td>
@@ -219,7 +219,7 @@ export function TotalsView(props: TotalsViewProps) {
 
       {days && days.length > 1 && totals.ms > 0 && (
         <table className={styles.table}>
-          <caption className={styles.caption}>By day</caption>
+          <caption className={styles.caption}>By Day</caption>
           <thead>
             <tr>
               <th scope="col">Day</th>

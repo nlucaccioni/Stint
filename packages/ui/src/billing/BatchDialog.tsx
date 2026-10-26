@@ -88,7 +88,7 @@ export function BatchDialog(props: BatchDialogProps) {
             ` Rounded ${batch.roundingMode} to ${batch.roundingMinutes} min per session.`}
         </p>
 
-        <ul className={styles.sessions} aria-label="Sessions in this batch">
+        <ul className={styles.sessions} aria-label="Sessions in This Batch">
           {sessions.map((s) => (
             <SessionLine
               key={s.id}
@@ -162,7 +162,7 @@ export function BatchDialog(props: BatchDialogProps) {
               <input value={reference} onChange={(e) => setReference(e.target.value)} />
             </Field>
           </div>
-          <Field label="Billed on">
+          <Field label="Billed On">
             <input
               type="date"
               value={billedOn}
@@ -182,11 +182,11 @@ export function BatchDialog(props: BatchDialogProps) {
                 void run(() => props.onUpdateBatch(batch.id, { paidAt: null }).then(() => {}))
               }
             >
-              Mark unpaid
+              Mark Unpaid
             </Button>
           ) : (
             <>
-              <Field label="Paid on">
+              <Field label="Paid On">
                 <input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
               </Field>
               <Button
@@ -197,9 +197,9 @@ export function BatchDialog(props: BatchDialogProps) {
                   )
                 }
               >
-                Mark paid
+                Mark Paid
               </Button>
-              {!adding && <Button onClick={() => setAdding(true)}>Add sessions…</Button>}
+              {!adding && <Button onClick={() => setAdding(true)}>Add Sessions…</Button>}
             </>
           )}
         </div>
@@ -216,7 +216,7 @@ export function BatchDialog(props: BatchDialogProps) {
                 props.onClose()
               },
             }}
-            label="Un-bill batch…"
+            label="Un-bill Batch…"
             confirmLabel="Un-bill"
             warning=""
           />
@@ -230,7 +230,7 @@ export function BatchDialog(props: BatchDialogProps) {
         <div className={formStyles.actions}>
           <Button onClick={props.onClose}>Close</Button>
           <Button type="submit" variant="primary" disabled={saving}>
-            Save details
+            Save Details
           </Button>
         </div>
       </form>
@@ -266,7 +266,7 @@ function AddSessions(props: {
   }
   return (
     <>
-      <ul className={styles.sessions} aria-label="Unbilled sessions to add">
+      <ul className={styles.sessions} aria-label="Unbilled Sessions to Add">
         {candidates.map((s) => (
           <SessionLine
             key={s.id}

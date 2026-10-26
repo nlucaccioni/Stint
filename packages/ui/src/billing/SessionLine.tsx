@@ -25,7 +25,7 @@ export function SessionLine(props: {
         {start}–{end}
       </span>
       <span className={styles.sessionWhat}>
-        {props.project?.name ?? 'Unknown project'}
+        {props.project?.name ?? 'Unknown Project'}
         {s.note && <span className={styles.muted}> · {s.note}</span>}
       </span>
       <span className={styles.num}>{formatClock(sessionDuration(s, props.now))}</span>

@@ -50,14 +50,14 @@ export function SessionLog(props: SessionLogProps) {
       <header className={styles.header}>
         <h1 className={styles.heading}>Time</h1>
         <div className={styles.nav}>
-          <Button size="sm" variant="ghost" aria-label="Previous week" onClick={props.onPrevWeek}>
+          <Button size="sm" variant="ghost" aria-label="Previous Week" onClick={props.onPrevWeek}>
             <ChevronLeft size={16} />
           </Button>
           <span className={styles.week}>{weekLabel(props.week, zone)}</span>
           <Button
             size="sm"
             variant="ghost"
-            aria-label="Next week"
+            aria-label="Next Week"
             onClick={props.onNextWeek}
             disabled={props.isCurrentWeek}
           >
@@ -65,13 +65,13 @@ export function SessionLog(props: SessionLogProps) {
           </Button>
           {!props.isCurrentWeek && (
             <Button size="sm" variant="ghost" onClick={props.onThisWeek}>
-              This week
+              This Week
             </Button>
           )}
         </div>
         <span className={styles.total}>{formatClock(weekTotal)}</span>
         <Button variant="primary" onClick={props.onAdd}>
-          <Plus size={16} /> Add time
+          <Plus size={16} /> Add Time
         </Button>
       </header>
 

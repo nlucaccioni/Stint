@@ -197,7 +197,7 @@ function startNudgeWatcher(database: Db): void {
       if (!Notification.isSupported()) return
       const project = getProject(database, running.projectId)
       const notification = new Notification({
-        title: 'Timer still running',
+        title: 'Timer Still Running',
         body: `${project?.name ?? 'Your timer'} has been running for ${formatClock(elapsed)}. Forgot to stop it?`,
       })
       notification.on('click', () => showMainWindow())

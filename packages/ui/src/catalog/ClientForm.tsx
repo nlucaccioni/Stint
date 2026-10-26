@@ -62,7 +62,7 @@ export function ClientForm({
   }
 
   return (
-    <Dialog title={client ? 'Edit client' : 'New client'} onClose={onClose}>
+    <Dialog title={client ? 'Edit Client' : 'New Client'} onClose={onClose}>
       <form className={styles.form} onSubmit={submit}>
         <div className={styles.row}>
           <div className={styles.grow}>
@@ -77,7 +77,7 @@ export function ClientForm({
         <div className={styles.row}>
           <div className={styles.grow}>
             <Field
-              label="Hourly rate"
+              label="Hourly Rate"
               hint="Leave empty if you don't bill this client by the hour."
             >
               <input
@@ -105,7 +105,7 @@ export function ClientForm({
         <div className={styles.actions}>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>
-            {client ? 'Save' : 'Add client'}
+            {client ? 'Save' : 'Add Client'}
           </Button>
         </div>
       </form>

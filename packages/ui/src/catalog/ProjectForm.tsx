@@ -82,21 +82,21 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
   }
 
   return (
-    <Dialog title={project ? 'Edit project' : `New project for ${client.name}`} onClose={onClose}>
+    <Dialog title={project ? 'Edit Project' : `New Project for ${client.name}`} onClose={onClose}>
       <form className={styles.form} onSubmit={submit}>
         <Field label="Name">
           <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
         </Field>
-        <Field label={`Hourly rate (${client.currency})`} hint={`Leave empty: ${clientRate}.`}>
+        <Field label={`Hourly Rate (${client.currency})`} hint={`Leave empty: ${clientRate}.`}>
           <input
             value={rate}
             onChange={(e) => setRate(e.target.value)}
             inputMode="decimal"
-            placeholder="Client rate"
+            placeholder="Client Rate"
           />
         </Field>
         <Checkbox
-          label="Billable by default"
+          label="Billable by Default"
           checked={billable}
           onChange={(e) => setBillable(e.target.checked)}
         />
@@ -106,7 +106,7 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
               value={budgetUnit}
               onChange={(e) => setBudgetUnit(e.target.value as Budget['unit'] | 'none')}
             >
-              <option value="none">No budget</option>
+              <option value="none">No Budget</option>
               <option value="minutes">Hours</option>
               <option value="cents">Amount ({client.currency})</option>
             </select>
@@ -141,13 +141,13 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
                   onChange={(e) => setBudgetPeriod(e.target.value as BudgetPeriod)}
                 >
                   <option value="total">Never</option>
-                  <option value="week">Every week</option>
-                  <option value="month">Every month</option>
+                  <option value="week">Every Week</option>
+                  <option value="month">Every Month</option>
                 </select>
               </Field>
             </div>
             {budgetPeriod === 'month' && (
-              <Field label="On day">
+              <Field label="On Day">
                 <select value={resetDay} onChange={(e) => setResetDay(Number(e.target.value))}>
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                     <option key={d} value={d}>
@@ -168,7 +168,7 @@ export function ProjectForm({ client, project, onSubmit, onClose, deletion }: Pr
         <div className={styles.actions}>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>
-            {project ? 'Save' : 'Add project'}
+            {project ? 'Save' : 'Add Project'}
           </Button>
         </div>
       </form>

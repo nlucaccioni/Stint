@@ -71,9 +71,9 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
   return (
     <section className={styles.section}>
       <div className={styles.header}>
-        <h2 className={styles.heading}>Keyboard shortcuts</h2>
+        <h2 className={styles.heading}>Keyboard Shortcuts</h2>
         <Button size="sm" variant="ghost" onClick={() => void api.resetHotkeys().then(setState)}>
-          Reset all to defaults
+          Reset All to Defaults
         </Button>
       </div>
       <p className={styles.intro}>
@@ -95,7 +95,7 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
               <span className={styles.action}>{hotkeyLabel(action)}</span>
               <span className={styles.binding}>
                 <kbd className={styles.kbd} data-recording={isRecording || undefined}>
-                  {isRecording ? 'Press a shortcut… (Esc to cancel)' : label(accelerator)}
+                  {isRecording ? 'Press a Shortcut… (Esc to Cancel)' : label(accelerator)}
                 </kbd>
                 {isRecording && hint && <span className={styles.problem}>{hint}</span>}
                 {!isRecording && !status?.ok && status?.problem && (

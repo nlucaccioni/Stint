@@ -98,8 +98,8 @@ export function QuickSwitcher(props: QuickSwitcherProps) {
         <input
           className={styles.input}
           value={query}
-          placeholder="Start a project…"
-          aria-label="Search projects"
+          placeholder="Start a Project…"
+          aria-label="Search Projects"
           aria-controls="switcher-results"
           aria-activedescendant={rows[active] ? `switcher-${rows[active].id}` : undefined}
           autoFocus
@@ -118,7 +118,7 @@ export function QuickSwitcher(props: QuickSwitcherProps) {
       )}
 
       <ul id="switcher-results" className={styles.results} role="listbox" aria-label="Projects">
-        {rows.length === 0 && <li className={styles.empty}>No matching projects</li>}
+        {rows.length === 0 && <li className={styles.empty}>No Matching Projects</li>}
         {rows.map((row, i) => {
           const isRunning = row.kind === 'project' && row.id === running?.projectId
           const slot = row.kind === 'project' ? favoriteSlot(favorites, row.id) : null

@@ -30,9 +30,9 @@ export function StopAtDialog({ startedAt, onSubmit, onClose }: StopAtDialogProps
   }
 
   return (
-    <Dialog title="Stop timer at…" onClose={onClose}>
+    <Dialog title="Stop Timer At…" onClose={onClose}>
       <form className={styles.form} onSubmit={submit}>
-        <Field label="Stopped at" hint={`Started ${new Date(startedAt).toLocaleString()}.`}>
+        <Field label="Stopped At" hint={`Started ${new Date(startedAt).toLocaleString()}.`}>
           <input
             type="datetime-local"
             value={value}
@@ -49,7 +49,7 @@ export function StopAtDialog({ startedAt, onSubmit, onClose }: StopAtDialogProps
         <div className={styles.actions}>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving}>
-            Stop timer
+            Stop Timer
           </Button>
         </div>
       </form>

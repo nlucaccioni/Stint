@@ -60,19 +60,19 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
       <form className={formStyles.form} onSubmit={submit} onChange={() => setSaved(false)}>
         <h2 className={styles.section}>Timer</h2>
         <Field
-          label="Ask about idle time after (minutes)"
+          label="Ask About Idle Time After (Minutes)"
           hint="When you come back after this long away, Stint asks whether to keep the time. 0 turns it off."
         >
           <input type="number" step={1} value={idle} onChange={(e) => setIdle(e.target.value)} />
         </Field>
         <Field
-          label="Remind me when a timer has run for (hours)"
+          label="Remind Me When a Timer Has Run For (Hours)"
           hint="A notification in case you forgot to stop it. 0 turns it off."
         >
           <input type="number" step={1} value={nudge} onChange={(e) => setNudge(e.target.value)} />
         </Field>
-        <h2 className={styles.section}>Calendar and money</h2>
-        <Field label="Week starts on">
+        <h2 className={styles.section}>Calendar and Money</h2>
+        <Field label="Week Starts On">
           <select
             value={weekStart}
             onChange={(e) => setWeekStart(Number(e.target.value) as WeekStartDay)}
@@ -84,7 +84,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             ))}
           </select>
         </Field>
-        <Field label="Default currency for new clients">
+        <Field label="Default Currency for New Clients">
           <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
             {currencies.map((c) => (
               <option key={c}>{c}</option>
@@ -95,7 +95,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
             <Field
-              label="Round billed time"
+              label="Round Billed Time"
               hint="Applies to each session when you bill it. The log and totals always show actual time."
             >
               <select
@@ -145,7 +145,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             </span>
           )}
           <Button type="submit" variant="primary" disabled={saving}>
-            Save settings
+            Save Settings
           </Button>
         </div>
       </form>

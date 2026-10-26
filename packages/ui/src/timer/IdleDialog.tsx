@@ -34,7 +34,7 @@ export function IdleDialog(props: IdleDialogProps) {
 
   return (
     // Closing without choosing (Escape) keeps the time, the option that loses nothing.
-    <Dialog title="You were away" onClose={() => void choose('keep')}>
+    <Dialog title="You Were Away" onClose={() => void choose('keep')}>
       <p className={styles.body}>
         From {from} to {to} ({formatClock(props.returnedAt - props.idleStartedAt)}), while the timer
         for <strong>{props.projectName}</strong> kept running.
@@ -46,13 +46,13 @@ export function IdleDialog(props: IdleDialogProps) {
       )}
       <div className={styles.choices}>
         <Button variant="primary" disabled={busy} onClick={() => void choose('keep')}>
-          Keep the time
+          Keep the Time
         </Button>
         <Button disabled={busy} onClick={() => void choose('discard-continue')}>
-          Discard it, keep timing
+          Discard It, Keep Timing
         </Button>
         <Button disabled={busy} onClick={() => void choose('discard')}>
-          Discard it and stop
+          Discard It and Stop
         </Button>
       </div>
     </Dialog>

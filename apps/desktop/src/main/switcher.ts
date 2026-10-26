@@ -45,7 +45,7 @@ function create(): BrowserWindow {
     alwaysOnTop: true,
     // Match the page background (--color-surface) so there's no white flash.
     backgroundColor: '#202020',
-    title: 'Stint quick switcher',
+    title: 'Stint Quick Switcher',
   })
   w.setAlwaysOnTop(true, 'floating')
   // Clicking anywhere else dismisses it, like Spotlight.

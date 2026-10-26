@@ -16,7 +16,7 @@ export function DeleteAction({
   deletion,
   kind,
   onError,
-  label = `Delete ${kind}…`,
+  label = `Delete ${kind[0]!.toUpperCase()}${kind.slice(1)}…`,
   confirmLabel = 'Delete',
   warning = "This can't be undone.",
 }: {

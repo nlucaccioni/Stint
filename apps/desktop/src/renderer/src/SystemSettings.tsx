@@ -30,9 +30,9 @@ export function SystemSettings() {
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.heading}>This computer</h2>
+      <h2 className={styles.heading}>This Computer</h2>
       <Checkbox
-        label="Open Stint when I log in (it starts in the tray / menu bar)"
+        label="Open Stint When I Log In (It Starts in the Tray / Menu Bar)"
         checked={login.enabled}
         disabled={!login.available}
         onChange={(e) => toggle(e.target.checked)}

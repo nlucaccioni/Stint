@@ -48,16 +48,16 @@ export function trayMenuItems(model: TrayModel, formatTime: (ms: number) => stri
   if (model.running) {
     const { projectName, clientName, startedAt } = model.running
     items.push({ label: `${projectName} · ${clientName}`, enabled: false })
-    items.push({ label: `Running since ${formatTime(startedAt)}`, enabled: false })
-    items.push({ label: 'Stop timer', command: { kind: 'stop' }, ...hint(model.stopAccelerator) })
+    items.push({ label: `Running Since ${formatTime(startedAt)}`, enabled: false })
+    items.push({ label: 'Stop Timer', command: { kind: 'stop' }, ...hint(model.stopAccelerator) })
   } else {
-    items.push({ label: 'No timer running', enabled: false })
+    items.push({ label: 'No Timer Running', enabled: false })
   }
 
   items.push({ type: 'separator' })
   if (model.favorites.length === 0) {
-    items.push({ label: 'No favorites yet', enabled: false })
-    items.push({ label: 'Set up favorites…', command: { kind: 'settings' } })
+    items.push({ label: 'No Favorites Yet', enabled: false })
+    items.push({ label: 'Set Up Favorites…', command: { kind: 'settings' } })
   } else {
     for (const fav of model.favorites) {
       items.push({
@@ -73,7 +73,7 @@ export function trayMenuItems(model: TrayModel, formatTime: (ms: number) => stri
 
   items.push({ type: 'separator' })
   items.push({
-    label: 'Quick switcher…',
+    label: 'Quick Switcher…',
     command: { kind: 'switcher' },
     ...hint(model.switcherAccelerator),
   })

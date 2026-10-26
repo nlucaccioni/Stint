@@ -29,7 +29,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
   const label: Label = running
     ? {
         key: running.id,
-        project: project?.name ?? 'Unknown project',
+        project: project?.name ?? 'Unknown Project',
         client: client?.name ?? null,
         color: client?.color ?? null,
       }
@@ -108,7 +108,7 @@ export function TimerBar({ running, project, client, onStop, onStopAt }: TimerBa
         </span>
       )}
       <IconButton
-        label="Stop at an earlier time…"
+        label="Stop at an Earlier Time…"
         disabled={!running}
         onClick={() => setStoppingAtId(running?.id ?? null)}
       >

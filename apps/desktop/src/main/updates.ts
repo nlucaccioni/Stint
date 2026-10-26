@@ -66,7 +66,7 @@ async function checkWindows(manual: boolean): Promise<void> {
   autoUpdater.autoInstallOnAppQuit = true
   if (!manual) {
     await autoUpdater.checkForUpdatesAndNotify({
-      title: 'Stint update ready',
+      title: 'Stint Update Ready',
       body: 'Version {version} will be installed when you quit Stint.',
     })
     return

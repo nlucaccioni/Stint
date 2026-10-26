@@ -73,7 +73,7 @@ function LockedSession(props: SessionDialogProps & { session: Session }) {
   const end = s.endedAt === null ? 'now' : toLocalParts(s.endedAt, zone).time
   const status = batch?.paidAt != null ? 'paid' : 'billed'
   return (
-    <Dialog title="Billed time" onClose={props.onClose}>
+    <Dialog title="Billed Time" onClose={props.onClose}>
       <div className={formStyles.form}>
         <p className={styles.locked}>
           <Lock size={14} aria-hidden /> This time is {status}
@@ -101,7 +101,7 @@ function LockedSession(props: SessionDialogProps & { session: Session }) {
         <DeleteAction
           kind="session"
           onError={setError}
-          label="Unlock to edit…"
+          label="Unlock to Edit…"
           confirmLabel="Unlock"
           warning=""
           deletion={{
@@ -218,7 +218,7 @@ function EditableSession(props: SessionDialogProps) {
   }
 
   return (
-    <Dialog title={session ? 'Edit time' : 'Add time'} onClose={props.onClose}>
+    <Dialog title={session ? 'Edit Time' : 'Add Time'} onClose={props.onClose}>
       <form className={formStyles.form} onSubmit={submit}>
         <Field label="Project">
           <select value={projectId} onChange={(e) => pickProject(e.target.value)} required>
@@ -327,7 +327,7 @@ function EditableSession(props: SessionDialogProps) {
         <div className={formStyles.actions}>
           <Button onClick={props.onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving || !projectId}>
-            {session ? 'Save' : 'Add time'}
+            {session ? 'Save' : 'Add Time'}
           </Button>
         </div>
       </form>
@@ -351,7 +351,7 @@ function SplitRow(props: {
   const [date, time] = value.split('T')
   return (
     <div className={styles.split}>
-      <Field label="Split at" hint="The first part keeps this entry; the rest becomes a new one.">
+      <Field label="Split At" hint="The first part keeps this entry; the rest becomes a new one.">
         <input type="datetime-local" value={value} onChange={(e) => setValue(e.target.value)} />
       </Field>
       <div className={styles.splitActions}>

@@ -25,8 +25,8 @@ export type HotkeyBindings = Record<HotkeyAction, string | null>
 export type Platform = 'darwin' | 'win32' | 'linux'
 
 export function hotkeyLabel(action: HotkeyAction): string {
-  if (action === 'stop') return 'Stop timer'
-  if (action === 'switcher') return 'Quick switcher'
+  if (action === 'stop') return 'Stop Timer'
+  if (action === 'switcher') return 'Quick Switcher'
   return `Favorite ${action.slice('favorite'.length)}`
 }
 

@@ -41,12 +41,12 @@ const labels = (m: TrayModel) => trayMenuItems(m, fmt).map((i) => i.label ?? '--
 describe('trayMenuItems', () => {
   it('shows an idle state and a way to set up favorites', () => {
     expect(labels(idle)).toEqual([
-      'No timer running',
+      'No Timer Running',
       '---',
-      'No favorites yet',
-      'Set up favorites…',
+      'No Favorites Yet',
+      'Set Up Favorites…',
       '---',
-      'Quick switcher…',
+      'Quick Switcher…',
       'Open Stint',
       'Settings…',
       '---',
@@ -58,8 +58,8 @@ describe('trayMenuItems', () => {
     const items = trayMenuItems(running, fmt)
     expect(items.slice(0, 3).map((i) => i.label)).toEqual([
       'Website · Acme',
-      'Running since 2:14 PM',
-      'Stop timer',
+      'Running Since 2:14 PM',
+      'Stop Timer',
     ])
     expect(items[2]).toMatchObject({
       command: { kind: 'stop' },

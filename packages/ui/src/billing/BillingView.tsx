@@ -109,7 +109,7 @@ export function BillingView(props: BillingViewProps) {
                       size="sm"
                       onClick={() => setOpen({ kind: 'create', clientId: row.clientId })}
                     >
-                      Create batch…
+                      Create Batch…
                     </Button>
                   </td>
                 </tr>
@@ -119,7 +119,7 @@ export function BillingView(props: BillingViewProps) {
         </table>
       )}
 
-      <h2 className={styles.section}>Waiting for payment</h2>
+      <h2 className={styles.section}>Waiting for Payment</h2>
       {outstanding.length === 0 ? (
         <p className={styles.empty}>Nothing outstanding.</p>
       ) : (
@@ -147,7 +147,7 @@ export function BillingView(props: BillingViewProps) {
           clientById={clientById}
           zone={zone}
           dateColumn={(b) => formatDay(b.paidAt!, zone)}
-          dateHeading="Paid on"
+          dateHeading="Paid On"
           onOpen={(b) => setOpen({ kind: 'batch', batchId: b.id })}
         />
       )}
@@ -220,7 +220,7 @@ function BatchTable(props: {
               <th scope="row">
                 <ClientName client={props.clientById.get(b.clientId)} />
               </th>
-              <td>{b.reference || <span className={styles.muted}>No reference</span>}</td>
+              <td>{b.reference || <span className={styles.muted}>No Reference</span>}</td>
               <td className={styles.muted}>{props.dateColumn(b)}</td>
               <td className={styles.num}>{sum ? formatClock(sum.billedMs) : '—'}</td>
               <td className={styles.num}>{amountLabel(sum?.amount ?? null)}</td>
@@ -236,7 +236,7 @@ function ClientName({ client }: { client: Client | undefined }) {
   return (
     <span className={styles.name}>
       <span className={styles.swatch} style={{ background: client?.color }} aria-hidden />
-      {client?.name ?? 'Unknown client'}
+      {client?.name ?? 'Unknown Client'}
     </span>
   )
 }

@@ -120,7 +120,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         {candidates.length === 0 ? (
           <p className={formStyles.note}>No unbilled time for {client.name} in this range.</p>
         ) : (
-          <ul className={styles.sessions} aria-label="Sessions to bill">
+          <ul className={styles.sessions} aria-label="Sessions to Bill">
             {candidates.map((s) => (
               <SessionLine
                 key={s.id}
@@ -164,7 +164,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
               />
             </Field>
           </div>
-          <Field label="Billed on">
+          <Field label="Billed On">
             <input
               type="date"
               value={billedOn}
@@ -185,7 +185,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         <div className={formStyles.actions}>
           <Button onClick={props.onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={saving || chosen.length === 0}>
-            Create batch
+            Create Batch
           </Button>
         </div>
       </form>
