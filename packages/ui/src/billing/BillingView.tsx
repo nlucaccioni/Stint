@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Billing tab: what's unbilled per client, batches waiting for payment, and
 // paid history. All figures are derived from sessions (core), never stored.
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import {
   billingSummary,
   daysWaiting,
@@ -14,6 +14,8 @@ import {
   type Session,
 } from '@stint/core'
 import { Button } from '../components/Button'
+import { Card } from '../components/Card'
+import tableStyles from '../components/Table.module.css'
 import { useNow } from '../timer/useNow'
 import { BatchDialog, type BatchDialogActions } from './BatchDialog'
 import { CreateBatchDialog, type NewBatchValues } from './CreateBatchDialog'
@@ -75,19 +77,20 @@ export function BillingView(props: BillingViewProps) {
     <section className={styles.view}>
       <h1 className={styles.heading}>Billing</h1>
 
-      <Section
+      <Card
+        compact
         title="Unbilled"
         empty={unbilled.length === 0 && 'Everything billable has been billed.'}
       >
-        <table className={styles.table}>
+        <table className={tableStyles.table}>
           <thead>
             <tr>
               <th scope="col">Client</th>
               <th scope="col">Since</th>
-              <th scope="col" className={styles.num}>
+              <th scope="col" className={tableStyles.num}>
                 Time
               </th>
-              <th scope="col" className={styles.num}>
+              <th scope="col" className={tableStyles.num}>
                 Amount
               </th>
               <th scope="col" />
@@ -102,9 +105,9 @@ export function BillingView(props: BillingViewProps) {
                     <ClientName client={client} />
                   </th>
                   <td className={styles.muted}>{formatDay(row.oldestStartedAt, zone)}</td>
-                  <td className={styles.num}>{formatClock(row.billedMs)}</td>
-                  <td className={styles.num}>{amountLabel(row.amount)}</td>
-                  <td className={styles.actions}>
+                  <td className={tableStyles.num}>{formatClock(row.billedMs)}</td>
+                  <td className={tableStyles.num}>{amountLabel(row.amount)}</td>
+                  <td className={tableStyles.actions}>
                     <Button
                       size="sm"
                       variant="tertiary"
@@ -118,9 +121,10 @@ export function BillingView(props: BillingViewProps) {
             })}
           </tbody>
         </table>
-      </Section>
+      </Card>
 
-      <Section
+      <Card
+        compact
         title="Waiting for Payment"
         empty={outstanding.length === 0 && 'Nothing outstanding.'}
       >
@@ -136,9 +140,9 @@ export function BillingView(props: BillingViewProps) {
           dateHeading="Billed · Waiting"
           onOpen={(b) => setOpen({ kind: 'batch', batchId: b.id })}
         />
-      </Section>
+      </Card>
 
-      <Section title="Paid" empty={paid.length === 0 && 'No paid batches yet.'}>
+      <Card compact title="Paid" empty={paid.length === 0 && 'No paid batches yet.'}>
         <BatchTable
           batches={paid}
           summaries={summaries}
@@ -148,7 +152,7 @@ export function BillingView(props: BillingViewProps) {
           dateHeading="Paid On"
           onOpen={(b) => setOpen({ kind: 'batch', batchId: b.id })}
         />
-      </Section>
+      </Card>
 
       {open?.kind === 'create' && clientById.get(open.clientId) && (
         <CreateBatchDialog
@@ -190,16 +194,16 @@ function BatchTable(props: {
   onOpen: (batch: BillingBatch) => void
 }) {
   return (
-    <table className={styles.table}>
+    <table className={tableStyles.table}>
       <thead>
         <tr>
           <th scope="col">Client</th>
           <th scope="col">Reference</th>
           <th scope="col">{props.dateHeading}</th>
-          <th scope="col" className={styles.num}>
+          <th scope="col" className={tableStyles.num}>
             Time
           </th>
-          <th scope="col" className={styles.num}>
+          <th scope="col" className={tableStyles.num}>
             Amount
           </th>
         </tr>
@@ -210,7 +214,7 @@ function BatchTable(props: {
           return (
             <tr
               key={b.id}
-              className={styles.clickable}
+              className={tableStyles.clickable}
               tabIndex={0}
               onClick={() => props.onOpen(b)}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && props.onOpen(b)}
@@ -220,29 +224,13 @@ function BatchTable(props: {
               </th>
               <td className={styles.muted}>{b.reference || 'No Reference'}</td>
               <td className={styles.muted}>{props.dateColumn(b)}</td>
-              <td className={styles.num}>{sum ? formatClock(sum.billedMs) : '—'}</td>
-              <td className={styles.num}>{amountLabel(sum?.amount ?? null)}</td>
+              <td className={tableStyles.num}>{sum ? formatClock(sum.billedMs) : '—'}</td>
+              <td className={tableStyles.num}>{amountLabel(sum?.amount ?? null)}</td>
             </tr>
           )
         })}
       </tbody>
     </table>
-  )
-}
-
-/**
- * One card (Figma: Billing). With nothing to show it becomes a dashed outline
- * with the message beside the title, and its table isn't rendered.
- */
-function Section(props: { title: string; empty: string | false; children: ReactNode }) {
-  return (
-    <section className={styles.card} data-empty={props.empty ? '' : undefined}>
-      <header className={styles.cardHeader}>
-        <h2 className={styles.cardTitle}>{props.title}</h2>
-        {props.empty && <p className={styles.emptyNote}>{props.empty}</p>}
-      </header>
-      {!props.empty && props.children}
-    </section>
   )
 }
 

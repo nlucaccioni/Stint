@@ -9,6 +9,10 @@
   background: var(--color-surface-translucent-active);
 }
 
+.card[data-compact] {
+  gap: var(--space-1);
+}
+
 /* Nothing in it: a dashed outline, no fill. */
 .card[data-empty] {
   border-style: dashed;

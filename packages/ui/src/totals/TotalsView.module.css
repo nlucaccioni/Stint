@@ -99,57 +99,18 @@
   line-height: 1.1;
 }
 
-.empty {
-  padding: var(--space-6);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-/* Tables */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.caption {
-  padding-bottom: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  text-align: left;
-}
-
-.table th,
-.table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  font-weight: normal;
-  text-align: left;
-}
-
-.table thead th {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
-.table .num {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.clientRow th,
-.clientRow td {
+/* Tables (base styles in components/Table.module.css) */
+/* The doubled class outranks the shared table's own th/td rules. */
+.clientRow.clientRow > * {
   font-weight: 600;
 }
 
-.projectRow th {
+.projectRow.projectRow > th {
   padding-left: calc(var(--space-3) + var(--space-4));
 }
 
-.table tr[data-empty] {
+/* Days with no time. */
+.emptyDay {
   color: var(--color-text-muted);
 }
 

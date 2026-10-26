@@ -1,0 +1,59 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Data tables inside cards (Figma: Billing). Shared by Billing and Totals. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th,
+.table td {
+  padding: 13px var(--space-3);
+  font-weight: normal;
+  text-align: left;
+}
+
+.table thead th {
+  padding: 9px var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* Lines between rows (and between row groups), not after the last. */
+.table tbody tr + tr > *,
+.table tbody + tbody tr:first-child > * {
+  border-top: 1px solid var(--color-border);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table .num {
+  text-align: right;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* A narrow column of buttons at the end of a row. */
+.table .actions {
+  width: 1%;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover,
+.clickable:focus-visible {
+  background: var(--color-wash);
+  outline: none;
+}

@@ -17,6 +17,8 @@ import {
   type TimeRange,
 } from '@stint/core'
 import { Button } from '../components/Button'
+import { Card } from '../components/Card'
+import tableStyles from '../components/Table.module.css'
 import { DateInput } from '../components/DateInput'
 import { useNow } from '../timer/useNow'
 import styles from './TotalsView.module.css'
@@ -164,21 +166,22 @@ export function TotalsView(props: TotalsViewProps) {
         />
       </div>
 
-      {totals.byClient.length === 0 ? (
-        <p className={styles.empty}>No time recorded in this range.</p>
-      ) : (
-        <table className={styles.table}>
-          <caption className={styles.caption}>By Client and Project</caption>
+      <Card
+        compact
+        title="By Client and Project"
+        empty={totals.byClient.length === 0 && 'No time recorded in this range.'}
+      >
+        <table className={tableStyles.table}>
           <thead>
             <tr>
-              <th scope="col">Client / project</th>
-              <th scope="col" className={styles.num}>
+              <th scope="col">Client / Project</th>
+              <th scope="col" className={tableStyles.num}>
                 Time
               </th>
-              <th scope="col" className={styles.num}>
+              <th scope="col" className={tableStyles.num}>
                 Billable
               </th>
-              <th scope="col" className={styles.num}>
+              <th scope="col" className={tableStyles.num}>
                 Amount
               </th>
             </tr>
@@ -192,9 +195,9 @@ export function TotalsView(props: TotalsViewProps) {
                   <th scope="row">
                     <Name color={client?.color}>{client?.name ?? 'Unknown Client'}</Name>
                   </th>
-                  <td className={styles.num}>{formatClock(ct.ms)}</td>
-                  <td className={styles.num}>{formatClock(ct.billableMs)}</td>
-                  <td className={styles.num}>{amountsLabel(ct.amounts)}</td>
+                  <td className={tableStyles.num}>{formatClock(ct.ms)}</td>
+                  <td className={tableStyles.num}>{formatClock(ct.billableMs)}</td>
+                  <td className={tableStyles.num}>{amountsLabel(ct.amounts)}</td>
                 </tr>
                 {own.map((pt) => {
                   const project = projectById.get(pt.projectId)
@@ -203,9 +206,9 @@ export function TotalsView(props: TotalsViewProps) {
                       <th scope="row">
                         <Name color={client?.color}>{project?.name ?? 'Unknown Project'}</Name>
                       </th>
-                      <td className={styles.num}>{formatClock(pt.ms)}</td>
-                      <td className={styles.num}>{formatClock(pt.billableMs)}</td>
-                      <td className={styles.num}>{amountsLabel(pt.amounts)}</td>
+                      <td className={tableStyles.num}>{formatClock(pt.ms)}</td>
+                      <td className={tableStyles.num}>{formatClock(pt.billableMs)}</td>
+                      <td className={tableStyles.num}>{amountsLabel(pt.amounts)}</td>
                     </tr>
                   )
                 })}
@@ -213,28 +216,29 @@ export function TotalsView(props: TotalsViewProps) {
             )
           })}
         </table>
-      )}
+      </Card>
 
       {days && days.length > 1 && totals.ms > 0 && (
-        <table className={styles.table}>
-          <caption className={styles.caption}>By Day</caption>
-          <thead>
-            <tr>
-              <th scope="col">Day</th>
-              <th scope="col" className={styles.num}>
-                Time
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((d) => (
-              <tr key={d.start} data-empty={d.ms === 0 || undefined}>
-                <th scope="row">{dayLabel(d.start, zone)}</th>
-                <td className={styles.num}>{formatClock(d.ms)}</td>
+        <Card compact title="By Day">
+          <table className={tableStyles.table}>
+            <thead>
+              <tr>
+                <th scope="col">Day</th>
+                <th scope="col" className={tableStyles.num}>
+                  Time
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {days.map((d) => (
+                <tr key={d.start} className={d.ms === 0 ? styles.emptyDay : undefined}>
+                  <th scope="row">{dayLabel(d.start, zone)}</th>
+                  <td className={tableStyles.num}>{formatClock(d.ms)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
     </section>
   )

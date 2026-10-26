@@ -11,12 +11,18 @@ export interface CardProps {
   actions?: ReactNode
   /** When set, the card is empty: dashed outline, this message, no children. */
   empty?: string | false
+  /** 4px under the title instead of 12px: for a card holding a table (Billing). */
+  compact?: boolean
   children?: ReactNode
 }
 
-export function Card({ title, actions, empty, children }: CardProps) {
+export function Card({ title, actions, empty, compact, children }: CardProps) {
   return (
-    <section className={styles.card} data-empty={empty ? '' : undefined}>
+    <section
+      className={styles.card}
+      data-empty={empty ? '' : undefined}
+      data-compact={compact || undefined}
+    >
       <header className={styles.header}>
         <h2 className={styles.title}>{title}</h2>
         {empty ? <p className={styles.emptyNote}>{empty}</p> : actions}
