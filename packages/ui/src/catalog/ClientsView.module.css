@@ -85,7 +85,8 @@
   border-radius: inherit;
   background: color-mix(in srgb, var(--client-color) 10%, transparent);
   filter: blur(50px);
-  opacity: 0;
+  /* A faint trace of the glow at all times; full strength while running. */
+  opacity: 0.3;
   transition: opacity 0.3s;
   pointer-events: none;
 }
