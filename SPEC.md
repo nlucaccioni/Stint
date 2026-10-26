@@ -121,6 +121,7 @@ All synced records are designed for future sync from day one.
 ### Project
 
 - `id`, `clientId`, `name`, `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, budget fields (below), sync fields.
+- Turning a project non-billable also makes its existing unbilled sessions non-billable (the running one included); billed sessions are read-only and keep theirs. Turning it billable again only changes the default for new sessions.
 - `sortKey`: the project's place among its client's projects (see Ordering below).
 - Projects have no color of their own; they always use their client's color. (The original schema has a `color` column on projects; it is no longer read or written.)
 - **Budget** (optional hard cap, see §6):

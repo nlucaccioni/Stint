@@ -126,6 +126,21 @@ export function deleteSession(session: Session, ctx: ChangeContext): SessionChan
 }
 
 /**
+ * Turning a project non-billable makes its past time non-billable too (SPEC.md §4
+ * "Projects"), running session included. Billed sessions are read-only, so they
+ * keep their billable flag.
+ */
+export function makeProjectSessionsNonBillable(
+  sessions: readonly Session[],
+  projectId: string,
+  ctx: ChangeContext,
+): SessionChange[] {
+  return sessions
+    .filter((s) => s.projectId === projectId && s.deletedAt === null && s.billable && !isLocked(s))
+    .map((s) => update(ctx, s.id, { billable: false }))
+}
+
+/**
  * Deleting a project or client takes its sessions with it (SPEC.md §6 "Deleting
  * clients and projects"), unless any are billed: those belong to an invoice.
  */

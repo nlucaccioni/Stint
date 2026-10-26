@@ -16,6 +16,7 @@ import {
   clientPatch,
   createManualSession,
   deleteProjectSessions,
+  makeProjectSessionsNonBillable,
   deleteSession,
   editSession,
   findOverlaps,
@@ -385,7 +386,19 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       if (edits.budget !== undefined) {
         assertBudgetHasRate({ ...project, ...patch }, existingClient(project.clientId))
       }
-      updateProject(db, projectId, patch)
+      if (project.billableByDefault && edits.billableByDefault === false) {
+        // Turning a project non-billable makes its past (unbilled) time non-billable too.
+        changeSessions(() => {
+          updateProject(db, projectId, patch)
+          return makeProjectSessionsNonBillable(
+            listProjectSessions(db, [projectId]),
+            projectId,
+            ctx(),
+          )
+        })
+      } else {
+        updateProject(db, projectId, patch)
+      }
       return existingProject(projectId)
     },
 

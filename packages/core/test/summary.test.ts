@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { budgetFields } from '../src/budget'
 import { StintError } from '../src/errors'
-import { deleteProjectSessions } from '../src/sessions'
+import { deleteProjectSessions, makeProjectSessionsNonBillable } from '../src/sessions'
 import { projectSummaries } from '../src/summary'
 import { HOUR, at, client, ctx, project, session } from './fixtures'
 
@@ -83,5 +83,23 @@ describe('deleteProjectSessions', () => {
       expect((e as StintError).code).toBe('has-billed-time')
       expect((e as StintError).message).toContain('client')
     }
+  })
+})
+
+describe('makeProjectSessionsNonBillable', () => {
+  it('turns off billable on the project’s unbilled sessions, running included', () => {
+    const sessions = [
+      session({ id: '1' }),
+      session({ id: '2', endedAt: null }),
+      session({ id: '3', billable: false }),
+      session({ id: '4', billingBatchId: 'b1' }),
+      session({ id: '5', deletedAt: 5 }),
+      session({ id: '6', projectId: 'other' }),
+    ]
+    const changes = makeProjectSessionsNonBillable(sessions, 'p1', ctx(now))
+    expect(changes.map((c) => c.kind === 'update' && [c.id, c.patch.billable])).toEqual([
+      ['1', false],
+      ['2', false],
+    ])
   })
 })

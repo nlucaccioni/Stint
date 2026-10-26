@@ -74,6 +74,25 @@ describe('projects', () => {
     expect(api.updateProject(project.id, { name: 'Site' }).name).toBe('Site')
   })
 
+  it('turning a project non-billable makes its past time non-billable', () => {
+    const client = api.createClient(acme)
+    const project = api.createProject({
+      clientId: client.id,
+      name: 'Website',
+      hourlyRateCents: null,
+      billableByDefault: true,
+    })
+    api.toggleTimer(project.id)
+    clock += 10 * MIN
+    api.toggleTimer(project.id)
+    clock += MIN
+    api.toggleTimer(project.id) // still running
+    api.updateProject(project.id, { billableByDefault: false })
+    const sessions = api.listSessions({ start: 0, end: clock + 1 })
+    expect(sessions).toHaveLength(2)
+    expect(sessions.every((s) => !s.billable)).toBe(true)
+  })
+
   it('saves, edits and clears a budget', () => {
     const client = api.createClient(acme)
     const budget = { unit: 'minutes', amount: 1200, period: 'month', resetDay: 15 } as const
