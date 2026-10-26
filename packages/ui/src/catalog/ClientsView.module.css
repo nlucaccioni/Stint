@@ -210,7 +210,6 @@
   flex-direction: column;
   gap: var(--space-1);
   min-height: 0;
-  padding-top: var(--space-1);
   overflow: hidden;
   opacity: 1;
   transition: opacity 0.25s ease;
@@ -237,9 +236,12 @@
   }
 }
 
+/* The 4px above the rule is a margin, not padding on the collapsible: padding
+   can't shrink to 0, so it left a 4px gap under collapsed cards. */
 .clientBarRule {
+  flex: none;
   width: 100%;
-  margin: 0;
+  margin: var(--space-1) 0 0;
   border: 0;
   border-top: 1px solid var(--color-border);
 }
