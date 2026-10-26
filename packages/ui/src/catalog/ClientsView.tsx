@@ -223,6 +223,7 @@ export function ClientsView(props: ClientsViewProps) {
         <ProjectForm
           client={editing.client}
           project={editing.project}
+          weekStartsOn={props.weekStartsOn}
           onSubmit={async (values) => {
             if (editing.project) await props.onUpdateProject(editing.project.id, values)
             else await props.onCreateProject({ ...values, clientId: editing.client.id })

@@ -1,23 +1,38 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Figma: modal fields. Label above, 40px control with a hairline border. */
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
 }
 
 .label {
-  font-size: var(--text-sm);
-  font-weight: 500;
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .control {
-  padding: var(--space-2);
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  background: var(--color-bg);
+  background: transparent;
   color: var(--color-text);
   font: inherit;
+  font-size: var(--text-sm);
+}
+
+textarea.control {
+  height: auto;
+  padding: var(--space-2) 10px;
+}
+
+.control::placeholder {
+  color: rgb(154 154 154 / 0.7);
+  font-size: var(--text-xs);
 }
 
 .control:focus-visible {
@@ -29,17 +44,10 @@
   opacity: 0.5;
 }
 
-.control[type='color'] {
-  width: 48px;
-  height: 36px;
-  padding: 2px;
-  cursor: pointer;
-}
-
 .hint {
   margin: 0;
-  font-size: var(--text-sm);
   color: var(--color-text-muted);
+  font-size: var(--text-xs);
 }
 
 .checkbox {
@@ -47,4 +55,32 @@
   align-items: center;
   gap: var(--space-2);
   cursor: pointer;
+}
+
+/* A 44 × 40 box that shows a check when on (Figma: Billable). */
+.checkBox {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.checkBox:hover {
+  background: var(--color-wash);
+}
+
+.checkBox:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.checkBox > svg {
+  width: 20px;
+  height: 20px;
 }

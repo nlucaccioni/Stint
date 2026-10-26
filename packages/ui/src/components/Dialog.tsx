@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { X } from 'lucide-react'
+import { IconButton } from './IconButton'
 import styles from './Dialog.module.css'
 
 export interface DialogProps {
@@ -33,9 +35,14 @@ export function Dialog({ title, onClose, children }: DialogProps) {
         onClose()
       }}
     >
-      <h2 id={titleId} className={styles.title}>
-        {title}
-      </h2>
+      <header className={styles.header}>
+        <h2 id={titleId} className={styles.title}>
+          {title}
+        </h2>
+        <IconButton label="Close" className={styles.close} onClick={onClose}>
+          <X aria-hidden />
+        </IconButton>
+      </header>
       {children}
     </dialog>
   )

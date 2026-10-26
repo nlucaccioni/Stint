@@ -91,7 +91,8 @@ export function ColorPicker(props: ColorPickerProps) {
       <button
         type="button"
         id={props.id}
-        className={[styles.swatch, props.className].filter(Boolean).join(' ')}
+        // Field passes its control class; the swatch keeps its own size instead.
+        className={styles.swatch}
         style={{ background: hex, anchorName: anchor } as CSSProperties}
         aria-describedby={props['aria-describedby']}
         aria-label={props['aria-label'] ?? `Color ${hex}`}

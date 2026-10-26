@@ -2,17 +2,35 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .row {
   display: flex;
   gap: var(--space-3);
-  align-items: flex-end;
+  align-items: flex-start;
+}
+
+/* Hairline between the rate row and the budget section. */
+.divider {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .grow {
   flex: 1;
+  min-width: 0;
+}
+
+/* Fixed widths from the design: the Budget type and the On Day selects. */
+.budgetUnit {
+  width: 105px;
+}
+
+.resetDay {
+  width: 100px;
 }
 
 .error {
@@ -28,7 +46,6 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-  margin-top: var(--space-2);
 }
 
 .note {

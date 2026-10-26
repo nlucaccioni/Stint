@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { cloneElement, useId, type InputHTMLAttributes, type ReactElement } from 'react'
+import { Check } from 'lucide-react'
 import styles from './Field.module.css'
 
 export interface FieldProps {
@@ -41,5 +42,29 @@ export function Checkbox({
       <input type="checkbox" {...rest} />
       {label}
     </label>
+  )
+}
+
+/** A checkbox drawn as a square box with a check (Figma: Billable). Put it in a Field. */
+export function CheckBox(props: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  id?: string
+  className?: string
+  'aria-describedby'?: string
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      id={props.id}
+      aria-checked={props.checked}
+      aria-describedby={props['aria-describedby']}
+      // Field passes its control class; the box has its own look instead.
+      className={styles.checkBox}
+      onClick={() => props.onChange(!props.checked)}
+    >
+      {props.checked && <Check aria-hidden />}
+    </button>
   )
 }

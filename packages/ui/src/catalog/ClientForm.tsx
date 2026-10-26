@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// New/Edit Client modal (Figma: New Client Modal). Deleting lives in the card's ⋯ menu.
 import { useState, type FormEvent } from 'react'
 import { parseMoney, toMoneyInput, type Client, type ClientInput } from '@stint/core'
 import { Button } from '../components/Button'
+import { ColorPicker } from '../components/ColorPicker'
 import { Dialog } from '../components/Dialog'
 import { Field } from '../components/Field'
-import { DeleteAction, type Deletion } from './DeleteAction'
+import { Select } from '../components/Select'
 import styles from './Form.module.css'
 import { useSubmit } from './useSubmit'
 
@@ -29,8 +31,6 @@ export interface ClientFormProps {
   defaultCurrency: string
   onSubmit: (values: ClientInput) => Promise<void>
   onClose: () => void
-  /** Only when editing. */
-  deletion?: Deletion
 }
 
 export function ClientForm({
@@ -39,7 +39,6 @@ export function ClientForm({
   defaultCurrency,
   onSubmit,
   onClose,
-  deletion,
 }: ClientFormProps) {
   const [name, setName] = useState(client?.name ?? '')
   const [color, setColor] = useState(client?.color ?? defaultColor)
@@ -47,7 +46,7 @@ export function ClientForm({
   const [rate, setRate] = useState(
     client?.hourlyRateCents != null ? toMoneyInput(client.hourlyRateCents, client.currency) : '',
   )
-  const { saving, error, setError, run } = useSubmit()
+  const { saving, error, run } = useSubmit()
 
   const currencies = COMMON_CURRENCIES.includes(currency)
     ? COMMON_CURRENCIES
@@ -67,43 +66,47 @@ export function ClientForm({
         <div className={styles.row}>
           <div className={styles.grow}>
             <Field label="Name">
-              <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Client Name"
+                autoFocus
+                required
+              />
             </Field>
           </div>
           <Field label="Color">
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+            <ColorPicker value={color} onChange={setColor} />
           </Field>
         </div>
         <div className={styles.row}>
           <div className={styles.grow}>
-            <Field
-              label="Hourly Rate"
-              hint="Leave empty if you don't bill this client by the hour."
-            >
+            <Field label="Hourly Rate">
               <input
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
                 inputMode="decimal"
-                placeholder="0.00"
+                placeholder="Leave empty if you don't bill this client by the hour."
               />
             </Field>
           </div>
           <Field label="Currency">
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              {currencies.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+            <Select
+              value={currency}
+              options={currencies.map((c) => ({ value: c, label: c }))}
+              onChange={setCurrency}
+            />
           </Field>
         </div>
-        {deletion && <DeleteAction deletion={deletion} kind="client" onError={setError} />}
         {error && (
           <p className={styles.error} role="alert">
             {error}
           </p>
         )}
         <div className={styles.actions}>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
           <Button type="submit" variant="primary" disabled={saving}>
             {client ? 'Save' : 'Add Client'}
           </Button>
