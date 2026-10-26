@@ -48,6 +48,13 @@
   gap: var(--space-2);
 }
 
+/* A hint under a whole row of fields, 4px below them (the form's gap is 12px). */
+.fieldHint {
+  margin: calc(var(--space-1) - var(--space-3)) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
 .note {
   margin: 0;
   font-size: var(--text-sm);

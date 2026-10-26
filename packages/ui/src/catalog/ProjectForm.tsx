@@ -169,14 +169,7 @@ export function ProjectForm({
         {unit !== 'none' && (
           <div className={styles.row}>
             <div className={styles.grow}>
-              <Field
-                label="Resets"
-                hint={
-                  period === 'total'
-                    ? 'Fixed cap for the whole project.'
-                    : 'A rolling cap, for retainers. Counts billable time in the current period.'
-                }
-              >
+              <Field label="Resets">
                 <Select value={period} options={PERIODS} onChange={setPeriod} />
               </Field>
             </div>
@@ -203,6 +196,14 @@ export function ProjectForm({
               </Field>
             )}
           </div>
+        )}
+        {/* Spans both columns, under Resets and On Day, as in the design. */}
+        {unit !== 'none' && (
+          <p className={styles.fieldHint}>
+            {period === 'total'
+              ? 'Fixed cap for the whole project.'
+              : 'A rolling cap, for retainers. Counts billable time in the current period.'}
+          </p>
         )}
 
         {error && (

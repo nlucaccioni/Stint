@@ -141,10 +141,13 @@
   flex: 1;
   gap: 1px;
   align-self: stretch;
+  min-width: 0;
 }
 
+/* width: 0 overrides the input's built-in size, so the boxes share the row evenly. */
 .value {
   flex: 1;
+  width: 0;
   min-width: 0;
   padding: var(--space-2) var(--space-1);
   border: 0;
