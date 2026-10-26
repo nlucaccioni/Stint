@@ -23,6 +23,10 @@
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-sm);
+  /* Fixed, and the same on the placeholder below: the placeholder's text is
+     smaller, and with line-height "normal" it gets a shorter line box than typed
+     text, so it sits off the input's center line. */
+  line-height: 16px;
 }
 
 textarea.control {
@@ -33,6 +37,7 @@ textarea.control {
 .control::placeholder {
   color: rgb(154 154 154 / 0.7);
   font-size: var(--text-xs);
+  line-height: 16px;
 }
 
 .control:focus-visible {
