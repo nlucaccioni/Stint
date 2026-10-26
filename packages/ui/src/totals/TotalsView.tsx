@@ -17,6 +17,7 @@ import {
   type TimeRange,
 } from '@stint/core'
 import { Button } from '../components/Button'
+import { DateInput } from '../components/DateInput'
 import { useNow } from '../timer/useNow'
 import styles from './TotalsView.module.css'
 
@@ -132,22 +133,18 @@ export function TotalsView(props: TotalsViewProps) {
         </button>
         {selection.kind === 'custom' && (
           <span className={styles.custom}>
-            <input
-              type="date"
+            <DateInput
+              className={styles.rangeDate}
               aria-label="From"
               value={selection.from}
-              onChange={(e) =>
-                e.target.value && props.onSelectionChange({ ...selection, from: e.target.value })
-              }
+              onChange={(from) => props.onSelectionChange({ ...selection, from })}
             />
             <span aria-hidden>–</span>
-            <input
-              type="date"
+            <DateInput
+              className={styles.rangeDate}
               aria-label="To"
               value={selection.to}
-              onChange={(e) =>
-                e.target.value && props.onSelectionChange({ ...selection, to: e.target.value })
-              }
+              onChange={(to) => props.onSelectionChange({ ...selection, to })}
             />
           </span>
         )}

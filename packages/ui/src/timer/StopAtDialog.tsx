@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { Field } from '../components/Field'
+import { DateTimeInput } from '../components/TimeInput'
 import styles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 
@@ -33,13 +34,7 @@ export function StopAtDialog({ startedAt, onSubmit, onClose }: StopAtDialogProps
     <Dialog title="Stop Timer At…" onClose={onClose}>
       <form className={styles.form} onSubmit={submit}>
         <Field label="Stopped At" hint={`Started ${new Date(startedAt).toLocaleString()}.`}>
-          <input
-            type="datetime-local"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            autoFocus
-            required
-          />
+          <DateTimeInput value={value} onChange={setValue} />
         </Field>
         {error && (
           <p className={styles.error} role="alert">

@@ -15,6 +15,7 @@ import {
 } from '@stint/core'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
+import { DateInput } from '../components/DateInput'
 import { Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
@@ -107,12 +108,12 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
             <Field label="From">
-              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required />
+              <DateInput value={from} onChange={setFrom} />
             </Field>
           </div>
           <div className={formStyles.grow}>
             <Field label="To">
-              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} required />
+              <DateInput value={to} onChange={setTo} />
             </Field>
           </div>
         </div>
@@ -165,12 +166,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
             </Field>
           </div>
           <Field label="Billed On">
-            <input
-              type="date"
-              value={billedOn}
-              onChange={(e) => setBilledOn(e.target.value)}
-              required
-            />
+            <DateInput value={billedOn} onChange={setBilledOn} />
           </Field>
         </div>
         <Field label="Note">

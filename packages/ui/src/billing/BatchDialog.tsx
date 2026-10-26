@@ -17,6 +17,7 @@ import {
 } from '@stint/core'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
+import { DateInput } from '../components/DateInput'
 import { Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
@@ -163,12 +164,7 @@ export function BatchDialog(props: BatchDialogProps) {
             </Field>
           </div>
           <Field label="Billed On">
-            <input
-              type="date"
-              value={billedOn}
-              onChange={(e) => setBilledOn(e.target.value)}
-              required
-            />
+            <DateInput value={billedOn} onChange={setBilledOn} />
           </Field>
         </div>
         <Field label="Note">
@@ -187,7 +183,7 @@ export function BatchDialog(props: BatchDialogProps) {
           ) : (
             <>
               <Field label="Paid On">
-                <input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
+                <DateInput value={paidOn} onChange={setPaidOn} />
               </Field>
               <Button
                 variant="primary"

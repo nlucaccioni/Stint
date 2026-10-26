@@ -1,0 +1,55 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* The native time field, restyled. Field's control class adds the 40px box. */
+.time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The clock button opens an OS-drawn list; typing or arrow keys are quicker anyway. */
+.time::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+/* Separators (":" and the space before AM/PM) in muted grey. */
+.time::-webkit-datetime-edit-text {
+  color: var(--color-text-muted);
+}
+
+/* The segment being edited: our wash instead of the system's blue highlight. */
+.time::-webkit-datetime-edit-hour-field:focus,
+.time::-webkit-datetime-edit-minute-field:focus,
+.time::-webkit-datetime-edit-ampm-field:focus {
+  border-radius: 2px;
+  background: var(--color-wash-strong);
+  color: var(--color-text);
+  outline: none;
+}
+
+/* Date and time side by side, used where a single datetime-local was. */
+.pair {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pairDate {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Outside a Field, so it needs the box itself. */
+.pairTime {
+  box-sizing: border-box;
+  width: 120px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.pairTime:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}

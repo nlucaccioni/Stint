@@ -60,14 +60,9 @@
   margin-left: var(--space-2);
 }
 
-.custom input {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-sm);
+/* Compact date buttons in the range bar (the 40px form size is too tall here). */
+.rangeDate {
+  height: 32px;
 }
 
 /* Headline figures */

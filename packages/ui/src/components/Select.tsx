@@ -11,6 +11,8 @@ import styles from './Select.module.css'
 export interface SelectOption<T extends string | number> {
   value: T
   label: string
+  /** Options sharing a group are listed under its heading (like <optgroup>). */
+  group?: string
 }
 
 export interface SelectProps<T extends string | number> {
@@ -102,7 +104,12 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
         onToggle={onToggle}
         onKeyDown={onKeyDown}
       >
-        {options.map((o) => (
+        {options.map((o, i) => [
+          o.group !== undefined && o.group !== options[i - 1]?.group && (
+            <div key={`group-${i}`} className={styles.group} role="presentation">
+              {o.group}
+            </div>
+          ),
           <button
             key={String(o.value)}
             type="button"
@@ -113,8 +120,8 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
           >
             <span>{o.label}</span>
             {o.value === value && <Check className={styles.check} aria-hidden />}
-          </button>
-        ))}
+          </button>,
+        ])}
       </div>
     </>
   )

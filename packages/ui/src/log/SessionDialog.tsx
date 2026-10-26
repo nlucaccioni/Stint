@@ -16,7 +16,10 @@ import {
 import { Lock } from 'lucide-react'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
+import { DateInput } from '../components/DateInput'
 import { Checkbox, Field } from '../components/Field'
+import { Select } from '../components/Select'
+import { DateTimeInput, TimeInput } from '../components/TimeInput'
 import { DeleteAction } from '../catalog/DeleteAction'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
@@ -174,8 +177,8 @@ function EditableSession(props: SessionDialogProps) {
 
   /** Editing the times makes any earlier error out of date. */
   function onTime(set: (v: string) => void) {
-    return (e: { target: { value: string } }) => {
-      set(e.target.value)
+    return (value: string) => {
+      set(value)
       setError(null)
     }
   }
@@ -221,37 +224,31 @@ function EditableSession(props: SessionDialogProps) {
     <Dialog title={session ? 'Edit Time' : 'Add Time'} onClose={props.onClose}>
       <form className={formStyles.form} onSubmit={submit}>
         <Field label="Project">
-          <select value={projectId} onChange={(e) => pickProject(e.target.value)} required>
-            {clients.map((client) => {
-              const own = startable.filter((p) => p.clientId === client.id)
-              if (own.length === 0) return null
-              return (
-                <optgroup key={client.id} label={client.name}>
-                  {own.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </optgroup>
-              )
-            })}
-          </select>
+          <Select
+            value={projectId}
+            onChange={pickProject}
+            options={clients.flatMap((client) =>
+              startable
+                .filter((p) => p.clientId === client.id)
+                .map((p) => ({ value: p.id, label: p.name, group: client.name })),
+            )}
+          />
         </Field>
 
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
             <Field label="Date">
-              <input type="date" value={date} onChange={onTime(setDate)} required />
+              <DateInput value={date} onChange={onTime(setDate)} />
             </Field>
           </div>
           <Field label="Start">
-            <input type="time" value={startTime} onChange={onTime(setStartTime)} required />
+            <TimeInput value={startTime} onChange={onTime(setStartTime)} required />
           </Field>
           <Field label="End">
             {running ? (
               <input value="Running" disabled />
             ) : (
-              <input type="time" value={endTime} onChange={onTime(setEndTime)} required />
+              <TimeInput value={endTime} onChange={onTime(setEndTime)} required />
             )}
           </Field>
         </div>
@@ -352,7 +349,7 @@ function SplitRow(props: {
   return (
     <div className={styles.split}>
       <Field label="Split At" hint="The first part keeps this entry; the rest becomes a new one.">
-        <input type="datetime-local" value={value} onChange={(e) => setValue(e.target.value)} />
+        <DateTimeInput value={value} onChange={setValue} />
       </Field>
       <div className={styles.splitActions}>
         <Button size="sm" onClick={props.onCancel}>
