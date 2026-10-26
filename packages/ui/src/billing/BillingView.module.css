@@ -167,3 +167,10 @@
   gap: var(--space-2);
   height: 40px;
 }
+
+.dialogActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}

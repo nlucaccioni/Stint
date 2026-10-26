@@ -171,37 +171,19 @@ export function BatchDialog(props: BatchDialogProps) {
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
         </Field>
 
-        <div className={styles.paidRow}>
-          {isPaid ? (
-            <Button
-              onClick={() =>
-                void run(() => props.onUpdateBatch(batch.id, { paidAt: null }).then(() => {}))
-              }
-            >
-              Mark Unpaid
-            </Button>
-          ) : (
-            <>
-              <Field label="Paid On">
-                <DateInput value={paidOn} onChange={setPaidOn} />
-              </Field>
-              {/* Same height as the date box, so the buttons sit centered on it. */}
+        {!isPaid && (
+          <div className={styles.paidRow}>
+            <Field label="Paid On">
+              <DateInput value={paidOn} onChange={setPaidOn} />
+            </Field>
+            {/* Same height as the date box, so the button sits centered on it. */}
+            {!adding && (
               <div className={styles.paidActions}>
-                <Button
-                  variant="primary"
-                  onClick={() =>
-                    void run(() =>
-                      props.onUpdateBatch(batch.id, { paidAt: day(paidOn) }).then(() => {}),
-                    )
-                  }
-                >
-                  Mark Paid
-                </Button>
-                {!adding && <Button onClick={() => setAdding(true)}>Add Sessions…</Button>}
+                <Button onClick={() => setAdding(true)}>Add Sessions…</Button>
               </div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {!isPaid && (
           <DeleteAction
@@ -226,11 +208,33 @@ export function BatchDialog(props: BatchDialogProps) {
             {error}
           </p>
         )}
-        <div className={formStyles.actions}>
-          <Button onClick={props.onClose}>Close</Button>
-          <Button type="submit" variant="primary" disabled={saving}>
-            Save Details
-          </Button>
+        {/* Mark Paid / Unpaid on the left, the dialog's own actions on the right. */}
+        <div className={styles.dialogActions}>
+          {isPaid ? (
+            <Button
+              onClick={() =>
+                void run(() => props.onUpdateBatch(batch.id, { paidAt: null }).then(() => {}))
+              }
+            >
+              Mark Unpaid
+            </Button>
+          ) : (
+            <Button
+              onClick={() =>
+                void run(() =>
+                  props.onUpdateBatch(batch.id, { paidAt: day(paidOn) }).then(() => {}),
+                )
+              }
+            >
+              Mark Paid
+            </Button>
+          )}
+          <div className={formStyles.actions}>
+            <Button onClick={props.onClose}>Close</Button>
+            <Button type="submit" variant="primary" disabled={saving}>
+              Save Details
+            </Button>
+          </div>
         </div>
       </form>
     </Dialog>
