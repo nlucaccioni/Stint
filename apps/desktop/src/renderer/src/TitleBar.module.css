@@ -6,7 +6,6 @@
   /* Must match TITLE_BAR_HEIGHT in main/index.ts. */
   height: 36px;
   padding: 0 var(--space-4);
-  background: var(--color-bg);
   user-select: none;
   /* Lets the user drag the window by its title bar (and double-click to maximize). */
   -webkit-app-region: drag;

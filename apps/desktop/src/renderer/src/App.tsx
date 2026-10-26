@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import {
   resolveRange,
   toLocalParts,
@@ -87,44 +87,62 @@ export function App() {
   const runningProject = catalog.projects.find((p) => p.id === timer.running?.projectId) ?? null
   const runningClient = catalog.clients.find((c) => c.id === runningProject?.clientId) ?? null
 
+  // The content starts below the floating chrome, whose height changes when the
+  // timer wraps to its own row in a narrow window.
+  const [chrome, setChrome] = useState<HTMLDivElement | null>(null)
+  const [chromeHeight, setChromeHeight] = useState(0)
+  useEffect(() => {
+    if (!chrome) return
+    const observer = new ResizeObserver(() => setChromeHeight(chrome.offsetHeight))
+    observer.observe(chrome)
+    return () => observer.disconnect()
+  }, [chrome])
+
   return (
-    <div className={styles.shell}>
-      <TitleBar platform={info?.platform} version={info?.version} />
-      <header className={styles.topbar}>
-        <nav className={styles.tabs} aria-label="Views">
-          {TABS.map((t) => (
-            <button
-              key={t.tab}
-              type="button"
-              className={styles.tab}
-              aria-current={tab === t.tab ? 'page' : undefined}
-              onClick={() => setTab(t.tab)}
+    <div
+      className={styles.shell}
+      style={{ '--chrome-height': `${chromeHeight}px` } as CSSProperties}
+    >
+      {/* Title bar and tabs float over the content, so cards (and their glow) show
+          through as they scroll under. */}
+      <div className={styles.chrome} ref={setChrome}>
+        <TitleBar platform={info?.platform} version={info?.version} />
+        <header className={styles.topbar}>
+          <nav className={styles.tabs} aria-label="Views">
+            {TABS.map((t) => (
+              <button
+                key={t.tab}
+                type="button"
+                className={styles.tab}
+                aria-current={tab === t.tab ? 'page' : undefined}
+                onClick={() => setTab(t.tab)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <div className={styles.topbarEnd}>
+            <IconButton
+              size="md"
+              label="Settings"
+              aria-current={tab === 'settings' ? 'page' : undefined}
+              onClick={() => setTab('settings')}
             >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className={styles.topbarEnd}>
-          <IconButton
-            size="md"
-            label="Settings"
-            aria-current={tab === 'settings' ? 'page' : undefined}
-            onClick={() => setTab('settings')}
-          >
-            <Settings aria-hidden />
-          </IconButton>
-          {catalog.loaded && (
-            <TimerBar
-              running={timer.running}
-              project={runningProject}
-              client={runningClient}
-              onStop={timer.stop}
-              onStopAt={timer.stopAt}
-            />
-          )}
-        </div>
-      </header>
-      {/* Only this part scrolls, so the title bar, tabs, and timer stay put. */}
+              <Settings aria-hidden />
+            </IconButton>
+            {catalog.loaded && (
+              <TimerBar
+                running={timer.running}
+                project={runningProject}
+                client={runningClient}
+                onStop={timer.stop}
+                onStopAt={timer.stopAt}
+              />
+            )}
+          </div>
+        </header>
+      </div>
+      {/* The whole window scrolls under the title bar, tabs, and timer, which stay put. */}
       <div className={styles.scroll}>
         <main className={styles.main}>
           {catalog.loadError && (
