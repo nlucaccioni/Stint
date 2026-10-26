@@ -14,7 +14,8 @@ export {
   type TimeInputProps,
 } from './components/TimeInput'
 export { Tag, type TagProps } from './components/Tag'
-export { CheckBox, Checkbox, Field, type FieldProps } from './components/Field'
+export { CheckBox, CheckInput, Checkbox, Field, type FieldProps } from './components/Field'
+export { Card, type CardProps } from './components/Card'
 export { Dialog, type DialogProps } from './components/Dialog'
 export { ClientForm, type ClientFormProps } from './catalog/ClientForm'
 export { ProjectForm, type ProjectFormProps, type ProjectValues } from './catalog/ProjectForm'

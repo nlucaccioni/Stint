@@ -1,14 +1,22 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Settings: one card per section, the same width as the Keyboard Shortcuts and
+   This Computer cards below (all full width, like Billing). */
 .view {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 520px;
 }
 
 .heading {
   margin: 0;
   font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .saved {
@@ -17,15 +25,14 @@
   font-size: var(--text-sm);
 }
 
-.section {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-md);
-}
-
 .intro {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+}
+
+.direction {
+  width: 120px;
 }
 
 .favorites {
@@ -40,20 +47,15 @@
   gap: var(--space-2);
 }
 
-.favorite select {
+.favoriteSelect {
   flex: 1;
   min-width: 0;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font: inherit;
 }
 
 .slot {
   width: 20px;
   color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
   text-align: right;
 }

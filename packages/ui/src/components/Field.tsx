@@ -33,13 +33,25 @@ export function Field({ label, hint, children }: FieldProps) {
   )
 }
 
+/** A styled checkbox on its own (e.g. in a list row); the native one is OS-drawn. */
+export function CheckInput({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="checkbox"
+      className={[styles.checkInput, className].filter(Boolean).join(' ')}
+      {...rest}
+    />
+  )
+}
+
+/** A styled checkbox with its label beside it. */
 export function Checkbox({
   label,
   ...rest
 }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className={styles.checkbox}>
-      <input type="checkbox" {...rest} />
+      <CheckInput {...rest} />
       {label}
     </label>
   )

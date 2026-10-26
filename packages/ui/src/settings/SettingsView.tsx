@@ -9,7 +9,9 @@ import {
   type WeekStartDay,
 } from '@stint/core'
 import { Button } from '../components/Button'
+import { Card } from '../components/Card'
 import { Field } from '../components/Field'
+import { Select } from '../components/Select'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import styles from './SettingsView.module.css'
@@ -57,82 +59,107 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   return (
     <section className={styles.view}>
       <h1 className={styles.heading}>Settings</h1>
-      <form className={formStyles.form} onSubmit={submit} onChange={() => setSaved(false)}>
-        <h2 className={styles.section}>Timer</h2>
-        <Field
-          label="Ask About Idle Time After (Minutes)"
-          hint="When you come back after this long away, Stint asks whether to keep the time. 0 turns it off."
-        >
-          <input type="number" step={1} value={idle} onChange={(e) => setIdle(e.target.value)} />
-        </Field>
-        <Field
-          label="Remind Me When a Timer Has Run For (Hours)"
-          hint="A notification in case you forgot to stop it. 0 turns it off."
-        >
-          <input type="number" step={1} value={nudge} onChange={(e) => setNudge(e.target.value)} />
-        </Field>
-        <h2 className={styles.section}>Calendar and Money</h2>
-        <Field label="Week Starts On">
-          <select
-            value={weekStart}
-            onChange={(e) => setWeekStart(Number(e.target.value) as WeekStartDay)}
+      <form className={styles.form} onSubmit={submit} onChange={() => setSaved(false)}>
+        <Card title="Timer">
+          <Field
+            label="Ask About Idle Time After (Minutes)"
+            hint="When you come back after this long away, Stint asks whether to keep the time. 0 turns it off."
           >
-            {weekdays.map((name, day) => (
-              <option key={day} value={day}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Default Currency for New Clients">
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-            {currencies.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-        <h2 className={styles.section}>Billing</h2>
-        <div className={formStyles.row}>
-          <div className={formStyles.grow}>
-            <Field
-              label="Round Billed Time"
-              hint="Applies to each session when you bill it. The log and totals always show actual time."
-            >
-              <select
-                value={roundingMinutes}
-                onChange={(e) => setRoundingMinutes(Number(e.target.value))}
+            <input type="number" step={1} value={idle} onChange={(e) => setIdle(e.target.value)} />
+          </Field>
+          <Field
+            label="Remind Me When a Timer Has Run For (Hours)"
+            hint="A notification in case you forgot to stop it. 0 turns it off."
+          >
+            <input
+              type="number"
+              step={1}
+              value={nudge}
+              onChange={(e) => setNudge(e.target.value)}
+            />
+          </Field>
+        </Card>
+        <Card title="Calendar and Money">
+          <div className={formStyles.row}>
+            <div className={formStyles.grow}>
+              <Field label="Week Starts On">
+                <Select
+                  value={weekStart}
+                  options={weekdays.map((name, day) => ({ value: day, label: name }))}
+                  onChange={(day) => {
+                    setWeekStart(day as WeekStartDay)
+                    setSaved(false)
+                  }}
+                />
+              </Field>
+            </div>
+            <div className={formStyles.grow}>
+              <Field label="Default Currency for New Clients">
+                <Select
+                  value={currency}
+                  options={currencies.map((c) => ({ value: c, label: c }))}
+                  onChange={(c) => {
+                    setCurrency(c)
+                    setSaved(false)
+                  }}
+                />
+              </Field>
+            </div>
+          </div>
+        </Card>
+        <Card title="Billing">
+          <div className={formStyles.row}>
+            <div className={formStyles.grow}>
+              <Field
+                label="Round Billed Time"
+                hint="Applies to each session when you bill it. The log and totals always show actual time."
               >
-                {ROUNDING_STEPS.map((m) => (
-                  <option key={m} value={m}>
-                    {m === 0 ? 'Off' : `To ${m} minute${m === 1 ? '' : 's'}`}
-                  </option>
-                ))}
-              </select>
+                <Select
+                  value={roundingMinutes}
+                  options={ROUNDING_STEPS.map((m) => ({
+                    value: m,
+                    label: m === 0 ? 'Off' : `To ${m} Minute${m === 1 ? '' : 's'}`,
+                  }))}
+                  onChange={(m) => {
+                    setRoundingMinutes(m)
+                    setSaved(false)
+                  }}
+                />
+              </Field>
+            </div>
+            <Field label="Direction">
+              <Select
+                className={styles.direction}
+                value={roundingMode}
+                disabled={roundingMinutes === 0}
+                options={[
+                  { value: 'up', label: 'Up' },
+                  { value: 'nearest', label: 'Nearest' },
+                ]}
+                onChange={(mode) => {
+                  setRoundingMode(mode as RoundingMode)
+                  setSaved(false)
+                }}
+              />
             </Field>
           </div>
-          <Field label="Direction">
-            <select
-              value={roundingMode}
-              disabled={roundingMinutes === 0}
-              onChange={(e) => setRoundingMode(e.target.value as RoundingMode)}
-            >
-              <option value="up">Up</option>
-              <option value="nearest">Nearest</option>
-            </select>
-          </Field>
-        </div>
+        </Card>
 
-        <h2 className={styles.section}>Favorites</h2>
-        <p className={styles.intro}>
-          Favorites 1–9 can be started from the tray menu and keyboard shortcuts (and later the MX
-          Keypad).
-        </p>
-        <FavoritePickers
-          favorites={favorites}
-          projects={projects}
-          clients={clients}
-          onChange={setFavorites}
-        />
+        <Card title="Favorites">
+          <p className={styles.intro}>
+            Favorites 1–9 can be started from the tray menu and keyboard shortcuts (and later the MX
+            Keypad).
+          </p>
+          <FavoritePickers
+            favorites={favorites}
+            projects={projects}
+            clients={clients}
+            onChange={(next) => {
+              setFavorites(next)
+              setSaved(false)
+            }}
+          />
+        </Card>
         {error && (
           <p className={formStyles.error} role="alert">
             {error}
@@ -171,31 +198,23 @@ function FavoritePickers(props: {
   return (
     <div className={styles.favorites}>
       {favorites.map((projectId, slot) => (
-        <label key={slot} className={styles.favorite}>
+        <div key={slot} className={styles.favorite}>
           <span className={styles.slot}>{slot + 1}</span>
-          <select
+          <Select
+            className={styles.favoriteSelect}
             aria-label={`Favorite ${slot + 1}`}
             value={projectId ?? ''}
-            onChange={(e) => pick(slot, e.target.value || null)}
-          >
-            <option value="">—</option>
-            {clients.map((client) => {
-              const own = projects.filter(
-                (p) => p.clientId === client.id && (!p.archived || p.id === projectId),
-              )
-              if (own.length === 0) return null
-              return (
-                <optgroup key={client.id} label={client.name}>
-                  {own.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </optgroup>
-              )
-            })}
-          </select>
-        </label>
+            options={[
+              { value: '', label: '—' },
+              ...clients.flatMap((client) =>
+                projects
+                  .filter((p) => p.clientId === client.id && (!p.archived || p.id === projectId))
+                  .map((p) => ({ value: p.id, label: p.name, group: client.name })),
+              ),
+            ]}
+            onChange={(id) => pick(slot, id || null)}
+          />
+        </div>
       ))}
     </div>
   )

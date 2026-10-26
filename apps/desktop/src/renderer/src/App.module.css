@@ -79,3 +79,10 @@
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
+
+/* Settings: its cards 16px apart, like the cards inside SettingsView. */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

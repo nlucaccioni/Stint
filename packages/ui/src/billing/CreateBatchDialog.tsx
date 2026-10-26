@@ -16,7 +16,7 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
-import { Field } from '../components/Field'
+import { CheckInput, Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
@@ -130,8 +130,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
                 zone={zone}
                 now={now}
                 before={
-                  <input
-                    type="checkbox"
+                  <CheckInput
                     aria-label="Include"
                     checked={!excluded.has(s.id)}
                     onChange={(e) => toggle(s.id, e.target.checked)}

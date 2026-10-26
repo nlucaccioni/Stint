@@ -213,7 +213,7 @@ export function App() {
                 />
               )}
               {tab === 'settings' && info && (
-                <>
+                <div className={styles.settings}>
                   <SettingsView
                     preferences={prefs.preferences}
                     projects={catalog.projects}
@@ -222,7 +222,7 @@ export function App() {
                   />
                   <ShortcutSettings platform={info.platform} />
                   <SystemSettings />
-                </>
+                </div>
               )}
             </>
           )}

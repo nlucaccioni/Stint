@@ -18,7 +18,7 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
-import { Field } from '../components/Field'
+import { CheckInput, Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { DeleteAction } from '../catalog/DeleteAction'
@@ -277,8 +277,7 @@ function AddSessions(props: {
             zone={props.zone}
             now={props.now}
             before={
-              <input
-                type="checkbox"
+              <CheckInput
                 aria-label="Add"
                 checked={picked.has(s.id)}
                 onChange={(e) => {

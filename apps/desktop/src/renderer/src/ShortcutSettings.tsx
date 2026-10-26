@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings section for global keyboard shortcuts (desktop only).
 import { useEffect, useState } from 'react'
-import { Button } from '@stint/ui'
+import { Button, Card } from '@stint/ui'
 import type { HotkeyState, HotkeyStatus } from '../../shared/api'
 import {
   acceleratorFromKeyPress,
@@ -69,13 +69,14 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
     accelerator ? formatAccelerator(accelerator, platform) : 'None'
 
   return (
-    <section className={styles.section}>
-      <div className={styles.header}>
-        <h2 className={styles.heading}>Keyboard Shortcuts</h2>
-        <Button size="sm" variant="ghost" onClick={() => void api.resetHotkeys().then(setState)}>
+    <Card
+      title="Keyboard Shortcuts"
+      actions={
+        <Button size="sm" variant="subtle" onClick={() => void api.resetHotkeys().then(setState)}>
           Reset All to Defaults
         </Button>
-      </div>
+      }
+    >
       <p className={styles.intro}>
         These work from any app. Favorite shortcuts start that project, switch to it, or stop it if
         it's already running.
@@ -132,6 +133,6 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
           )
         })}
       </ul>
-    </section>
+    </Card>
   )
 }

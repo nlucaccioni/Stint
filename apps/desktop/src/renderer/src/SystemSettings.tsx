@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings that belong to this computer rather than syncing (desktop only).
 import { useEffect, useState } from 'react'
-import { Checkbox } from '@stint/ui'
+import { Card, Checkbox } from '@stint/ui'
 import type { LaunchAtLogin } from '../../shared/api'
 import { api } from './api'
 import styles from './ShortcutSettings.module.css'
@@ -29,8 +29,7 @@ export function SystemSettings() {
   }
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.heading}>This Computer</h2>
+    <Card title="This Computer">
       <Checkbox
         label="Open Stint When I Log In (It Starts in the Tray / Menu Bar)"
         checked={login.enabled}
@@ -45,6 +44,6 @@ export function SystemSettings() {
           {error}
         </p>
       )}
-    </section>
+    </Card>
   )
 }

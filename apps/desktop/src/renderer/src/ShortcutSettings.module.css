@@ -1,22 +1,4 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  max-width: 640px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.heading {
-  margin: 0;
-  font-size: var(--text-md);
-}
-
 .intro {
   margin: 0;
   color: var(--color-text-muted);
@@ -63,9 +45,11 @@
   font-size: var(--text-sm);
 }
 
+/* Waiting for a key press: a brighter outline over the wash. */
 .kbd[data-recording] {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-text);
+  background: var(--color-wash-strong);
+  color: var(--color-text);
 }
 
 .problem {
