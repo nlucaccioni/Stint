@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-// "Stop Timer": stops whatever is running. Shows the running time, or a muted
-// "Stop" when nothing is running.
+// "Now Running": shows the running project in its client's color with the live
+// time, or "No Timer". Pressing it stops the timer. (Still named StopCommand so
+// keys set up when it was "Stop Timer" keep working.)
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
@@ -8,7 +9,7 @@ namespace Loupedeck.StintPlugin
     public class StopCommand : PluginDynamicCommand
     {
         public StopCommand()
-            : base(displayName: "Stop Timer", description: "Stop the running timer.", groupName: "Timer")
+            : base(displayName: "Now Running", description: "Shows the running timer. Press to stop it.", groupName: "Timer")
         {
         }
 
@@ -44,12 +45,13 @@ namespace Loupedeck.StintPlugin
                 return KeyArt.Unavailable(w, h, stint.Status);
             }
             var running = stint.State?.Running;
-            if (running == null)
+            var project = running == null ? null : stint.Projects.FirstOrDefault(p => p.Id == running.ProjectId);
+            if (running == null || project == null)
             {
-                return KeyArt.Label(w, h, "Stop", muted: true);
+                return KeyArt.Label(w, h, "No Timer", muted: true);
             }
             long elapsed = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - running.StartedAt) / 1000;
-            return KeyArt.Value(w, h, "Stop", Format.Elapsed(elapsed), alert: true);
+            return KeyArt.RunningProject(w, h, project, Format.Elapsed(elapsed));
         }
 
         private void OnTick()

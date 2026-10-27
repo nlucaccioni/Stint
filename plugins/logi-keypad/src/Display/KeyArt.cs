@@ -13,7 +13,6 @@ namespace Loupedeck.StintPlugin
         private static readonly BitmapColor Background = new(20, 20, 20);
         private static readonly BitmapColor Text = new(240, 240, 240);
         private static readonly BitmapColor Muted = new(140, 140, 140);
-        private static readonly BitmapColor StopRed = new(220, 70, 60);
 
         /// <summary>An idle project: its client's color as a bar on the left, the name in the middle.</summary>
         public static BitmapImage Project(int width, int height, ProjectEntry project)
@@ -39,12 +38,12 @@ namespace Loupedeck.StintPlugin
             return b.ToImage();
         }
 
-        /// <summary>A key with a label on top and a big value below (Stop, totals).</summary>
-        public static BitmapImage Value(int width, int height, string label, string value, bool alert = false)
+        /// <summary>A key with a label on top and a big value below (totals).</summary>
+        public static BitmapImage Value(int width, int height, string label, string value)
         {
             using var b = new BitmapBuilder(width, height);
             b.Clear(Background);
-            DrawLines(b, 0, label, value, alert ? StopRed : Muted, Text, emphasizeSecond: true, labelFirst: true);
+            DrawLines(b, 0, label, value, Muted, Text, emphasizeSecond: true, labelFirst: true);
             return b.ToImage();
         }
 
