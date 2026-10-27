@@ -80,9 +80,9 @@ export class LocalApiServer {
     wss.on('connection', (socket) => this.accept(socket))
     this.wss = wss
 
+    // Not unref()'d: in Electron's main process an unref'd timer can sit unfired
+    // until something else wakes the event loop. stop() clears it instead.
     this.heartbeat = setInterval(() => this.sendState(), this.deps.heartbeatMs ?? 60_000)
-    // Don't keep the process alive just for the heartbeat.
-    this.heartbeat.unref()
   }
 
   /** Close every connection and stop listening. */
