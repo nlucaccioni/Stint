@@ -38,6 +38,8 @@ import { HotkeyService } from './hotkeys'
 import { createTray, type TrayHandle } from './tray'
 import type { TrayCommand, TrayModel } from './tray-menu'
 import { IdleWatcher } from './idle'
+import { LocalApiController } from './local-api/controller'
+import { buildProjects, buildState } from './local-api/state'
 import { registerIpc } from './ipc'
 import { NudgeWatcher } from './nudge'
 import { finishScreenPick, pickScreenColor, screenCapture } from './screen-picker'
@@ -61,6 +63,7 @@ let db: Db | null = null
 /** An absence waiting for the user to decide what to do with it. */
 let pendingIdle: IdleAway | null = null
 let tray: TrayHandle | null = null
+let localApi: LocalApiController | null = null
 /** Set when the user really quits (tray "Quit", Cmd+Q). Until then, closing hides. */
 let quitting = false
 /** Shows the Windows "still running in the tray" notice once; set up after startup. */
@@ -343,15 +346,28 @@ void app.whenReady().then(() => {
       onTimerChanged: (state) => {
         broadcast('timerChanged', state)
         tray?.refresh()
+        localApi?.notifyState()
         // A prompt about a session that's no longer running doesn't apply any more.
         if (pendingIdle && state.running?.id !== pendingIdle.sessionId) setPendingIdle(null)
       },
       onSessionsChanged: () => {
         broadcast('sessionsChanged', null)
         tray?.refresh()
+        localApi?.notifyState()
       },
-      onPreferencesChanged: (prefs) => broadcast('preferencesChanged', prefs),
-      onBatchesChanged: () => broadcast('batchesChanged', null),
+      onPreferencesChanged: (prefs) => {
+        broadcast('preferencesChanged', prefs)
+        localApi?.notifyState()
+      },
+      onBatchesChanged: () => {
+        broadcast('batchesChanged', null)
+        localApi?.notifyState()
+      },
+      // A rate change alters the unbilled amounts, so state goes out too.
+      onCatalogChanged: () => {
+        localApi?.notifyProjects()
+        localApi?.notifyState()
+      },
       saveFile,
       revealFile: (path) => shell.showItemInFolder(path),
       pendingIdle: { get: () => pendingIdle, clear: () => setPendingIdle(null) },
@@ -363,6 +379,11 @@ void app.whenReady().then(() => {
         }),
         set: (enabled) =>
           app.setLoginItemSettings({ openAtLogin: enabled, args: enabled ? ['--hidden'] : [] }),
+      },
+      localApi: {
+        status: () => localApi!.status(),
+        update: (edits) => localApi!.update(edits),
+        regenerateToken: () => localApi!.regenerateToken(),
       },
       hideSwitcher,
       showSwitcher,
@@ -376,10 +397,28 @@ void app.whenReady().then(() => {
         },
       },
     })
+    const database = db
+    // The Keypad plugin's connection (SPEC.md §8). Commands go through the same
+    // handlers as the window, so the same rules apply. Dev builds use the next
+    // port up, so a dev run and the installed app can both be open.
+    localApi = new LocalApiController({
+      dir: dataDir,
+      defaultPort: app.isPackaged ? 47823 : 47824,
+      deps: {
+        start: (projectId) => void handlers.startTimer(projectId),
+        stop: () => void handlers.stopTimer(),
+        toggle: (projectId) => void handlers.toggleTimer(projectId),
+        openSwitcher: () => showSwitcher(),
+        getState: () =>
+          buildState(database, Date.now(), Intl.DateTimeFormat().resolvedOptions().timeZone),
+        getProjects: () => buildProjects(database),
+      },
+      onStatusChanged: (status) => broadcast('localApiChanged', status),
+    })
     registerIpc(handlers)
     installAppMenu({ checkForUpdates: checkForUpdatesNow })
     hotkeys.apply()
-    const database = db
+    void localApi.apply()
     tray = createTray({
       getModel: () => trayModel(database, hotkeys),
       onCommand: (command) => runTrayCommand(command, handlers),
@@ -413,6 +452,8 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll()
+  // Tells connected clients Stint is closing (code 1001), so they show "offline".
+  void localApi?.stop()
   db?.close()
   db = null
 })

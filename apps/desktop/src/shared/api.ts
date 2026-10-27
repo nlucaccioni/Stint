@@ -48,6 +48,18 @@ export interface LaunchAtLogin {
   available: boolean
 }
 
+/** The Local API that the Keypad plugin connects to (main/local-api). */
+export interface LocalApiStatus {
+  enabled: boolean
+  port: number
+  /** True when the server is up and accepting connections. */
+  listening: boolean
+  /** Why it isn't listening while enabled. in-use: another program has the port. */
+  problem: 'in-use' | 'failed' | null
+  /** Names of the connected clients (e.g. "logi-keypad"). */
+  clients: string[]
+}
+
 export interface NewBatch {
   clientId: string
   rangeStart: number
@@ -167,6 +179,12 @@ export interface StintApi {
   getLaunchAtLogin(): Promise<LaunchAtLogin>
   setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLogin>
 
+  getLocalApi(): Promise<LocalApiStatus>
+  /** Turn the Local API on or off, or move it to another port. */
+  setLocalApi(edits: { enabled?: boolean; port?: number }): Promise<LocalApiStatus>
+  /** Replace the token; connected clients must reconnect with the new one. */
+  regenerateLocalApiToken(): Promise<LocalApiStatus>
+
   /** Projects with the most recent time, newest first (for the quick switcher). */
   listRecentProjectIds(limit: number): Promise<string[]>
   /** Close the quick switcher (after a pick or Esc). */
@@ -241,6 +259,9 @@ export const apiMethods = [
   'pauseHotkeys',
   'getLaunchAtLogin',
   'setLaunchAtLogin',
+  'getLocalApi',
+  'setLocalApi',
+  'regenerateLocalApiToken',
   'listRecentProjectIds',
   'hideSwitcher',
   'showSwitcher',
@@ -294,6 +315,8 @@ export interface StintEvents {
   switcherShown: null
   /** A billing batch was created, edited, or removed. */
   batchesChanged: null
+  /** The Local API started, stopped, or a client connected or left. */
+  localApiChanged: LocalApiStatus
 }
 
 export const eventNames = [
@@ -304,6 +327,7 @@ export const eventNames = [
   'navigate',
   'switcherShown',
   'batchesChanged',
+  'localApiChanged',
 ] as const satisfies readonly (keyof StintEvents)[]
 
 export type EventName = keyof StintEvents

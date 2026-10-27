@@ -46,6 +46,7 @@ import type {
   HotkeyState,
   IdleAway,
   LaunchAtLogin,
+  LocalApiStatus,
   ScreenCapture,
   StintApi,
   TimerState,
@@ -81,6 +82,8 @@ export interface ApiDeps {
   onSessionsChanged?: () => void
   onBatchesChanged?: () => void
   onPreferencesChanged?: (prefs: Preferences) => void
+  /** Called after any client or project is added, edited, moved, or deleted. */
+  onCatalogChanged?: () => void
   /**
    * Ask the user where to save a file (system dialog) and write it there.
    * Returns the chosen path, or null if they cancelled.
@@ -99,6 +102,12 @@ export interface ApiDeps {
   }
   /** Start Stint when the user logs in (an OS setting for this machine). */
   loginItem?: { get: () => LaunchAtLogin; set: (enabled: boolean) => void }
+  /** The Local API the Keypad plugin connects to (see main/local-api). */
+  localApi?: {
+    status: () => LocalApiStatus
+    update: (edits: { enabled?: boolean; port?: number }) => Promise<LocalApiStatus>
+    regenerateToken: () => LocalApiStatus
+  }
   hideSwitcher?: () => void
   showSwitcher?: () => void
   /** The screen color picker overlays (see main/screen-picker.ts). */
@@ -115,7 +124,7 @@ export interface ApiDeps {
 }
 
 /** Handlers that wait on something outside Stint (e.g. a save dialog). */
-type AsyncMethod = 'exportCsv' | 'pickScreenColor'
+type AsyncMethod = 'exportCsv' | 'pickScreenColor' | 'setLocalApi'
 
 /**
  * Each handler takes raw arguments and returns the value (or throws). Most are
@@ -243,6 +252,11 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     return deps.hotkeys
   }
 
+  function localApi() {
+    if (!deps.localApi) throw new Error('The Local API is not available.')
+    return deps.localApi
+  }
+
   function savePreferences(values: Partial<Preferences>): Preferences {
     setPreferences(db, values, ctx())
     const prefs = getPreferences(db)
@@ -334,6 +348,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       // New clients go at the end of the user's order.
       const client = newClient(input, ctx(), keyAtEnd(listClients(db)))
       insertClient(db, client)
+      deps.onCatalogChanged?.()
       return client
     },
 
@@ -343,6 +358,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       if (beforeId !== null) existingClient(beforeId)
       const sortKey = keyForMove(listClients(db), clientId, beforeId)
       updateClient(db, clientId, { sortKey, ...stamp() })
+      deps.onCatalogChanged?.()
       return existingClient(clientId)
     },
 
@@ -350,6 +366,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       const [clientId, edits] = z.tuple([id, clientEdits]).parse(args)
       existingClient(clientId)
       updateClient(db, clientId, clientPatch(edits, ctx()))
+      deps.onCatalogChanged?.()
       return existingClient(clientId)
     },
 
@@ -362,6 +379,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       const project = newProject(input, ctx(), keyAtEnd(siblings))
       assertBudgetHasRate(project, client)
       insertProject(db, project)
+      deps.onCatalogChanged?.()
       return project
     },
 
@@ -375,6 +393,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       }
       const sortKey = keyForMove(siblings, projectId, beforeId)
       updateProject(db, projectId, { sortKey, ...stamp() })
+      deps.onCatalogChanged?.()
       return existingProject(projectId)
     },
 
@@ -399,6 +418,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       } else {
         updateProject(db, projectId, patch)
       }
+      deps.onCatalogChanged?.()
       return existingProject(projectId)
     },
 
@@ -553,6 +573,20 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
       return item.get()
     },
 
+    getLocalApi: () => localApi().status(),
+
+    setLocalApi: (...args) => {
+      const [edits] = z
+        .tuple([z.strictObject({ enabled: z.boolean().optional(), port: z.number().optional() })])
+        .parse(args)
+      return localApi().update(edits)
+    },
+
+    regenerateLocalApiToken: (...args) => {
+      z.tuple([]).parse(args)
+      return localApi().regenerateToken()
+    },
+
     listRecentProjectIds: (...args) => {
       const [limit] = z.tuple([z.number().int().min(1).max(50)]).parse(args)
       return recentProjectIds(db, limit)
@@ -699,6 +733,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
         dropFavorites([projectId])
         return changes
       })
+      deps.onCatalogChanged?.()
     },
 
     /** Also deletes the client's projects and their sessions. */
@@ -721,6 +756,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
         dropFavorites(projectIds)
         return changes
       })
+      deps.onCatalogChanged?.()
     },
   }
 }
