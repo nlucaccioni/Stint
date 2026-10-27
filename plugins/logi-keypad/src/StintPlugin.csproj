@@ -1,0 +1,78 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!--
+  The project file: like package.json plus build scripts for .NET. `dotnet build`
+  compiles src/ into bin/Debug/bin/StintPlugin.dll, copies package/ next to it,
+  and writes a .link file that points Logi Plugin Service at that folder, so the
+  plugin loads straight from this repo during development.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Must match the .NET that Logi Plugin Service ships with (it bundles its own
+      runtime): .NET 10 as of Logi Plugin Service 6.4. Building against an older
+      target fails with error CS1705 ("PluginApi uses System.Runtime 10.0.0.0").
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Common `using` lines (System, System.Linq, ...) are added to every file automatically. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Like TypeScript's strictNullChecks: a type only allows null when marked with `?`. -->
+    <Nullable>enable</Nullable>
+    <RootNamespace>Loupedeck.StintPlugin</RootNamespace>
+
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- Where Logi Options+ installed the SDK library we compile against. -->
+    <PluginApiDir Condition="$(OS) == 'Windows_NT'">C:\Program Files\Logi\LogiPluginService\</PluginApiDir>
+    <PluginApiDir Condition="$(OS) != 'Windows_NT'">/Applications/Utilities/LogiPluginService.app/Contents/MonoBundle/</PluginApiDir>
+
+    <!-- Where the service looks for plugins (and our development .link file). -->
+    <PluginDir Condition="$(OS) == 'Windows_NT'">$(LocalAppData)\Logi\LogiPluginService\Plugins\</PluginDir>
+    <PluginDir Condition="$(OS) != 'Windows_NT'">~/Library/Application\ Support/Logi/LogiPluginService/Plugins/</PluginDir>
+
+    <BaseOutputPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\bin\'))</BaseOutputPath>
+    <OutputPath>$(BaseOutputPath)$(Configuration)\bin\</OutputPath>
+
+    <PluginShortName>Stint</PluginShortName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Logitech's SDK library, referenced from the local Logi Options+ install.
+      Private=false: don't copy it into our build output. The service already has
+      it, and Logitech's binaries must never be committed or shipped by us.
+    -->
+    <Reference Include="PluginApi">
+      <HintPath>$(PluginApiDir)PluginApi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Copy package/ (metadata, icon) into the build output, where the service expects it. -->
+  <Target Name="CopyPackage" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <PackageFiles Include="package\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PackageFiles)" DestinationFolder="$(OutputPath)..\%(RecursiveDir)" />
+  </Target>
+
+  <!-- Point the service at our build output, then ask it to reload the plugin. -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Condition="$(OS) == 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)\ &gt; &quot;$(PluginDir)$(ProjectName).link&quot;" />
+    <Exec Condition="$(OS) != 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)\ &gt; $(PluginDir)$(ProjectName).link" />
+    <Message Text="Created plugin link at: $(PluginDir)$(ProjectName).link" Importance="High" />
+
+    <Exec Condition="$(OS) == 'Windows_NT'" Command="start loupedeck:plugin/$(PluginShortName)/reload" ContinueOnError="true" />
+    <Exec Condition="$(OS) != 'Windows_NT'" Command="open loupedeck:plugin/$(PluginShortName)/reload" ContinueOnError="true" />
+    <Message Condition="'$(MSBuildLastTaskResult)' == 'false'" Text="Couldn't reload the plugin; restart Logi Plugin Service." Importance="High" />
+  </Target>
+
+  <!-- `dotnet clean` also removes the .link, so the service stops loading this build. -->
+  <Target Name="PluginClean" AfterTargets="CoreClean">
+    <Delete Condition="$(OS) == 'Windows_NT'" Files="$(PluginDir)$(ProjectName).link" />
+    <Exec Condition="$(OS) != 'Windows_NT'" Command="rm -f $(PluginDir)$(ProjectName).link" />
+    <RemoveDir Directories="$(OutputPath)..\" />
+  </Target>
+
+</Project>

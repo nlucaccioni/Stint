@@ -1,0 +1,6 @@
+# Build output (also keeps Logitech's binaries out of git).
+bin/
+obj/
+*.lplug4
+*.user
+.vs/

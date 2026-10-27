@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+# Package metadata read by Logi Plugin Service and LogiPluginTool.
+
+type: plugin4
+name: Stint
+displayName: Stint
+description: Start, stop, and switch Stint timers and see your totals on the MX Keypad.
+pluginFileName: StintPlugin.dll
+version: 0.1
+author: nlucaccioni
+copyright: Copyright © 2026 nlucaccioni
+homePageUrl: https://github.com/nlucaccioni/stint
+supportPageUrl: https://github.com/nlucaccioni/stint/issues
+
+# Where the plugin's .dll lives inside the package, per OS.
+pluginFolderWin: bin
+pluginFolderMac: bin
+
+# MxCreativeKeypad is the MX Keypad. LoupedeckCtFamily covers devices with LCD
+# keys, which Logi Options+ also uses to offer plugins on the Keypad.
+supportedDevices:
+  - MxCreativeKeypad
+  - LoupedeckCtFamily
+
+pluginCapabilities:
+  # Works whichever app is in front (see StintPlugin.cs).
+  - HasNoApplication
+
+minimumLoupedeckVersion: 6.0
+
+# The plugin is MIT, separate from the GPL app (see LICENSE in this folder).
+license: MIT
+licenseUrl: https://opensource.org/licenses/MIT
