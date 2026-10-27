@@ -255,7 +255,7 @@ All editing is allowed on unbilled sessions:
 - Closing the main window keeps Stint running in the tray/menu bar (hotkeys and the timer keep working). Quit from the menu exits. On Windows, the first close shows a notification explaining this.
 - Launch at login: a Settings checkbox, off by default (device-local).
 
-**Favorites:** up to 9 project slots, a synced preference, assigned in Settings. Shared by hotkeys, the tray menu, and the Keypad.
+**Favorites:** up to 9 project slots, a synced preference, assigned in Settings. Shared by hotkeys and the tray menu. (Keypad keys pick their project directly; see §9.)
 
 **Global hotkeys (fully customizable per action, device-local):**
 
@@ -304,8 +304,7 @@ Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client
 
 **Actions (assignable to keys in Logi Options+):**
 
-- **Project timer** (parameter: which project, chosen from the list the app provides). Idle: project name + color. Running: distinct running style + live elapsed time. Press: toggle.
-- **Favorite slot** (parameter: 1–9). Mirrors the hotkey slot so key N and hotkey N always match.
+- **Project timer**: the project is chosen per key from a dropdown in Logi Options+ (an Action Editor listbox filled from the app's project list), independent of the favorite slots. Idle: project name + color. Running: distinct running style + live elapsed time. Press: toggle. A key whose project was archived or deleted shows it's unavailable.
 - **Stop.**
 - **Today total** / **Week total.**
 - **Unbilled** (hours or amount).
@@ -315,7 +314,7 @@ Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client
 
 - Redraw the running key once per second; totals keys once per minute; others only on state change.
 - If the app is not reachable: show a clear "Stint offline" key state and retry the connection with backoff.
-- Target the .NET version that matches the installed Logi Plugin Service; verify at build time.
+- Target the .NET version that matches the installed Logi Plugin Service; verify at build time. Logi Plugin Service 6.4 bundles .NET 10, so the plugin targets `net10.0` and building needs the .NET 10 SDK.
 - Use the SDK's dev link/hot-reload workflow during development.
 
 The C# plugin should stay small. Include clear comments, since the owner is new to C#.
