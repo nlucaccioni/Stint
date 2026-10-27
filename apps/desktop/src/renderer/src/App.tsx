@@ -23,6 +23,7 @@ import { Settings } from 'lucide-react'
 import type { AppInfo, AppView } from '../../shared/api'
 import { api, onEvent } from './api'
 import { ShortcutSettings } from './ShortcutSettings'
+import { KeypadSettings } from './KeypadSettings'
 import { SystemSettings } from './SystemSettings'
 import { TitleBar } from './TitleBar'
 import { useBilling } from './useBilling'
@@ -241,6 +242,7 @@ export function App() {
                     onSave={prefs.update}
                   />
                   <ShortcutSettings platform={info.platform} />
+                  <KeypadSettings />
                   <SystemSettings />
                 </div>
               )}
