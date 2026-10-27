@@ -101,6 +101,23 @@ namespace Stint.Keypad
 
         public static string OpenSwitcher() => Serialize(new { type = "openSwitcher" });
 
+        /// <summary>The project list as JSON, for saving between plugin restarts.</summary>
+        public static string SerializeProjects(IReadOnlyList<ProjectEntry> projects) =>
+            JsonSerializer.Serialize(projects, Json);
+
+        /// <summary>A saved project list, or an empty one if it can't be read.</summary>
+        public static IReadOnlyList<ProjectEntry> ParseProjects(string json)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<List<ProjectEntry>>(json, Json) ?? new List<ProjectEntry>();
+            }
+            catch (JsonException)
+            {
+                return Array.Empty<ProjectEntry>();
+            }
+        }
+
         // `new { ... }` is an anonymous object, like a JS object literal.
         private static string Serialize(object message) => JsonSerializer.Serialize(message, Json);
     }

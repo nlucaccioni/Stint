@@ -81,6 +81,18 @@ namespace Stint.Keypad
 
         public void Start() => this._loop ??= Task.Run(() => this.RunAsync(this._stop.Token));
 
+        /// <summary>
+        /// Start with a project list saved from an earlier run, so project keys know
+        /// their projects before Stint connects. Stint's own list replaces it.
+        /// </summary>
+        public void SeedProjects(IReadOnlyList<ProjectEntry> projects)
+        {
+            if (this._projects.Count == 0)
+            {
+                this._projects = projects;
+            }
+        }
+
         public async Task StopAsync()
         {
             this._stop.Cancel();

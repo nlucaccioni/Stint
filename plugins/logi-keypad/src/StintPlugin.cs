@@ -45,6 +45,65 @@ namespace Loupedeck.StintPlugin
 
             var folders = ConnectionInfo.DefaultFolders();
             this.Stint = new StintConnection(() => ConnectionInfo.Find(folders), PluginLog.Info);
+
+            // Logi Options+ checks each project key's saved project when the plugin
+            // loads, before Stint has connected. Without the last known project list
+            // those keys would lose their project, so keep a copy between runs in a
+            // small file. (The SDK's plugin settings can't be read this early.)
+            this._projectsFile = ProjectsFile();
+            try
+            {
+                if (File.Exists(this._projectsFile))
+                {
+                    this.Stint.SeedProjects(Protocol.ParseProjects(File.ReadAllText(this._projectsFile)));
+                }
+            }
+            catch (IOException ex)
+            {
+                PluginLog.Warning(ex, "Couldn't read the saved project list");
+            }
+            this.Stint.Changed += this.SaveProjects;
+        }
+
+        private readonly String _projectsFile;
+        private IReadOnlyList<ProjectEntry>? _savedProjects;
+
+        /// <summary>The plugin's own data folder from the SDK, or one in the user's local app data.</summary>
+        private String ProjectsFile()
+        {
+            String dir;
+            try
+            {
+                dir = this.GetPluginDataDirectory();
+            }
+            catch (Exception)
+            {
+                dir = "";
+            }
+            if (String.IsNullOrEmpty(dir))
+            {
+                dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StintKeypadPlugin");
+            }
+            Directory.CreateDirectory(dir);
+            return Path.Combine(dir, "projects.json");
+        }
+
+        private void SaveProjects()
+        {
+            var projects = this.Stint.Projects;
+            if (ReferenceEquals(projects, this._savedProjects) || projects.Count == 0)
+            {
+                return;
+            }
+            this._savedProjects = projects;
+            try
+            {
+                File.WriteAllText(this._projectsFile, Protocol.SerializeProjects(projects));
+            }
+            catch (IOException ex)
+            {
+                PluginLog.Warning(ex, "Couldn't save the project list");
+            }
         }
 
         // Called after the plugin and all its actions are created.

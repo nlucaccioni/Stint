@@ -85,6 +85,11 @@ namespace Loupedeck.StintPlugin
         protected override BitmapImage GetCommandImage(ActionEditorActionParameters actionParameters, Int32 stateIndex, Int32 imageWidth, Int32 imageHeight) =>
             ProjectKey.Draw(this.FindProject(actionParameters), stateIndex, imageWidth, imageHeight);
 
+        // A key's settings are just its project id (confirmed on the Keypad), so
+        // building them from an id reaches every key set to that project.
+        private static ActionEditorActionParameters Settings(String projectId) =>
+            new(new Dictionary<String, String> { [ProjectControl] = projectId });
+
         private ProjectEntry? FindProject(ActionEditorActionParameters actionParameters) =>
             this.Stint.Projects.FirstOrDefault(p => p.Id == actionParameters.GetString(ProjectControl));
 
@@ -100,22 +105,19 @@ namespace Loupedeck.StintPlugin
             this.UpdateStates();
         }
 
-        /// <summary>
-        /// Put every Project Timer key in the state that matches Stint. The plugin
-        /// isn't told which keys exist, but a key's settings are just its project id,
-        /// so setting the state for each project's settings reaches every key.
-        /// </summary>
+        /// <summary>Put every Project Timer key in the state that matches Stint.</summary>
         private void UpdateStates()
         {
             var stint = this.Stint;
             var runningId = stint.State?.Running?.ProjectId;
             bool online = stint.Status == ConnectionStatus.Connected;
+
             foreach (var project in stint.Projects)
             {
-                var parameters = new ActionEditorActionParameters(
-                    new Dictionary<string, string> { [ProjectControl] = project.Id });
+                var parameters = Settings(project.Id);
+                var projectId = project.Id;
                 int wanted = !online ? ProjectKey.Offline
-                    : project.Id == runningId ? ProjectKey.Running
+                    : projectId == runningId ? ProjectKey.Running
                     : ProjectKey.Idle;
                 if (!this.TryGetCurrentStateIndex(parameters, out int current) || current != wanted)
                 {
