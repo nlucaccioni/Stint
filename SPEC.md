@@ -304,10 +304,10 @@ Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client
 
 **Actions (assignable to keys in Logi Options+):**
 
-- **Project timer**: the project is chosen per key from a dropdown in Logi Options+ (an Action Editor listbox filled from the app's project list), independent of the favorite slots. Idle: project name + color. Running: distinct running style + live elapsed time. Press: toggle. A key whose project was archived or deleted shows it's unavailable.
-- **Stop.**
-- **Today total** / **Week total.**
-- **Unbilled** (hours or amount).
+- **Projects** (a dynamic folder): the key shows the running project in its client's color with the live elapsed time, or "Projects". Pressing it opens a page with a key per active project, drawn live (idle: name + client color bar; running: filled with the client color + elapsed time). Pressing a project toggles it and closes the page. The page follows the app's project list.
+- **Project timer**: a one-press key for one project, chosen per key from a dropdown in Logi Options+ (an Action Editor listbox filled from the app's project list), independent of the favorite slots. Press: toggle. On the MX Keypad, Options+ draws dropdown actions from fixed per-state images and never asks for live ones, so the key has three states (Idle, Running, Stint Offline) and no live elapsed time.
+- **Now running**: the running project in its client's color with the live elapsed time, or "No Timer". Press: stop.
+- **Today**, **This week**, **Unbilled time**, **Unbilled amount**: one action each (Options+ on the Keypad doesn't offer per-key choices for plain actions). They count up live while a timer runs, using the running timer's `billable` and `rate`.
 - **Quick switcher** (opens the palette in the app).
 
 **Rendering & behavior:**
