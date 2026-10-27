@@ -11,10 +11,13 @@ export default defineConfig({
   main: {
     build: { externalizeDeps: bundleWorkspace },
     define: {
-      // ws (the Local API server) tries to load an optional native add-on, bufferutil.
-      // Bundling replaces the missing add-on with an empty stub that ws would then
-      // call and crash on, so tell ws not to try. Its built-in code is used instead.
+      // ws (the Local API server) tries to load two optional native add-ons,
+      // bufferutil and utf-8-validate. Bundling replaces each missing add-on with a
+      // stub that either crashes when ws calls it (production) or throws as soon as
+      // the app starts (dev). These switches make ws skip the add-ons, so the
+      // bundler drops those imports entirely. ws's built-in code is used instead.
       'process.env.WS_NO_BUFFER_UTIL': JSON.stringify('1'),
+      'process.env.WS_NO_UTF_8_VALIDATE': JSON.stringify('1'),
     },
   },
   preload: {
