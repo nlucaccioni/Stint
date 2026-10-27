@@ -44,6 +44,10 @@ export interface RunningTimer {
   projectId: string
   clientId: string
   startedAt: number
+  /** Counts toward unbilled time (billable and not in a billing batch). */
+  billable: boolean
+  /** Hourly rate, or null when neither the project nor the client has one. */
+  rate: { currency: string; cents: number } | null
 }
 
 export interface StateMessage {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Builds the Local API's `state` and `projects` messages from the database.
 // Totals are derived from sessions each time (never stored), using core's math.
-import { computeTotals, dayRange, weekRange, type TimeRange } from '@stint/core'
+import { computeTotals, dayRange, effectiveRate, weekRange, type TimeRange } from '@stint/core'
 import type { Db } from '../db/connection'
 import { listClients } from '../db/clients'
 import { getPreferences } from '../db/preferences'
@@ -23,9 +23,8 @@ export function buildState(db: Db, now: number, zone: string): StateMessage {
   // Unbilled = billable time outside any batch. The running timer isn't in
   // listUnbilledSessions (it only returns finished sessions), so add it here.
   const unbilledSessions = listUnbilledSessions(db)
-  if (running && running.billable && running.billingBatchId === null) {
-    unbilledSessions.push(running)
-  }
+  const runningUnbilled = running !== null && running.billable && running.billingBatchId === null
+  if (runningUnbilled) unbilledSessions.push(running)
   const unbilled = computeTotals({
     sessions: unbilledSessions,
     projects,
@@ -35,15 +34,19 @@ export function buildState(db: Db, now: number, zone: string): StateMessage {
   })
 
   const runningProject = running && projects.find((p) => p.id === running.projectId)
+  const runningClient = runningProject && clients.find((c) => c.id === runningProject.clientId)
   return {
     type: 'state',
     running:
-      running && runningProject
+      running && runningProject && runningClient
         ? {
             sessionId: running.id,
             projectId: running.projectId,
             clientId: runningProject.clientId,
             startedAt: running.startedAt,
+            // Lets clients count unbilled time and amounts up between messages.
+            billable: runningUnbilled,
+            rate: effectiveRate(runningProject, runningClient),
           }
         : null,
     favorites: prefs.favorites,

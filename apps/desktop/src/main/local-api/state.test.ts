@@ -82,6 +82,9 @@ describe('buildState', () => {
       projectId: site.id,
       clientId: acme.id,
       startedAt: NOW - HOUR / 2,
+      billable: true,
+      // The project has no rate of its own, so the client's applies.
+      rate: { currency: 'USD', cents: 10_000 },
     })
     expect(state.totals).toEqual({
       todaySeconds: 1.5 * 3600,
@@ -113,6 +116,16 @@ describe('buildState', () => {
       todaySeconds: 3600,
       unbilledSeconds: 0,
       unbilledAmounts: [],
+    })
+  })
+
+  it('marks a non-billable running timer, so clients only count billable time up', () => {
+    const { admin } = setup()
+    api.startTimer(admin.id)
+    expect(buildState(db, NOW, ZONE).running).toMatchObject({
+      projectId: admin.id,
+      billable: false,
+      rate: { currency: 'USD', cents: 10_000 },
     })
   })
 

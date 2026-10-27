@@ -92,7 +92,9 @@ and at least once a minute.
     "sessionId": "0193…",
     "projectId": "0192…",
     "clientId": "0192…",
-    "startedAt": 1761487200000
+    "startedAt": 1761487200000,
+    "billable": true,
+    "rate": { "currency": "USD", "cents": 15000 }
   },
   "favorites": ["0192…", null, null, null, null, null, null, null, null],
   "totals": {
@@ -107,6 +109,10 @@ and at least once a minute.
 - `running`: the running timer, or `null`. `startedAt` is UTC epoch
   milliseconds. Stint doesn't send a message every second: clients compute the
   live elapsed time as `now - startedAt` themselves.
+  - `billable`: whether this time counts toward unbilled time.
+  - `rate`: its hourly rate (the project's, or else the client's), or `null`
+    when there's none.
+  - Added after v1 was first written: clients should treat both as optional.
 - `favorites`: the nine favorite slots (index 0 = slot 1), each a project id or
   `null`. These match the global hotkeys, so slot N on the Keypad and hotkey N
   always do the same thing. Look up names and colors in `projects`; a favorite
@@ -119,8 +125,11 @@ and at least once a minute.
     in different currencies are never added together). Empty when no rates are
     set. `cents` is in the currency's minor unit.
 
-  Totals go stale between messages. A client showing a total next to a running
-  timer can add the elapsed time since the last `state` itself.
+  Totals go stale between messages. A client can keep them live by adding the
+  seconds since the last `state` while a timer runs: to `todaySeconds` and
+  `weekSeconds` always, and, when `running.billable`, to `unbilledSeconds`,
+  plus `seconds × rate.cents / 3600` to the `unbilledAmounts` entry in
+  `rate.currency`.
 
 #### `projects`
 
