@@ -12,7 +12,14 @@ namespace Stint.Keypad
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
-    public record RunningTimer(string SessionId, string ProjectId, string ClientId, long StartedAt);
+    // Billable and Rate were added to the protocol later; the defaults cover an older Stint.
+    public record RunningTimer(
+        string SessionId,
+        string ProjectId,
+        string ClientId,
+        long StartedAt,
+        bool Billable = false,
+        Money? Rate = null);
 
     public record Money(string Currency, long Cents);
 

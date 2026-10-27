@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: MIT
-// "Total": shows one of Stint's totals. Which one is picked per key in Logi
-// Options+ from a short fixed list (the SDK's "parameters"). It's display-only:
-// pressing it does nothing.
+// Total keys: Today, This Week, Unbilled Time, Unbilled Amount. Each is its own
+// action (rather than one action with a choice) so there's nothing to pick in
+// Logi Options+. They're display-only: pressing them does nothing.
+//
+// C# notes: `abstract` classes can't be used directly, only extended, like a base
+// class whose subclasses fill in the blanks (the `abstract` members).
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
 
-    public class TotalCommand : PluginDynamicCommand
+    public abstract class TotalCommand : PluginDynamicCommand
     {
-        private const string Today = "today";
-        private const string Week = "week";
-        private const string UnbilledTime = "unbilled-time";
-        private const string UnbilledAmount = "unbilled-amount";
-
         private int _ticks;
 
-        public TotalCommand()
-            : base(displayName: "Total", description: "Show today's, this week's, or unbilled time.", groupName: "Totals")
+        protected TotalCommand(string displayName, string description)
+            : base(displayName: displayName, description: description, groupName: "Totals")
         {
-            this.AddParameter(Today, "Today", "Totals");
-            this.AddParameter(Week, "This Week", "Totals");
-            this.AddParameter(UnbilledTime, "Unbilled Time", "Totals");
-            this.AddParameter(UnbilledAmount, "Unbilled Amount", "Totals");
         }
+
+        /// <summary>The small label above the value.</summary>
+        protected abstract string Label { get; }
+
+        /// <summary>The value to show, from totals brought up to the current second.</summary>
+        protected abstract string Value(Totals totals);
 
         private StintConnection Stint => ((StintPlugin)this.Plugin).Stint;
 
@@ -56,30 +56,65 @@ namespace Loupedeck.StintPlugin
             {
                 return KeyArt.Unavailable(w, h, stint.Status);
             }
-
-            // Stint sends totals when something changes and once a minute. While a
-            // timer runs, count today and this week up in between, so they don't lag.
-            long sinceState = state.Running != null
-                ? (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - stint.StateReceivedAt) / 1000
-                : 0;
-            var totals = state.Totals;
-            return actionParameter switch
-            {
-                Today => KeyArt.Value(w, h, "Today", Format.Duration(totals.TodaySeconds + sinceState)),
-                Week => KeyArt.Value(w, h, "This Week", Format.Duration(totals.WeekSeconds + sinceState)),
-                UnbilledTime => KeyArt.Value(w, h, "Unbilled", Format.Duration(totals.UnbilledSeconds)),
-                UnbilledAmount => KeyArt.Value(w, h, "Unbilled", Format.Money(totals.UnbilledAmounts)),
-                _ => KeyArt.Label(w, h, "Total", muted: true),
-            };
+            long sinceState = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - stint.StateReceivedAt) / 1000;
+            return KeyArt.Value(w, h, this.Label, this.Value(LiveTotals.At(state, sinceState)));
         }
 
-        // Totals show minutes, so redrawing every 15 seconds while a timer runs is plenty.
+        // Totals show whole minutes and dollars, so redrawing every 5 seconds while a timer runs is plenty.
         private void OnTick()
         {
-            if (this.Stint.State?.Running != null && ++this._ticks % 15 == 0)
+            if (this.Stint.State?.Running != null && ++this._ticks % 5 == 0)
             {
                 this.ActionImageChanged();
             }
         }
+    }
+
+    public class TodayTotalCommand : TotalCommand
+    {
+        public TodayTotalCommand()
+            : base("Today", "Time recorded today.")
+        {
+        }
+
+        protected override string Label => "Today";
+
+        protected override string Value(Totals totals) => Format.Duration(totals.TodaySeconds);
+    }
+
+    public class WeekTotalCommand : TotalCommand
+    {
+        public WeekTotalCommand()
+            : base("This Week", "Time recorded this week.")
+        {
+        }
+
+        protected override string Label => "This Week";
+
+        protected override string Value(Totals totals) => Format.Duration(totals.WeekSeconds);
+    }
+
+    public class UnbilledTimeCommand : TotalCommand
+    {
+        public UnbilledTimeCommand()
+            : base("Unbilled Time", "Billable time not yet billed.")
+        {
+        }
+
+        protected override string Label => "Unbilled";
+
+        protected override string Value(Totals totals) => Format.Duration(totals.UnbilledSeconds);
+    }
+
+    public class UnbilledAmountCommand : TotalCommand
+    {
+        public UnbilledAmountCommand()
+            : base("Unbilled Amount", "What your unbilled time is worth.")
+        {
+        }
+
+        protected override string Label => "Unbilled";
+
+        protected override string Value(Totals totals) => Format.Money(totals.UnbilledAmounts);
     }
 }
