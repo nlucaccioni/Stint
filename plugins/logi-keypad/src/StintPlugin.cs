@@ -27,6 +27,15 @@ namespace Loupedeck.StintPlugin
         /// <summary>The live connection to Stint, shared by every key.</summary>
         public StintConnection Stint { get; }
 
+        /// <summary>
+        /// Fires once a second (on a background thread). Keys showing a running
+        /// time redraw on it; Stint itself only sends updates when something changes.
+        /// </summary>
+        public event Action? Tick;
+
+        // A System.Threading.Timer calls its callback on a background thread every period.
+        private Timer? _ticker;
+
         public StintPlugin()
         {
             // Let PluginLog.Info(...) etc. write to the service's log file for this plugin.
@@ -42,12 +51,14 @@ namespace Loupedeck.StintPlugin
         public override void Load()
         {
             this.Stint.Start();
+            this._ticker = new Timer(_ => this.Tick?.Invoke(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             PluginLog.Info("Stint plugin loaded");
         }
 
         // Called before the service unloads the plugin (quitting, updating, or a dev rebuild).
         public override void Unload()
         {
+            this._ticker?.Dispose();
             // Wait (briefly) for the connection to close, so a rebuild doesn't leave
             // an old connection open in Stint's "Connected" list.
             this.Stint.StopAsync().Wait(TimeSpan.FromSeconds(2));

@@ -1,7 +1,12 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!--
+  Applies to every project under src/. Intermediate build files go to
+  plugins/logi-keypad/obj/ whether you build the solution or src/ on its own,
+  never inside src/ (where the compiler would pick them up as source files).
+-->
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <BaseIntermediateOutputPath>$(SolutionDir)obj\</BaseIntermediateOutputPath>
-        <BaseOutputPath>$(SolutionDir)..\bin\</BaseOutputPath>
+        <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\obj\</BaseIntermediateOutputPath>
     </PropertyGroup>
 </Project>

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <Compile Include="..\src\Connection\*.cs" Link="Connection\%(Filename)%(Extension)" />
+    <Compile Include="..\src\Display\Format.cs" Link="Display\Format.cs" />
   </ItemGroup>
 
   <!-- Test-only packages: Microsoft.NET.Test.Sdk (MIT), xunit (Apache-2.0). -->
