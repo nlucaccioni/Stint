@@ -26,8 +26,8 @@ namespace Loupedeck.StintPlugin
             return b.ToImage();
         }
 
-        /// <summary>A running project: filled with the client's color, with the live elapsed time.</summary>
-        public static BitmapImage RunningProject(int width, int height, ProjectEntry project, long elapsedSeconds)
+        /// <summary>A running project: filled with the client's color, with a second line (e.g. "Running").</summary>
+        public static BitmapImage RunningProject(int width, int height, ProjectEntry project, string detail)
         {
             using var b = new BitmapBuilder(width, height);
             var rgb = Format.ParseHex(project.Color);
@@ -35,7 +35,7 @@ namespace Loupedeck.StintPlugin
             // Pick black or white text, whichever reads better on the client's color.
             var ink = rgb.HasValue && Format.IsLight(rgb.Value) ? BitmapColor.Black : BitmapColor.White;
             b.Clear(fill);
-            DrawLines(b, 0, project.Name, Format.Elapsed(elapsedSeconds), ink, ink, emphasizeSecond: true);
+            DrawLines(b, 0, project.Name, detail, ink, ink, emphasizeSecond: true);
             return b.ToImage();
         }
 

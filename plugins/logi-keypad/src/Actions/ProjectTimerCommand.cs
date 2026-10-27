@@ -2,11 +2,17 @@
 // "Project Timer": a key that starts, switches to, or stops one project's timer.
 // The project is picked per key from a dropdown in Logi Options+ (the SDK's
 // "Action Editor"), filled from Stint's project list.
+//
+// How the key shows what's happening (learned by testing on the MX Keypad):
+// Logi Options+ asks for one image per state when the key is set up, then reuses
+// them; it never asks again. So the key has three states (Idle, Running, Stint
+// Offline), and the plugin switches each key to the right state as Stint changes.
+// A live elapsed time isn't possible on this key; the Stop key shows it.
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
 
-    public class ProjectTimerCommand : ActionEditorCommand
+    public class ProjectTimerCommand : MultistateActionEditorCommand
     {
         // The dropdown's name. Logi Options+ saves each key's choice under it.
         private const string ProjectControl = "project";
@@ -21,6 +27,11 @@ namespace Loupedeck.StintPlugin
             this.Description = "Start, switch to, or stop a project's timer.";
             this.GroupName = "Timer";
 
+            // Added in the order of ProjectKey.Idle, Running, Offline (0, 1, 2).
+            this.AddState("Idle", "Not running");
+            this.AddState("Running", "Timer running");
+            this.AddState("Offline", "Stint isn't running");
+
             this.ActionEditor.AddControlEx(
                 new ActionEditorListbox(name: ProjectControl, labelText: "Project")
                     .SetPlaceholder("Choose a project")
@@ -34,17 +45,13 @@ namespace Loupedeck.StintPlugin
 
         protected override Boolean OnLoad()
         {
-            var plugin = (StintPlugin)this.Plugin;
-            plugin.Stint.Changed += this.OnStintChanged;
-            plugin.Tick += this.OnTick;
+            ((StintPlugin)this.Plugin).Stint.Changed += this.OnStintChanged;
             return true;
         }
 
         protected override Boolean OnUnload()
         {
-            var plugin = (StintPlugin)this.Plugin;
-            plugin.Stint.Changed -= this.OnStintChanged;
-            plugin.Tick -= this.OnTick;
+            ((StintPlugin)this.Plugin).Stint.Changed -= this.OnStintChanged;
             return true;
         }
 
@@ -55,57 +62,31 @@ namespace Loupedeck.StintPlugin
             {
                 return;
             }
-            var projects = this.Stint.Projects;
-            foreach (var p in projects)
+            foreach (var p in this.Stint.Projects)
             {
                 e.AddItem(name: p.Id, displayName: $"{p.ClientName} · {p.Name}", description: null);
             }
-            PluginLog.Info($"Project dropdown filled with {projects.Count} projects");
         }
 
         protected override Boolean RunCommand(ActionEditorActionParameters actionParameters)
         {
             if (actionParameters.TryGetString(ProjectControl, out var projectId) && !String.IsNullOrEmpty(projectId))
             {
-                // `_ =` starts the send without waiting for it; the key redraws when Stint's new state arrives.
+                // `_ =` starts the send without waiting for it; the key changes state when Stint's new state arrives.
                 _ = this.Stint.ToggleTimerAsync(projectId);
             }
             return true;
         }
 
-        protected override String GetCommandDisplayName(ActionEditorActionParameters actionParameters) =>
+        // Asked once per state when the key is set up (see the note at the top).
+        protected override String GetCommandDisplayName(ActionEditorActionParameters actionParameters, Int32 stateIndex) =>
             this.FindProject(actionParameters)?.Name ?? "Project Timer";
 
-        protected override BitmapImage GetCommandImage(ActionEditorActionParameters actionParameters, Int32 imageWidth, Int32 imageHeight)
-        {
-            var stint = this.Stint;
-            var state = stint.State;
-            if (stint.Status != ConnectionStatus.Connected || state == null)
-            {
-                return KeyArt.Unavailable(imageWidth, imageHeight, stint.Status);
-            }
-            if (!actionParameters.TryGetString(ProjectControl, out var projectId) || String.IsNullOrEmpty(projectId))
-            {
-                return KeyArt.Label(imageWidth, imageHeight, "Choose a Project", muted: true);
-            }
-            var project = this.FindProject(actionParameters);
-            if (project == null)
-            {
-                // Archived or deleted in Stint since this key was set up.
-                return KeyArt.Label(imageWidth, imageHeight, "Project Unavailable", muted: true);
-            }
-            if (state.Running?.ProjectId == project.Id)
-            {
-                long elapsed = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - state.Running.StartedAt) / 1000;
-                return KeyArt.RunningProject(imageWidth, imageHeight, project, elapsed);
-            }
-            return KeyArt.Project(imageWidth, imageHeight, project);
-        }
+        protected override BitmapImage GetCommandImage(ActionEditorActionParameters actionParameters, Int32 stateIndex, Int32 imageWidth, Int32 imageHeight) =>
+            ProjectKey.Draw(this.FindProject(actionParameters), stateIndex, imageWidth, imageHeight);
 
         private ProjectEntry? FindProject(ActionEditorActionParameters actionParameters) =>
-            actionParameters.TryGetString(ProjectControl, out var id)
-                ? this.Stint.Projects.FirstOrDefault(p => p.Id == id)
-                : null;
+            this.Stint.Projects.FirstOrDefault(p => p.Id == actionParameters.GetString(ProjectControl));
 
         private void OnStintChanged()
         {
@@ -116,15 +97,30 @@ namespace Loupedeck.StintPlugin
                 this._knownProjects = projects;
                 this.ActionEditor.ListboxItemsChanged(ProjectControl);
             }
-            this.ActionImageChanged();
+            this.UpdateStates();
         }
 
-        // Once a second: only a running key's elapsed time changes, so skip redrawing otherwise.
-        private void OnTick()
+        /// <summary>
+        /// Put every Project Timer key in the state that matches Stint. The plugin
+        /// isn't told which keys exist, but a key's settings are just its project id,
+        /// so setting the state for each project's settings reaches every key.
+        /// </summary>
+        private void UpdateStates()
         {
-            if (this.Stint.State?.Running != null)
+            var stint = this.Stint;
+            var runningId = stint.State?.Running?.ProjectId;
+            bool online = stint.Status == ConnectionStatus.Connected;
+            foreach (var project in stint.Projects)
             {
-                this.ActionImageChanged();
+                var parameters = new ActionEditorActionParameters(
+                    new Dictionary<string, string> { [ProjectControl] = project.Id });
+                int wanted = !online ? ProjectKey.Offline
+                    : project.Id == runningId ? ProjectKey.Running
+                    : ProjectKey.Idle;
+                if (!this.TryGetCurrentStateIndex(parameters, out int current) || current != wanted)
+                {
+                    this.SetCurrentState(parameters, wanted);
+                }
             }
         }
     }
