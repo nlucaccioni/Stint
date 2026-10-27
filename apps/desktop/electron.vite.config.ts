@@ -10,6 +10,12 @@ const bundleWorkspace = { exclude: ['@stint/core', '@stint/ui'] }
 export default defineConfig({
   main: {
     build: { externalizeDeps: bundleWorkspace },
+    define: {
+      // ws (the Local API server) tries to load an optional native add-on, bufferutil.
+      // Bundling replaces the missing add-on with an empty stub that ws would then
+      // call and crash on, so tell ws not to try. Its built-in code is used instead.
+      'process.env.WS_NO_BUFFER_UTIL': JSON.stringify('1'),
+    },
   },
   preload: {
     build: {
