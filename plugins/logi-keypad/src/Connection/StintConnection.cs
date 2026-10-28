@@ -167,7 +167,7 @@ namespace Stint.Keypad
                     }
                     this.Handle(Protocol.Parse(text));
                 }
-                this.SetStatus(StatusForClose(socket.CloseStatus));
+                this.Disconnected(StatusForClose(socket.CloseStatus));
                 this._log($"Stint closed the connection ({(int?)socket.CloseStatus} {socket.CloseStatusDescription})");
             }
             catch (OperationCanceledException) when (stop.IsCancellationRequested)
@@ -178,13 +178,24 @@ namespace Stint.Keypad
             catch (Exception ex) when (ex is WebSocketException or OperationCanceledException or IOException)
             {
                 // Usually "connection refused": Stint isn't running. Not worth a log line each retry.
-                this.SetStatus(ConnectionStatus.Offline);
+                this.Disconnected(ConnectionStatus.Offline);
             }
             finally
             {
                 this._socket = null;
                 this._state = null; // No live state while disconnected; keys show offline.
             }
+        }
+
+        /// <summary>
+        /// Drop the connection's state, then report the new status. In that order, so
+        /// anything reacting to the status (a key redrawing) never sees stale state.
+        /// </summary>
+        private void Disconnected(ConnectionStatus status)
+        {
+            this._socket = null;
+            this._state = null;
+            this.SetStatus(status);
         }
 
         private void Handle(ServerMessage? message)
