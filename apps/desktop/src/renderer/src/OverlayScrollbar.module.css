@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Along the window's right edge, below the chrome (the window buttons sit there). */
+.track {
+  position: absolute;
+  z-index: 1;
+  top: var(--chrome-height);
+  right: 0;
+  bottom: 0;
+  width: 12px;
+}
+
+/* Matches the old styled scrollbar: 6px wide with 3px either side. */
+.thumb {
+  position: absolute;
+  right: 3px;
+  left: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+  transition: background-color 0.15s;
+}
+
+.thumb:hover,
+.thumb[data-dragging] {
+  background: var(--color-text-tertiary);
+}

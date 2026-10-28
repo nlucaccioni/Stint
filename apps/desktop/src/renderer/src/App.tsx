@@ -22,6 +22,7 @@ import {
 import { Settings } from 'lucide-react'
 import type { AppInfo, AppView } from '../../shared/api'
 import { api, onEvent } from './api'
+import { OverlayScrollbar } from './OverlayScrollbar'
 import { ShortcutSettings } from './ShortcutSettings'
 import { KeypadSettings } from './KeypadSettings'
 import { SystemSettings } from './SystemSettings'
@@ -92,6 +93,7 @@ export function App() {
   // timer wraps to its own row in a narrow window.
   const [chrome, setChrome] = useState<HTMLDivElement | null>(null)
   const [chromeHeight, setChromeHeight] = useState(0)
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null)
   useEffect(() => {
     if (!chrome) return
     const observer = new ResizeObserver(() => setChromeHeight(chrome.offsetHeight))
@@ -144,7 +146,8 @@ export function App() {
         </header>
       </div>
       {/* The whole window scrolls under the title bar, tabs, and timer, which stay put. */}
-      <div className={styles.scroll}>
+      <OverlayScrollbar target={scroller} />
+      <div className={styles.scroll} ref={setScroller}>
         <main className={styles.main}>
           {catalog.loadError && (
             <p role="alert" className={styles.error}>
