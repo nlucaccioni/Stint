@@ -47,6 +47,15 @@
       <HintPath>$(PluginApiDir)PluginApi.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!--
+      SkiaSharp (MIT), the graphics library the SDK draws with. Used to measure text
+      in the SDK's own font so key text can wrap and truncate cleanly (KeyArt.cs).
+      Also referenced from the Logi install, never copied: the service already has it.
+    -->
+    <Reference Include="SkiaSharp">
+      <HintPath>$(PluginApiDir)SkiaSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Copy package/ (metadata, icon) into the build output, where the service expects it. -->
