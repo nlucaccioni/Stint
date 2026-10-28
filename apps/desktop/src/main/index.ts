@@ -69,8 +69,14 @@ let quitting = false
 /** Shows the Windows "still running in the tray" notice once; set up after startup. */
 let onFirstHide: () => void = () => {}
 
-/** Must match the title bar height in renderer TitleBar.module.css. */
-const TITLE_BAR_HEIGHT = 36
+/** The main window opens at 125%, which reads better than the design's 1:1 sizes. */
+const MAIN_ZOOM = 1.25
+
+/**
+ * The title bar's CSS height (renderer TitleBar.module.css) in window pixels, for
+ * the Windows window buttons and the macOS traffic lights, which don't zoom.
+ */
+const TITLE_BAR_HEIGHT = Math.round(36 * MAIN_ZOOM)
 
 /** Starting colors for the window buttons; the renderer swaps in the design tokens on load. */
 // The strip behind the buttons is transparent, so the page (and the timer pill's
@@ -80,26 +86,29 @@ function titleBarColors(): { color: string; symbolColor: string } {
 }
 
 function createMainWindow(): BrowserWindow {
-  const win = createSecureWindow({
-    width: 1000,
-    height: 700,
-    minWidth: 480,
-    minHeight: 400,
-    show: false,
-    title: 'Stint',
-    // Windows/Linux window and taskbar icon (installed builds also embed it in the
-    // .exe; this covers dev runs). macOS uses the app bundle's icon.
-    ...(process.platform === 'darwin'
-      ? {}
-      : { icon: join(app.getAppPath(), 'resources', 'icon.png') }),
-    // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
-    // button. Windows still draws minimize/maximize/close at the top right, over
-    // the page ("title bar overlay"); macOS keeps its traffic lights, inset.
-    titleBarStyle: 'hidden',
-    ...(process.platform === 'darwin'
-      ? { trafficLightPosition: { x: 14, y: Math.round((TITLE_BAR_HEIGHT - 12) / 2) } }
-      : { titleBarOverlay: { height: TITLE_BAR_HEIGHT, ...titleBarColors() } }),
-  })
+  const win = createSecureWindow(
+    {
+      width: 1000,
+      height: 700,
+      minWidth: 480,
+      minHeight: 400,
+      show: false,
+      title: 'Stint',
+      // Windows/Linux window and taskbar icon (installed builds also embed it in the
+      // .exe; this covers dev runs). macOS uses the app bundle's icon.
+      ...(process.platform === 'darwin'
+        ? {}
+        : { icon: join(app.getAppPath(), 'resources', 'icon.png') }),
+      // Stint draws its own title bar (renderer TitleBar.tsx) so it can hold the menu
+      // button. Windows still draws minimize/maximize/close at the top right, over
+      // the page ("title bar overlay"); macOS keeps its traffic lights, inset.
+      titleBarStyle: 'hidden',
+      ...(process.platform === 'darwin'
+        ? { trafficLightPosition: { x: 14, y: Math.round((TITLE_BAR_HEIGHT - 12) / 2) } }
+        : { titleBarOverlay: { height: TITLE_BAR_HEIGHT, ...titleBarColors() } }),
+    },
+    MAIN_ZOOM,
+  )
 
   win.once('ready-to-show', () => {
     if (!startHidden) win.show()
