@@ -304,15 +304,17 @@ Hardware: MX Keypad has 9 LCD keys and page buttons. The plugin is a thin client
 
 **Actions (assignable to keys in Logi Options+):**
 
-- **Projects** (a dynamic folder): the key says "Projects" (Options+ only redraws a folder's own key when the main page is shown again, so live info there would go stale). Pressing it opens a page with a key per active project, drawn live (idle: name + client color bar; running: filled with the client color + elapsed time). Pressing a project toggles it and closes the page. The page follows the app's project list.
-- **Project timer**: a one-press key for one project, chosen per key from a dropdown in Logi Options+ (an Action Editor listbox filled from the app's project list), independent of the favorite slots. Press: toggle. On the MX Keypad, Options+ draws dropdown actions itself as a labeled tile, so the key is named after its project and doesn't show whether it's running. The plugin still tracks three states (Idle, Running, Stint Offline) with an image each, used by Options+'s preview and by devices that show them.
+- **Project**: a one-press key for one project. Options+ lists every active project under Projects > client > project (one parameter per project, nested with `###`); dragging one onto a key binds it. Drawn live: idle shows the name + client color bar, running fills with the client color + elapsed time. Press: toggle. A key whose project was archived or deleted shows it's unavailable.
+- **All projects** (a dynamic folder, also under Projects): the key says "All Projects" (Options+ only redraws a folder's own key when the main page is shown again, so live info there would go stale). Pressing it opens a page of Project keys, one per active project; pressing one toggles it and closes the page. The page uses Project keys (widgets, full size) because Options+ draws a folder's own keys inset on its folder tile; the folder key itself is drawn that way.
 - **Now running**: the running project in its client's color with the live elapsed time, or "No Timer". Press: stop.
-- **Today**, **This week**, **Unbilled time**, **Unbilled amount**: one action each (Options+ on the Keypad doesn't offer per-key choices for plain actions). They count up live while a timer runs, using the running timer's `billable` and `rate`.
+- **Today**, **This week**, **Unbilled time**, **Unbilled amount**: one action each. They count up live while a timer runs, using the running timer's `billable` and `rate`.
 - **Quick switcher** (opens the palette in the app).
 
 **Rendering & behavior:**
 
-- Redraw the running key once per second; totals keys once per minute; others only on state change.
+- Plugin-drawn keys are widgets (`IsWidget`) with a single-space display name: Options+ then shows the plugin's image as is, with no text over it and no icon editing. Editing a key's icon in Options+ saves a snapshot and Options+ stops asking the plugin for new images, freezing the key.
+- An action with per-key choices must use the SDK's parameterless base constructor and add its parameters in the constructor (Options+ lists only those). The plugin keeps the last project list on disk so it has projects before the app connects.
+- Redraw running-time keys once per second and total keys every 5 seconds while a timer runs; others only on state change.
 - If the app is not reachable: show a clear "Stint offline" key state and retry the connection with backoff.
 - Target the .NET version that matches the installed Logi Plugin Service; verify at build time. Logi Plugin Service 6.4 bundles .NET 10, so the plugin targets `net10.0` and building needs the .NET 10 SDK.
 - Use the SDK's dev link/hot-reload workflow during development.
