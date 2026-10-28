@@ -59,7 +59,8 @@ namespace Loupedeck.StintPlugin
 
         // --- the folder key ---
 
-        public override String GetButtonDisplayName(PluginImageSize imageSize) => "Projects";
+        // The image has its own label (see KeyArt.NoLabel).
+        public override String GetButtonDisplayName(PluginImageSize imageSize) => KeyArt.NoLabel;
 
         public override BitmapImage GetButtonImage(PluginImageSize imageSize)
         {
@@ -73,8 +74,8 @@ namespace Loupedeck.StintPlugin
         public override IEnumerable<String> GetButtonPressActionNames(DeviceType deviceType) =>
             this.Stint.Projects.Select(p => this.CreateCommandName(p.Id));
 
-        public override String GetCommandDisplayName(String actionParameter, PluginImageSize imageSize) =>
-            this.Stint.Projects.FirstOrDefault(p => p.Id == actionParameter)?.Name ?? "";
+        // The image has its own label (see KeyArt.NoLabel).
+        public override String GetCommandDisplayName(String actionParameter, PluginImageSize imageSize) => KeyArt.NoLabel;
 
         public override BitmapImage GetCommandImage(String actionParameter, PluginImageSize imageSize)
         {

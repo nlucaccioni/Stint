@@ -16,6 +16,9 @@ namespace Loupedeck.StintPlugin
         protected TotalCommand(string displayName, string description)
             : base(displayName: displayName, description: description, groupName: "Totals")
         {
+            // A widget: Options+ shows the plugin's image as is and offers no icon
+            // editing, which would freeze the key (see KeyArt.NoLabel).
+            this.IsWidget = true;
         }
 
         /// <summary>The small label above the value.</summary>
@@ -45,6 +48,9 @@ namespace Loupedeck.StintPlugin
         protected override void RunCommand(String actionParameter)
         {
         }
+
+        // The image has its own label (see KeyArt.NoLabel).
+        protected override String GetCommandDisplayName(String actionParameter, PluginImageSize imageSize) => KeyArt.NoLabel;
 
         protected override BitmapImage GetCommandImage(String actionParameter, PluginImageSize imageSize)
         {

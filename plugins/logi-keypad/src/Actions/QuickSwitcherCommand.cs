@@ -9,6 +9,9 @@ namespace Loupedeck.StintPlugin
         public QuickSwitcherCommand()
             : base(displayName: "Quick Switcher", description: "Open Stint's quick switcher to start any project.", groupName: "Timer")
         {
+            // A widget: Options+ shows the plugin's image as is and offers no icon
+            // editing, which would freeze the key (see KeyArt.NoLabel).
+            this.IsWidget = true;
         }
 
         private StintConnection Stint => ((StintPlugin)this.Plugin).Stint;
@@ -26,6 +29,9 @@ namespace Loupedeck.StintPlugin
         }
 
         protected override void RunCommand(String actionParameter) => _ = this.Stint.OpenSwitcherAsync();
+
+        // The image has its own label (see KeyArt.NoLabel).
+        protected override String GetCommandDisplayName(String actionParameter, PluginImageSize imageSize) => KeyArt.NoLabel;
 
         protected override BitmapImage GetCommandImage(String actionParameter, PluginImageSize imageSize)
         {

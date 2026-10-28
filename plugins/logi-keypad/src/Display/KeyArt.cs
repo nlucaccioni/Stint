@@ -10,6 +10,16 @@ namespace Loupedeck.StintPlugin
 
     internal static class KeyArt
     {
+        /// <summary>
+        /// The name to give keys whose image already has its own label. Logi Options+
+        /// prints a key's name over its image, and falls back to the action's name
+        /// when the name is empty, so this is a single space (as the SpeedTest plugin
+        /// does). Live keys are also widgets (see WidgetKeys) so Options+ doesn't
+        /// offer icon editing, which would freeze them: editing saves a snapshot of
+        /// the key and Options+ stops asking the plugin for new images.
+        /// </summary>
+        public const string NoLabel = " ";
+
         private static readonly BitmapColor Background = new(20, 20, 20);
         private static readonly BitmapColor Text = new(240, 240, 240);
         private static readonly BitmapColor Muted = new(140, 140, 140);
