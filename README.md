@@ -9,9 +9,10 @@ A local-first desktop time tracker for freelance work, for macOS and Windows.
 - Billing batches: bill a client's time with an invoice reference, mark it paid, and see what's outstanding. Billed time is locked and keeps the rate it was billed at. Optional rounding.
 - Idle detection (including sleep and screen lock) and a reminder for long-running timers.
 - CSV export of any date range.
+- Logitech MX Keypad plugin: one-press project keys, a live "Now Running" key, and totals. See [plugins/logi-keypad](plugins/logi-keypad/README.md).
 - Works fully offline. Your data lives in a SQLite database on your machine.
 
-> Stint is in early development, with a placeholder visual design. Logitech MX Keypad support and sync between devices are planned; see [SPEC.md](SPEC.md).
+> Stint is in early development, with a placeholder visual design. Sync between devices is planned; see [SPEC.md](SPEC.md).
 
 ## Install
 
@@ -48,7 +49,7 @@ Your data lives in `stint.db` in the app data folder: `~/Library/Application Sup
 | `packages/ui`         | Shared React components and design tokens.                     |
 | `apps/desktop`        | The Electron app.                                              |
 | `apps/web`            | PWA companion (planned).                                       |
-| `plugins/logi-keypad` | MX Keypad plugin (planned).                                    |
+| `plugins/logi-keypad` | MX Keypad plugin (C#, Logi Actions SDK).                       |
 
 ## License
 
