@@ -3,11 +3,12 @@
 // The project is picked per key from a dropdown in Logi Options+ (the SDK's
 // "Action Editor"), filled from Stint's project list.
 //
-// How the key shows what's happening (learned by testing on the MX Keypad):
-// Logi Options+ asks for one image per state when the key is set up, then reuses
-// them; it never asks again. So the key has three states (Idle, Running, Stint
-// Offline), and the plugin switches each key to the right state as Stint changes.
-// A live elapsed time isn't possible on this key; the Stop key shows it.
+// What the key shows (learned by testing on the MX Keypad): Logi Options+ draws
+// dropdown actions itself, as a tile with the key's name, and never shows images
+// from the plugin on the key. So the name is set to the chosen project's name
+// (like Spotify's playlist key). The plugin still keeps each key's state (Idle,
+// Running, Offline) and draws an image per state, which Options+ shows in its
+// editor preview and on devices that use them. Now Running shows the live time.
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
@@ -38,6 +39,7 @@ namespace Loupedeck.StintPlugin
                     .SetRequired());
             // `+=` subscribes to an event, like addEventListener.
             this.ActionEditor.ListboxItemsRequested += this.OnListboxItemsRequested;
+            this.ActionEditor.ControlValueChanged += this.OnControlValueChanged;
         }
 
         // `this.Plugin` is the SDK's base type; cast it to ours to reach the connection.
@@ -65,6 +67,21 @@ namespace Loupedeck.StintPlugin
             foreach (var p in this.Stint.Projects)
             {
                 e.AddItem(name: p.Id, displayName: $"{p.ClientName} · {p.Name}", description: null);
+            }
+        }
+
+        /// <summary>Name the key after the project picked in the dropdown, so it reads "Branding", not "Project Timer".</summary>
+        private void OnControlValueChanged(Object? sender, ActionEditorControlValueChangedEventArgs e)
+        {
+            if (e.ControlName != ProjectControl)
+            {
+                return;
+            }
+            var id = e.ActionEditorState.GetControlValue(ProjectControl);
+            var project = this.Stint.Projects.FirstOrDefault(p => p.Id == id);
+            if (project != null)
+            {
+                e.ActionEditorState.SetDisplayName(project.Name);
             }
         }
 
