@@ -15,8 +15,8 @@
 
 .pageTitle {
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: 700;
 }
 
 .headerActions {
@@ -158,10 +158,13 @@
 .clientName {
   font-size: var(--text-md);
   font-weight: 700;
+  /* A light tint of the client color (Figma: the color at ~28% over white). */
+  color: color-mix(in srgb, var(--client-color) 28%, #fff);
 }
 
 .projectName {
   margin-right: var(--space-1);
+  font-size: var(--text-reg);
   font-weight: 500;
 }
 

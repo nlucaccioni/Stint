@@ -20,10 +20,13 @@
   --text-xxs: 8px;
   --text-xs: 10px;
   --text-sm: 12px;
+  /* Tabs and project names. */
+  --text-reg: 14px;
   --text-md: 16px;
-  /* Not in the Figma variables yet (page headings); 1.25 × md. */
+  /* Dialog titles and smaller headings. */
   --text-lg: 20px;
-  --text-xl: 32px;
+  /* Page headings and Totals figures. */
+  --text-xl: 24px;
 
   --space-1: 4px;
   --space-2: 8px;

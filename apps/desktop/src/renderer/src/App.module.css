@@ -94,7 +94,7 @@
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-reg);
   font-weight: 500;
   line-height: normal;
   cursor: pointer;
