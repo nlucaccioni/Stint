@@ -5,9 +5,10 @@
   gap: var(--space-4);
 }
 
+/* The date sits on the heading's baseline. */
 .header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-3);
 }
 
