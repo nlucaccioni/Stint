@@ -1,32 +1,35 @@
 // SPDX-License-Identifier: MIT
-// Images for a Project Timer key. Logi Options+ asks for one image per state when
-// the key is set up and reuses them, so each state's image is fixed: the live
-// elapsed time can't be shown here (the Stop key shows it instead).
+// The live image for a key bound to one project, shared by the Project key and the
+// keys on the All Projects page.
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
 
     internal static class ProjectKey
     {
-        // The key's states, in the order ProjectTimerCommand adds them.
-        public const int Idle = 0;
-        public const int Running = 1;
-        public const int Offline = 2;
-
-        public static BitmapImage Draw(ProjectEntry? project, int state, int width, int height)
+        /// <summary>
+        /// Idle: the client's color bar and the name. Running: filled with the
+        /// client's color, with the live elapsed time.
+        /// </summary>
+        public static BitmapImage Draw(StintConnection stint, string? projectId, int width, int height)
         {
-            if (state == Offline)
+            if (stint.Status != ConnectionStatus.Connected)
             {
-                return KeyArt.Unavailable(width, height, ConnectionStatus.Offline);
+                return KeyArt.Unavailable(width, height, stint.Status);
             }
+            var project = stint.Projects.FirstOrDefault(p => p.Id == projectId);
             if (project == null)
             {
-                // Archived or deleted in Stint, or not known yet (Stint hasn't connected since the plugin started).
+                // Archived or deleted in Stint since this key was set up.
                 return KeyArt.Label(width, height, "Project Unavailable", muted: true);
             }
-            return state == Running
-                ? KeyArt.RunningProject(width, height, project, "Running")
-                : KeyArt.Project(width, height, project);
+            var running = stint.State?.Running;
+            if (running != null && running.ProjectId == project.Id)
+            {
+                long elapsed = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - running.StartedAt) / 1000;
+                return KeyArt.RunningProject(width, height, project, Format.Elapsed(elapsed));
+            }
+            return KeyArt.Project(width, height, project);
         }
     }
 }

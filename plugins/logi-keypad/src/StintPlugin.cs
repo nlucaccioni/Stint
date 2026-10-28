@@ -27,6 +27,17 @@ namespace Loupedeck.StintPlugin
         /// <summary>The live connection to Stint, shared by every key.</summary>
         public StintConnection Stint { get; }
 
+        /// <summary>The All Projects folder, set when it loads, so a Project key can close its page.</summary>
+        public ProjectsFolder? ProjectsFolder { get; set; }
+
+        /// <summary>
+        /// The project list saved from the last run, available as soon as the plugin
+        /// is created. The service creates the plugin before its actions, and an
+        /// action that lists projects in Options+ has to add them in its constructor,
+        /// before it can reach the plugin (see ProjectKeyCommand).
+        /// </summary>
+        public static IReadOnlyList<ProjectEntry> SavedProjects { get; private set; } = Array.Empty<ProjectEntry>();
+
         /// <summary>
         /// Fires once a second (on a background thread). Keys showing a running
         /// time redraw on it; Stint itself only sends updates when something changes.
@@ -55,7 +66,8 @@ namespace Loupedeck.StintPlugin
             {
                 if (File.Exists(this._projectsFile))
                 {
-                    this.Stint.SeedProjects(Protocol.ParseProjects(File.ReadAllText(this._projectsFile)));
+                    SavedProjects = Protocol.ParseProjects(File.ReadAllText(this._projectsFile));
+                    this.Stint.SeedProjects(SavedProjects);
                 }
             }
             catch (IOException ex)
