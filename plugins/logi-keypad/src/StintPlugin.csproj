@@ -58,7 +58,15 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Copy package/ (metadata, icon) into the build output, where the service expects it. -->
+  <!--
+    Space Grotesk, built into the .dll (see Display/FontStack.cs). Its OFL
+    license text is in package/licenses and ships in the .lplug4.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+  <!-- Copy package/ (metadata, icon, licenses) into the build output, where the service expects it. -->
   <Target Name="CopyPackage" AfterTargets="PostBuildEvent">
     <ItemGroup>
       <PackageFiles Include="package\**\*" />
@@ -66,8 +74,12 @@
     <Copy SourceFiles="@(PackageFiles)" DestinationFolder="$(OutputPath)..\%(RecursiveDir)" />
   </Target>
 
-  <!-- Point the service at our build output, then ask it to reload the plugin. -->
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <!--
+    Point the service at our build output, then ask it to reload the plugin.
+    Debug builds only: a Release build is for packaging (see README.md) and must
+    not redirect the service away from the development build.
+  -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Condition="$(OS) == 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)\ &gt; &quot;$(PluginDir)$(ProjectName).link&quot;" />
     <Exec Condition="$(OS) != 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)\ &gt; $(PluginDir)$(ProjectName).link" />
     <Message Text="Created plugin link at: $(PluginDir)$(ProjectName).link" Importance="High" />

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Draws the key images. Placeholder look until the real design arrives: keep all
-// the colors and sizes here so restyling the keys means editing one file.
+// Draws the key images. All the colors and sizes live here, so restyling the keys
+// means editing one file. The design is mirrored on the "Keypad" page of the Stint
+// Figma file.
 //
-// Keys are square (80–116 px depending on the device). Sizes below are fractions
-// of the key so they scale.
+// Keys are square: 143 px on the MX Keypad, and Options+ also asks for 116 and 80 px
+// previews. Sizes below are fractions of the key so they scale.
 namespace Loupedeck.StintPlugin
 {
     using global::Stint.Keypad;
-
-    using SkiaSharp;
 
     internal static class KeyArt
     {
@@ -113,41 +112,35 @@ namespace Loupedeck.StintPlugin
         // Values shrink to fit before they'd be cut off, but no smaller than this share of their size.
         private const double MinShrink = 0.6;
 
-        // The font the SDK draws text in, for measuring. Owned by the SDK: don't dispose it.
-        private static readonly SKTypeface Typeface = BitmapFonts.GetDefaultTypeface();
-
         /// <summary>
         /// Text centered in a box. It wraps at spaces onto at most `maxLines` lines,
         /// and anything that still doesn't fit ends in "…". With `shrinkToFit`, a
         /// one-line value gets smaller instead (down to MinShrink) before it's cut.
-        /// The lines are placed here rather than by the SDK, so the spacing between
-        /// them is ours and the block is centered exactly.
+        /// Lines are drawn in Space Grotesk (see FontStack).
         /// </summary>
         private static void DrawText(
             BitmapBuilder b, string text, int x, int y, int width, int height, BitmapColor color, int fontSize,
             int maxLines, bool shrinkToFit = false)
         {
-            // `using` disposes the paint when the method ends, like a try/finally.
-            using var paint = new SKPaint { Typeface = Typeface, TextSize = fontSize };
-            // A couple of pixels of slack: the SDK's own drawing can differ slightly from this measurement.
+            var font = FontStack.Sans;
+            // A pixel of slack on each side, so antialiased edges never touch the box.
             float fitWidth = width - 2;
             if (shrinkToFit)
             {
                 int smallest = (int)Math.Round(fontSize * MinShrink);
-                while (fontSize > smallest && paint.MeasureText(text) > fitWidth)
+                while (fontSize > smallest && font.Measure(text, fontSize) > fitWidth)
                 {
                     fontSize--;
-                    paint.TextSize = fontSize;
                 }
             }
 
-            var lines = TextLayout.Wrap(text, s => paint.MeasureText(s), fitWidth, maxLines);
+            var lines = TextLayout.Wrap(text, s => font.Measure(s, fontSize), fitWidth, maxLines);
             int lineHeight = (int)Math.Round(fontSize * LineSpacing);
             int top = y + (height - (lines.Count * lineHeight)) / 2;
             for (int i = 0; i < lines.Count; i++)
             {
                 // Each line centered in its own row, one line height tall.
-                b.DrawText(lines[i], x, top + (i * lineHeight), width, lineHeight, color, fontSize);
+                b.DrawImage(font.DrawLine(lines[i], width, lineHeight, fontSize, color), x, top + (i * lineHeight));
             }
         }
 
