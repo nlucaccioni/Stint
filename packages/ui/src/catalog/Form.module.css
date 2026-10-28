@@ -24,13 +24,14 @@
   min-width: 0;
 }
 
-/* Fixed widths from the design: the Budget type and the On Day selects. */
+/* The Budget type and On Day selects fit their text (Figma: Hours is 105px, the
+   day "01" 61px), so "No Budget" or "Wednesday" never truncates. */
 .budgetUnit {
-  width: 105px;
+  min-width: 105px;
 }
 
 .resetDay {
-  width: 100px;
+  min-width: 61px;
 }
 
 .error {
