@@ -201,7 +201,7 @@ function BatchTable(props: {
   onOpen: (batch: BillingBatch) => void
 }) {
   return (
-    <table className={tableStyles.table}>
+    <table className={`${tableStyles.table} ${styles.batchTable}`}>
       <thead>
         <tr>
           <th scope="col">Client</th>
