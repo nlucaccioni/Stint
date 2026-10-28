@@ -73,7 +73,8 @@ namespace Loupedeck.StintPlugin
         public override BitmapImage GetButtonImage(PluginImageSize imageSize)
         {
             using var sizer = new BitmapBuilder(imageSize);
-            return KeyArt.Label(sizer.Width, sizer.Height, "All Projects");
+            // Two lines, like Quick Switcher.
+            return KeyArt.Label(sizer.Width, sizer.Height, "All\nProjects");
         }
 
         // --- the page ---

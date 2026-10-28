@@ -40,5 +40,12 @@ namespace Stint.Keypad.Tests
 
         [Fact]
         public void HandlesEmptyText() => Assert.Empty(Wrap(""));
+
+        [Fact]
+        public void BreaksAtExplicitLineBreaks() => Assert.Equal(["All", "Projects"], Wrap("All\nProjects"));
+
+        [Fact]
+        public void EndsWithAnEllipsisWhenLineBreaksRunOut() =>
+            Assert.Equal(["One", "Two Three…"], Wrap("One\nTwo\nThree Four"));
     }
 }

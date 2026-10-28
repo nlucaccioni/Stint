@@ -8,10 +8,32 @@ namespace Stint.Keypad
     {
         public const string Ellipsis = "…";
 
+        /// <param name="text">The text; "\n" forces a line break (e.g. "All\nProjects").</param>
         /// <param name="measure">Width of a piece of text, in pixels, at the font size being drawn.</param>
         /// <param name="maxWidth">Width of the box the text goes in.</param>
         /// <param name="maxLines">Most lines to use; the last one ends in "…" if text is left over.</param>
         public static IReadOnlyList<string> Wrap(string text, Func<string, float> measure, float maxWidth, int maxLines)
+        {
+            var paragraphs = text.Split('\n');
+            var lines = new List<string>();
+            for (int i = 0; i < paragraphs.Length; i++)
+            {
+                if (lines.Count == maxLines)
+                {
+                    // Out of lines with paragraphs left: end the last line with "…" (unless it already does).
+                    if (!lines[^1].EndsWith(Ellipsis, StringComparison.Ordinal))
+                    {
+                        lines[^1] = WithEllipsis($"{lines[^1]} {string.Join(" ", paragraphs[i..])}", measure, maxWidth);
+                    }
+                    break;
+                }
+                lines.AddRange(WrapParagraph(paragraphs[i], measure, maxWidth, maxLines - lines.Count));
+            }
+            return lines;
+        }
+
+        /// <summary>One paragraph (no line breaks) wrapped at spaces.</summary>
+        private static List<string> WrapParagraph(string text, Func<string, float> measure, float maxWidth, int maxLines)
         {
             var words = new Queue<string>(text.Split(' ', StringSplitOptions.RemoveEmptyEntries));
             var lines = new List<string>();
