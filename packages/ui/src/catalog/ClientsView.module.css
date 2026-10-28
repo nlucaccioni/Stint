@@ -246,10 +246,12 @@
 
 /* The 4px above the rule is a margin, not padding on the collapsible: padding
    can't shrink to 0, so it left a 4px gap under collapsed cards. */
+/* 8px above, the same as the card's bottom padding when collapsed, so the client
+   bar sits the same open or closed. */
 .clientBarRule {
   flex: none;
   width: 100%;
-  margin: var(--space-1) 0 0;
+  margin: var(--space-2) 0 0;
   border: 0;
   border-top: 1px solid var(--color-border);
 }
