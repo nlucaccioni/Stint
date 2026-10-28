@@ -86,3 +86,14 @@ function hueOf(r: number, g: number, b: number, max: number, d: number): number 
   const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
   return (h * 60 + 360) % 360
 }
+
+/**
+ * The same hue and saturation at full brightness (HSV value 100). Client colors
+ * are kept this bright so their glows always show; a dark color would barely glow.
+ * Greys come out white. Returns the input unchanged if it isn't a hex color.
+ */
+export function atFullBrightness(hex: string): string {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return hex
+  return rgbToHex(hsvToRgb({ ...rgbToHsv(rgb), v: 100 }))
+}

@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// A swatch that opens a color picker (Figma: Color Picker): a saturation/brightness
-// square, a hue slider, an eyedropper, and the value as HSL, RGB or hex.
+// A swatch that opens a color picker (Figma: Color Picker): a hue/saturation
+// square, a saturation slider, an eyedropper, and the value as HSB, RGB or hex.
+//
+// Colors are always at full brightness (HSV value 100): client colors glow
+// throughout the app, and a dark color barely glows. So there's no brightness
+// control, and typed or picked colors are brightened to match.
 //
 // The panel is a native popover anchored to the swatch, like Menu and Select. The
-// picker works in HSV internally so the hue survives dragging through greys.
+// picker works in HSV internally so the hue survives dragging through white.
 import {
   useId,
   useRef,
@@ -12,17 +16,20 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
-import { hexToRgb, hslToRgb, hsvToRgb, rgbToHex, rgbToHsl, rgbToHsv, type Hsv } from '@stint/core'
+import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, type Hsv, type Rgb } from '@stint/core'
 import { Pipette } from 'lucide-react'
 import { Select } from './Select'
 import styles from './ColorPicker.module.css'
 
-type Mode = 'hsl' | 'rgb' | 'hex'
+type Mode = 'hsb' | 'rgb' | 'hex'
 const MODES = [
   { value: 'rgb', label: 'RGB' },
   { value: 'hex', label: 'Hex' },
-  { value: 'hsl', label: 'HSL' },
+  { value: 'hsb', label: 'HSB' },
 ] as const
+
+/** Any color as HSV at full brightness, keeping its hue and saturation. */
+const bright = (rgb: Rgb): Hsv => ({ ...rgbToHsv(rgb), v: 100 })
 
 /** Chromium's EyeDropper API (not yet in TypeScript's DOM types). */
 interface EyeDropperApi {
@@ -55,8 +62,8 @@ export function ColorPicker(props: ColorPickerProps) {
   const { value, onChange } = props
   const panelId = useId()
   const anchor = `--color-${panelId.replace(/[^a-zA-Z0-9_-]/g, '')}`
-  const [hsv, setHsv] = useState<Hsv>(() => rgbToHsv(hexToRgb(value) ?? { r: 0, g: 0, b: 0 }))
-  const [mode, setMode] = useState<Mode>('hsl')
+  const [hsv, setHsv] = useState<Hsv>(() => bright(hexToRgb(value) ?? { r: 255, g: 255, b: 255 }))
+  const [mode, setMode] = useState<Mode>('hsb')
 
   // Follow outside changes to `value` (adjusting state during render, React's
   // recommended pattern), but keep our hue when the hex is the same.
@@ -64,7 +71,7 @@ export function ColorPicker(props: ColorPickerProps) {
   if (value !== seenValue) {
     setSeenValue(value)
     const rgb = hexToRgb(value)
-    if (rgb && rgbToHex(hsvToRgb(hsv)) !== value.toLowerCase()) setHsv(rgbToHsv(rgb))
+    if (rgb && rgbToHex(hsvToRgb(hsv)) !== value.toLowerCase()) setHsv(bright(rgb))
   }
 
   function update(next: Hsv) {
@@ -75,7 +82,7 @@ export function ColorPicker(props: ColorPickerProps) {
 
   function setFromHex(hex: string) {
     const rgb = hexToRgb(hex)
-    if (rgb) update(rgbToHsv(rgb))
+    if (rgb) update(bright(rgb))
   }
 
   const rgb = hsvToRgb(hsv)
@@ -118,7 +125,7 @@ export function ColorPicker(props: ColorPickerProps) {
         className={styles.panel}
         style={{ positionAnchor: anchor } as CSSProperties}
       >
-        <SaturationArea hsv={hsv} hueColor={hueColor} onChange={update} />
+        <HueSaturationArea hsv={hsv} onChange={update} />
         <div className={styles.row}>
           {canPick && (
             <button
@@ -131,7 +138,12 @@ export function ColorPicker(props: ColorPickerProps) {
               <Pipette aria-hidden />
             </button>
           )}
-          <HueSlider hue={hsv.h} hueColor={hueColor} onChange={(h) => update({ ...hsv, h })} />
+          <SaturationSlider
+            saturation={hsv.s}
+            hueColor={hueColor}
+            color={hex}
+            onChange={(s) => update({ ...hsv, s })}
+          />
         </div>
         <div className={styles.row}>
           <Select
@@ -157,32 +169,20 @@ export function ColorPicker(props: ColorPickerProps) {
                   label={k.toUpperCase()}
                   text={String(rgb[k])}
                   parse={(t) => intIn(t, 0, 255)}
-                  onCommit={(n) => update(rgbToHsv({ ...rgb, [k]: n }))}
+                  onCommit={(n) => update(bright({ ...rgb, [k]: n }))}
                 />
               ))}
-            {mode === 'hsl' &&
-              (['h', 's', 'l'] as const).map((k) => {
-                const hsl = rgbToHsl(rgb)
-                // Keep our own hue for greys, where HSL's hue is meaningless.
-                const shown = { ...hsl, h: hsl.s === 0 ? hsv.h : hsl.h }
-                return (
-                  <ChannelInput
-                    key={k}
-                    label={k.toUpperCase()}
-                    text={String(Math.round(shown[k]))}
-                    parse={(t) => intIn(t, 0, k === 'h' ? 359 : 100)}
-                    onCommit={(n) => {
-                      const next = { ...shown, [k]: n }
-                      const nextHsv = rgbToHsv(hslToRgb(next))
-                      update(
-                        next.s === 0 || next.l === 0 || next.l === 100
-                          ? { ...nextHsv, h: next.h }
-                          : nextHsv,
-                      )
-                    }}
-                  />
-                )
-              })}
+            {/* Hue and saturation only: brightness is always 100. */}
+            {mode === 'hsb' &&
+              (['h', 's'] as const).map((k) => (
+                <ChannelInput
+                  key={k}
+                  label={k.toUpperCase()}
+                  text={String(Math.round(hsv[k]))}
+                  parse={(t) => intIn(t, 0, k === 'h' ? 359 : 100)}
+                  onCommit={(n) => update({ ...hsv, [k]: n })}
+                />
+              ))}
           </div>
         </div>
       </div>
@@ -196,25 +196,25 @@ function intIn(text: string, min: number, max: number): number | null {
   return n >= min && n <= max ? n : null
 }
 
-/** Drag (or use arrow keys) across saturation (x) and brightness (y). */
-function SaturationArea(props: { hsv: Hsv; hueColor: string; onChange: (hsv: Hsv) => void }) {
+/** Drag (or use arrow keys) across hue (x) and saturation (y, white at the bottom). */
+function HueSaturationArea(props: { hsv: Hsv; onChange: (hsv: Hsv) => void }) {
   const { hsv, onChange } = props
   const ref = useRef<HTMLDivElement>(null)
 
   function fromPointer(e: PointerEvent) {
     const r = ref.current!.getBoundingClientRect()
-    const s = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100))
-    const v = Math.min(100, Math.max(0, 100 - ((e.clientY - r.top) / r.height) * 100))
-    onChange({ ...hsv, s, v })
+    const h = Math.min(359, Math.max(0, ((e.clientX - r.left) / r.width) * 360))
+    const s = Math.min(100, Math.max(0, 100 - ((e.clientY - r.top) / r.height) * 100))
+    onChange({ ...hsv, h, s })
   }
 
   function onKeyDown(e: KeyboardEvent) {
     const step = e.shiftKey ? 10 : 1
     const moves: Record<string, Partial<Hsv>> = {
-      ArrowLeft: { s: hsv.s - step },
-      ArrowRight: { s: hsv.s + step },
-      ArrowUp: { v: hsv.v + step },
-      ArrowDown: { v: hsv.v - step },
+      ArrowLeft: { h: hsv.h - step },
+      ArrowRight: { h: hsv.h + step },
+      ArrowUp: { s: hsv.s + step },
+      ArrowDown: { s: hsv.s - step },
     }
     const move = moves[e.key]
     if (!move) return
@@ -222,8 +222,8 @@ function SaturationArea(props: { hsv: Hsv; hueColor: string; onChange: (hsv: Hsv
     const next = { ...hsv, ...move }
     onChange({
       ...next,
+      h: Math.min(359, Math.max(0, next.h)),
       s: Math.min(100, Math.max(0, next.s)),
-      v: Math.min(100, Math.max(0, next.v)),
     })
   }
 
@@ -231,11 +231,10 @@ function SaturationArea(props: { hsv: Hsv; hueColor: string; onChange: (hsv: Hsv
     <div
       ref={ref}
       className={styles.area}
-      style={{ '--hue': props.hueColor } as CSSProperties}
       role="slider"
       tabIndex={0}
-      aria-label="Saturation and brightness"
-      aria-valuetext={`Saturation ${Math.round(hsv.s)}%, brightness ${Math.round(hsv.v)}%`}
+      aria-label="Hue and saturation"
+      aria-valuetext={`Hue ${Math.round(hsv.h)}, saturation ${Math.round(hsv.s)}%`}
       onKeyDown={onKeyDown}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId)
@@ -247,19 +246,27 @@ function SaturationArea(props: { hsv: Hsv; hueColor: string; onChange: (hsv: Hsv
     >
       <span
         className={styles.areaHandle}
-        style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%` }}
+        style={{ left: `${(hsv.h / 360) * 100}%`, top: `${100 - hsv.s}%` }}
         aria-hidden
       />
     </div>
   )
 }
 
-function HueSlider(props: { hue: number; hueColor: string; onChange: (hue: number) => void }) {
+/** White on the left to the full hue on the right. */
+function SaturationSlider(props: {
+  saturation: number
+  /** The hue at full saturation, for the right end of the track. */
+  hueColor: string
+  /** The current color, for the handle. */
+  color: string
+  onChange: (saturation: number) => void
+}) {
   const ref = useRef<HTMLDivElement>(null)
 
   function fromPointer(e: PointerEvent) {
     const r = ref.current!.getBoundingClientRect()
-    props.onChange(Math.min(359, Math.max(0, ((e.clientX - r.left) / r.width) * 360)))
+    props.onChange(Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100)))
   }
 
   function onKeyDown(e: KeyboardEvent) {
@@ -272,19 +279,20 @@ function HueSlider(props: { hue: number; hueColor: string; onChange: (hue: numbe
           : 0
     if (!delta) return
     e.preventDefault()
-    props.onChange(Math.min(359, Math.max(0, props.hue + delta)))
+    props.onChange(Math.min(100, Math.max(0, props.saturation + delta)))
   }
 
   return (
     <div
       ref={ref}
-      className={styles.hue}
+      className={styles.saturation}
+      style={{ '--hue': props.hueColor } as CSSProperties}
       role="slider"
       tabIndex={0}
-      aria-label="Hue"
+      aria-label="Saturation"
       aria-valuemin={0}
-      aria-valuemax={359}
-      aria-valuenow={Math.round(props.hue)}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(props.saturation)}
       onKeyDown={onKeyDown}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId)
@@ -295,8 +303,8 @@ function HueSlider(props: { hue: number; hueColor: string; onChange: (hue: numbe
       }}
     >
       <span
-        className={styles.hueHandle}
-        style={{ left: `${(props.hue / 360) * 100}%`, background: props.hueColor }}
+        className={styles.sliderHandle}
+        style={{ left: `${props.saturation}%`, background: props.color }}
         aria-hidden
       />
     </div>

@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { hexToRgb, hslToRgb, hsvToRgb, rgbToHex, rgbToHsl, rgbToHsv } from '../src/color'
+import {
+  atFullBrightness,
+  hexToRgb,
+  hslToRgb,
+  hsvToRgb,
+  rgbToHex,
+  rgbToHsl,
+  rgbToHsv,
+} from '../src/color'
 
 describe('hex', () => {
   it('parses six- and three-digit hex, with or without #', () => {
@@ -40,5 +48,14 @@ describe('HSV and HSL', () => {
 
   it('treats grey as hue 0 with no saturation', () => {
     expect(rgbToHsv({ r: 128, g: 128, b: 128 })).toMatchObject({ h: 0, s: 0 })
+  })
+})
+
+describe('atFullBrightness', () => {
+  it('keeps hue and saturation, raises brightness to full', () => {
+    expect(atFullBrightness('#1a3366')).toBe('#417fff')
+    expect(atFullBrightness('#ff0000')).toBe('#ff0000')
+    expect(atFullBrightness('#808080')).toBe('#ffffff')
+    expect(atFullBrightness('nope')).toBe('nope')
   })
 })

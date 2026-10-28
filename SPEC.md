@@ -116,6 +116,7 @@ All synced records are designed for future sync from day one.
 
 - `id`, `name`, `color`, `hourlyRateCents` (nullable), `currency` (defaults to the default-currency setting), `archived`, sync fields.
 - The client's color identifies it everywhere: its card, its projects, the running timer, totals.
+- Client colors are always at full brightness (HSV value 100), so their glows show; the picker sets only hue and saturation, and typed or picked colors are brightened to match. A color saved before this is brightened the next time the client is edited.
 - `sortKey`: the client's place in the user's order (see Ordering below).
 
 ### Project

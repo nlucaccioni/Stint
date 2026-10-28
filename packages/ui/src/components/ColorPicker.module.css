@@ -39,27 +39,37 @@
   display: flex;
 }
 
-/* Saturation left→right, brightness top→bottom, over the current hue. */
+/* Hue left→right, saturation top→bottom (white at the bottom), always at full
+   brightness. */
 .area {
   position: relative;
   height: 112px;
   border-radius: 8px;
   background:
-    linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent),
-    var(--hue);
+    linear-gradient(to top, #fff, transparent),
+    linear-gradient(
+      to right,
+      #f00 0%,
+      #ff0 16.67%,
+      #0f0 33.33%,
+      #0ff 50%,
+      #00f 66.67%,
+      #f0f 83.33%,
+      #f00 100%
+    );
   cursor: crosshair;
   touch-action: none;
 }
 
 .area:focus-visible,
-.hue:focus-visible {
+.saturation:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 /* White ring handles, as in the design. */
 .areaHandle,
-.hueHandle {
+.sliderHandle {
   position: absolute;
   box-sizing: content-box;
   border: 3px solid #fff;
@@ -74,7 +84,7 @@
   height: 8px;
 }
 
-.hueHandle {
+.sliderHandle {
   top: 50%;
   width: 6px;
   height: 6px;
@@ -109,21 +119,13 @@
   background: var(--color-wash);
 }
 
-.hue {
+/* White → the current hue at full saturation. */
+.saturation {
   position: relative;
   flex: 1;
   height: 12px;
   border-radius: var(--radius-pill);
-  background: linear-gradient(
-    to right,
-    #f00 0%,
-    #ff0 16.67%,
-    #0f0 33.33%,
-    #0ff 50%,
-    #00f 66.67%,
-    #f0f 83.33%,
-    #f00 100%
-  );
+  background: linear-gradient(to right, #fff, var(--hue));
   cursor: pointer;
   touch-action: none;
 }

@@ -42,16 +42,16 @@ import { ConfirmDelete, type DeleteTarget } from './ConfirmDelete'
 import { ProjectForm } from './ProjectForm'
 import styles from './ClientsView.module.css'
 
-/** Suggested colors for new clients, cycled in order. */
+/** Suggested colors for new clients, cycled in order. All at full brightness, like every client color (see ColorPicker). */
 const PALETTE = [
-  '#55e6f6',
-  '#55f69d',
-  '#f6c955',
-  '#f67a55',
-  '#a78bfa',
-  '#f472b6',
-  '#2dd4bf',
-  '#94a3b8',
+  '#58eeff',
+  '#58ffa3',
+  '#ffd058',
+  '#ff7e58',
+  '#aa8eff',
+  '#ff77be',
+  '#36ffe6',
+  '#cde2ff',
 ]
 
 export interface ClientsViewProps {

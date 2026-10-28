@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // New/Edit Client modal (Figma: New Client Modal). Deleting lives in the card's ⋯ menu.
 import { useState, type FormEvent } from 'react'
-import { parseMoney, toMoneyInput, type Client, type ClientInput } from '@stint/core'
+import {
+  atFullBrightness,
+  parseMoney,
+  toMoneyInput,
+  type Client,
+  type ClientInput,
+} from '@stint/core'
 import { Button } from '../components/Button'
 import { ColorPicker } from '../components/ColorPicker'
 import { Dialog } from '../components/Dialog'
@@ -44,7 +50,8 @@ export function ClientForm({
   pickScreenColor,
 }: ClientFormProps) {
   const [name, setName] = useState(client?.name ?? '')
-  const [color, setColor] = useState(client?.color ?? defaultColor)
+  // Brightened on open, so a color saved before colors were kept bright is fixed on save.
+  const [color, setColor] = useState(() => atFullBrightness(client?.color ?? defaultColor))
   const [currency, setCurrency] = useState(client?.currency ?? defaultCurrency)
   const [rate, setRate] = useState(
     client?.hourlyRateCents != null ? toMoneyInput(client.hourlyRateCents, client.currency) : '',
