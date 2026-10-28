@@ -23,6 +23,10 @@
   padding-top: var(--chrome-height);
   overflow-y: auto;
   scroll-padding-top: var(--chrome-height);
+  /* Room for the scrollbar is always kept (on both sides, so the content stays
+     centered), so nothing shifts sideways when a page gets long enough to scroll.
+     Chromium has no overlay scrollbars any more, so this is the way to get that. */
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Keep the scrollbar out from under the chrome (the window buttons sit there). */
