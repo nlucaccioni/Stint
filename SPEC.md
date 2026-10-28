@@ -270,7 +270,7 @@ All editing is allowed on unbilled sessions:
 - Quick switcher: small always-on-top palette; type to fuzzy-search client/project, Enter to start.
 - Handle registration failures gracefully (another app may own a shortcut) and show which ones failed in settings.
 
-**Visual design:** Nicholas will provide the visual design. All styling is driven by design tokens (CSS variables) in `packages/ui`. Dark mode only for now; light mode can be added later as a second set of token values. Text uses Geist and Geist Mono (timers and times), bundled with the app (SIL Open Font License 1.1). UI icons use the Lucide library (`lucide-react`, ISC). App and tray icons are placeholders until Nicholas supplies them.
+**Visual design:** Nicholas will provide the visual design. All styling is driven by design tokens (CSS variables) in `packages/ui`. Dark mode only for now; light mode can be added later as a second set of token values. Text uses Space Grotesk and Space Mono (timers and times), bundled with the app (SIL Open Font License 1.1). The Keypad plugin bundles Space Grotesk only; Space Mono is too wide for the keys. UI icons use the Lucide library (`lucide-react`, ISC). App and tray icons are placeholders until Nicholas supplies them.
 
 ---
 
@@ -372,7 +372,7 @@ Stint is open source under **GPL-3.0-or-later** and hosted publicly at `github.c
 - `LICENSE` at the repo root contains the full, unmodified GPL-3.0 text.
 - SPDX header in source files: `// SPDX-License-Identifier: GPL-3.0-or-later`.
 - `"license": "GPL-3.0-or-later"` in every `package.json`.
-- **Dependency compatibility:** only add dependencies whose licenses are GPL-3.0-compatible (MIT, BSD, ISC, Apache-2.0, MPL-2.0, LGPL, GPL are fine). Flag anything else before adding it. CI runs a license check. Approved exception: the Geist fonts (SIL OFL 1.1), bundled as separate font files.
+- **Dependency compatibility:** only add dependencies whose licenses are GPL-3.0-compatible (MIT, BSD, ISC, Apache-2.0, MPL-2.0, LGPL, GPL are fine). Flag anything else before adding it. CI runs a license check. Approved exception: the Space Grotesk and Space Mono fonts (SIL OFL 1.1), bundled as separate font files.
 - **Keypad plugin:** licensed **MIT**, separately from the app. It is a separate program that talks to Stint only over the WebSocket protocol, so it is not a derivative of the GPL app, and MIT lets it link with Logitech's proprietary `PluginApi.dll` without a GPL exception. `plugins/logi-keypad/LICENSE` holds the MIT text and plugin files use `// SPDX-License-Identifier: MIT`. Never commit Logitech's DLLs or other SDK binaries; reference them from the local Logi Options+ install at build time.
 - **Future sync server (Phase 5):** may be licensed AGPL-3.0 (compatible with GPL-3.0) if protection against closed hosted forks is wanted. Decide then.
 - **App stores:** GPL conflicts with Mac App Store terms. If store distribution is ever wanted, outside contributions would need a CLA so the owner can dual-license.

@@ -5,15 +5,17 @@
  * second set of color values here.
  */
 
-/* Geist and Geist Mono (SIL OFL 1.1), bundled with the app; no remote fonts. */
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist-mono';
+/* Space Grotesk and Space Mono (SIL OFL 1.1), bundled with the app; no remote fonts.
+ * Space Mono only comes in Regular (400) and Bold (700), so other mono weights round to those. */
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
 
 :root {
   color-scheme: dark;
 
-  --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+  --font-sans: 'Space Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
 
   --text-xxs: 8px;
   --text-xs: 10px;
