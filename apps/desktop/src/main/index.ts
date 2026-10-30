@@ -16,7 +16,7 @@ import {
   session,
   shell,
 } from 'electron'
-import { formatClock } from '@stint/core'
+import { formatClock, stopLeftover } from '@stint/core'
 import {
   eventChannel,
   type AppInfo,
@@ -28,12 +28,13 @@ import {
 import type { HotkeyAction, Platform } from '../shared/hotkeys'
 import { createApiHandlers, type ApiHandlers } from './api'
 import { installAppMenu, popUpAppMenu } from './app-menu'
-import { openDatabase, type Db } from './db/connection'
+import { openDatabase, transaction, type Db } from './db/connection'
 import { getClient } from './db/clients'
 import { getPreferences } from './db/preferences'
 import { getProject } from './db/projects'
-import { getRunningSession } from './db/sessions'
+import { applySessionChanges, getRunningSession } from './db/sessions'
 import { loadDeviceSettings, saveDeviceSettings, type DeviceSettings } from './device'
+import { HEARTBEAT_MS, readHeartbeat, writeHeartbeat } from './heartbeat'
 import { HotkeyService } from './hotkeys'
 import { createTray, type TrayHandle } from './tray'
 import type { TrayCommand, TrayModel } from './tray-menu'
@@ -54,7 +55,8 @@ app.setPath('userData', join(app.getPath('appData'), app.isPackaged ? 'Stint' : 
 
 // Two copies of Stint writing to one database would conflict, so only allow one.
 // A second launch just focuses the existing window.
-if (!app.requestSingleInstanceLock()) {
+const isFirstInstance = app.requestSingleInstanceLock()
+if (!isFirstInstance) {
   app.quit()
 }
 
@@ -68,6 +70,11 @@ let localApi: LocalApiController | null = null
 let quitting = false
 /** Shows the Windows "still running in the tray" notice once; set up after startup. */
 let onFirstHide: () => void = () => {}
+/**
+ * Stops the running timer as Stint quits or the computer shuts down: a timer
+ * never outlives the app (SPEC.md §6). Set up after startup; safe to call twice.
+ */
+let stopTimerOnExit: () => void = () => {}
 
 /** The main window opens at 125%, which reads better than the design's 1:1 sizes. */
 const MAIN_ZOOM = 1.25
@@ -122,6 +129,10 @@ function createMainWindow(): BrowserWindow {
     win.hide()
     onFirstHide()
   })
+
+  // Windows: shutting down or signing out ends the app without a normal quit, so
+  // stop the timer here (macOS sends before-quit as usual).
+  win.on('session-end', () => stopTimerOnExit())
 
   loadRenderer(win)
   return win
@@ -321,6 +332,9 @@ let startHidden =
   (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin)
 
 void app.whenReady().then(() => {
+  // A second copy is on its way out: it must not open the database, or it would
+  // take the first copy's running timer for one left over from a crash.
+  if (!isFirstInstance) return
   // Windows uses this ID to group taskbar icons and show notifications.
   app.setAppUserModelId('com.nlucaccioni.stint')
 
@@ -336,6 +350,21 @@ void app.whenReady().then(() => {
     const device = loadDeviceSettings(dataDir)
     db = openDatabase(join(dataDir, 'stint.db'))
     if (!app.isPackaged) console.log(`[stint] data: ${dataDir}  device: ${device.deviceId}`)
+
+    // A timer still running now is one Stint didn't get to stop on the way out (a
+    // crash, power loss): end it when Stint was last known to be running.
+    const leftoverDb = db
+    transaction(leftoverDb, () =>
+      applySessionChanges(
+        leftoverDb,
+        stopLeftover(getRunningSession(leftoverDb), readHeartbeat(dataDir), {
+          now: Date.now(),
+          deviceId: device.deviceId,
+        }),
+      ),
+    )
+    writeHeartbeat(dataDir, Date.now())
+    setInterval(() => writeHeartbeat(dataDir, Date.now()), HEARTBEAT_MS)
 
     const appInfo: AppInfo = {
       version: app.getVersion(),
@@ -406,6 +435,15 @@ void app.whenReady().then(() => {
         },
       },
     })
+    stopTimerOnExit = () => {
+      try {
+        handlers.stopTimer()
+      } catch (e) {
+        console.error('[stint] could not stop the timer on exit', e)
+      }
+    }
+    // macOS and Linux: the system is shutting down (Windows uses session-end).
+    powerMonitor.on('shutdown', () => stopTimerOnExit())
     const database = db
     // The Keypad plugin's connection (SPEC.md §8). Commands go through the same
     // handlers as the window, so the same rules apply. Dev builds use the next
@@ -457,6 +495,7 @@ void app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   quitting = true
+  stopTimerOnExit()
 })
 
 app.on('will-quit', () => {

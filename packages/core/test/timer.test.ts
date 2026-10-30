@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { resolveIdle, start, stop, stopAt, toggle } from '../src/timer'
+import { resolveIdle, start, stop, stopAt, stopLeftover, toggle } from '../src/timer'
 import { HOUR, MIN, at, ctx, project, session } from './fixtures'
 
 const now = at(2026, 3, 10, 12)
@@ -100,6 +100,30 @@ describe('stop', () => {
     const changes = start(justStarted, p2, ctx(now))
     expect(changes[0]).toMatchObject({ patch: { deletedAt: now } })
     expect(changes[1]).toMatchObject({ kind: 'insert', session: { projectId: 'p2' } })
+  })
+})
+
+describe('stopLeftover', () => {
+  it('ends a leftover timer when Stint was last running', () => {
+    const lastAlive = now - 10 * MIN
+    expect(stopLeftover(running, lastAlive, ctx(now))).toMatchObject([
+      { id: 'run', patch: { endedAt: lastAlive } },
+    ])
+  })
+
+  it('never ends it after now', () => {
+    expect(stopLeftover(running, now + HOUR, ctx(now))).toMatchObject([{ patch: { endedAt: now } }])
+  })
+
+  it('deletes it when there is no time to count', () => {
+    expect(stopLeftover(running, null, ctx(now))).toMatchObject([{ patch: { deletedAt: now } }])
+    expect(stopLeftover(running, now - 2 * HOUR, ctx(now))).toMatchObject([
+      { patch: { deletedAt: now } },
+    ])
+  })
+
+  it('does nothing when no timer is running', () => {
+    expect(stopLeftover(null, now, ctx(now))).toEqual([])
   })
 })
 

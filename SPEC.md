@@ -176,7 +176,8 @@ Settings are split by whether they belong to the user or to one machine.
 - Only one timer runs at a time (enforced by the unique index in §5 as well as in the engine).
 - Starting a project while another is running stops the current one at that same instant and starts the new one, in one transaction.
 - Starting the project that is already running stops it (toggle behavior).
-- The running timer is simply a session with `endedAt = null`, so it survives app restarts and will sync naturally later.
+- The running timer is simply a session with `endedAt = null`, so it will sync naturally later.
+- A timer never outlives the app: quitting Stint, or shutting down or signing out of the computer, stops it then. Stint never opens with a timer running. If it didn't get to stop one (a crash, power loss), it ends that timer at the last time Stint was known to be running, from a device-local heartbeat written once a minute (so at most a minute is lost). Until there's a web or mobile app to keep a timer going elsewhere, a timer running with no Stint open makes no sense.
 - **Idle detection:** after a configurable idle period (default 15 min, using system idle time), when the user returns, prompt: keep the idle time, discard it (end the session when idle began), or discard and continue timing. System sleep/suspend and screen lock count as idle, starting from the moment they happened (system idle time can reset on wake, so these events are handled explicitly).
 - **Long-running nudge:** notify after a configurable duration (default 4 hours).
 - **"Stop at…":** end a running timer at a chosen past time.
@@ -357,7 +358,7 @@ The C# plugin should stay small. Include clear comments, since the owner is new 
 
 - Installs and runs on both macOS and Windows, from installers built by GitHub Actions.
 - Can create clients and projects, start/stop/switch timers, and only one timer ever runs.
-- A running timer survives quitting and reopening the app.
+- Quitting, shutting down, or a crash stops the running timer; Stint never opens with one running.
 - Sessions can be edited, moved, split, added manually, and deleted.
 - Totals by day/week/range and by client/project are correct, including a running session and sessions crossing midnight.
 - CSV export works.

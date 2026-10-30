@@ -54,6 +54,24 @@ export function stop(running: Session | null, ctx: ChangeContext): SessionChange
   return [update(ctx, running.id, { endedAt: ctx.now })]
 }
 
+/**
+ * A timer still running when Stint opens: Stint didn't get to stop it on the way
+ * out (a crash, power loss, or the OS ending it). Timers don't outlive the app
+ * (SPEC.md §6), so it ends at `lastAliveAt`, the last time Stint was known to be
+ * running, and never after now. With no usable time, nothing was recorded and the
+ * session is deleted, as `stop` does for an empty one.
+ */
+export function stopLeftover(
+  running: Session | null,
+  lastAliveAt: number | null,
+  ctx: ChangeContext,
+): SessionChange[] {
+  if (!running) return []
+  const end = Math.min(lastAliveAt ?? running.startedAt, ctx.now)
+  if (end <= running.startedAt) return [update(ctx, running.id, { deletedAt: ctx.now })]
+  return [update(ctx, running.id, { endedAt: end })]
+}
+
 /** "Stop at…": end the running timer at an earlier time. */
 export function stopAt(running: Session | null, at: number, ctx: ChangeContext): SessionChange[] {
   if (!running) throw new StintError('not-running', 'No timer is running.')
