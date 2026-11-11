@@ -431,11 +431,11 @@ function ProjectRow(props: {
           ]}
         />
         <span className={styles.statsDivider} aria-hidden />
-        {/* Unbilled billable time; a non-billable project is never billed, so it
-            shows all its recorded time instead (not part of the client total). */}
+        {/* Unbilled billable time; a non-billable project shows its non-billable
+            time instead (never billed, so not part of the client total). */}
         <span className={styles.elapsed}>
           {formatClock(
-            (project.billableByDefault ? summary?.unbilledMs : summary?.recordedMs) ?? 0,
+            (project.billableByDefault ? summary?.unbilledMs : summary?.nonBillableMs) ?? 0,
           )}
         </span>
         <button

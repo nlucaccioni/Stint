@@ -39,6 +39,7 @@ describe('projectSummaries', () => {
     })
     expect(summaries.get('p1')).toMatchObject({
       unbilledMs: 3 * HOUR,
+      nonBillableMs: 1 * HOUR,
       recordedMs: 8 * HOUR,
       sessionCount: 4,
       hasBilledTime: true,

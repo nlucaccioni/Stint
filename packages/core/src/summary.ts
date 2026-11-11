@@ -10,6 +10,8 @@ import type { Client, Project, Session } from './types'
 export interface ProjectSummary {
   /** Billable time not yet in a billing batch (resets when the client is billed). */
   unbilledMs: number
+  /** Non-billable time, all of it (it's never billed). */
+  nonBillableMs: number
   /** All recorded time, billed or not. */
   recordedMs: number
   sessionCount: number
@@ -42,17 +44,20 @@ export function projectSummaries(input: SummaryInput): Map<string, ProjectSummar
   for (const project of input.projects) {
     const sessions = byProject.get(project.id) ?? []
     let unbilledMs = 0
+    let nonBillableMs = 0
     let recordedMs = 0
     let hasBilledTime = false
     for (const s of sessions) {
       const ms = sessionDuration(s, input.now)
       recordedMs += ms
+      if (!s.billable) nonBillableMs += ms
       if (isLocked(s)) hasBilledTime = true
       else if (s.billable) unbilledMs += ms
     }
     const client = clients.get(project.clientId)
     out.set(project.id, {
       unbilledMs,
+      nonBillableMs,
       recordedMs,
       sessionCount: sessions.length,
       hasBilledTime,

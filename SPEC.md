@@ -253,7 +253,7 @@ All editing is allowed on unbilled sessions:
 - **Projects tab:** one card per client with the client's color as a bar on its left edge. The header shows name, rate, a ⋯ menu, the total, and a chevron to collapse the card. Collapsed cards stay collapsed across restarts (remembered per device).
   - Project rows show name, favorite slot badge, rate, a ⋯ menu, time, and a start/stop button. A "Non-billable" pill appears only on non-billable projects. Projects with a budget show the budget bar.
   - The ⋯ menus hold Edit, Archive/Unarchive, and Delete.
-  - Time on a project row is its unbilled billable time (all time, including a running session), so it resets when the client is billed. A non-billable project is never billed, so its row shows all its recorded time instead. The client total is the sum of its projects' unbilled billable time (a non-billable project's recorded time isn't in it).
+  - Time on a project row is its unbilled billable time (all time, including a running session), so it resets when the client is billed. A non-billable project's row shows its non-billable time instead (which is never billed), so time kept billable when the project was switched (see §4 "Projects") doesn't show on its row. The client total is the sum of its projects' unbilled billable time, whichever kind of project it's on.
   - While one of a client's projects is running, its card has a soft glow in the client's color.
   - Search opens the quick switcher. "Show archived" toggles archived clients and projects.
 
