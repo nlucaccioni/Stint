@@ -126,18 +126,43 @@ export function deleteSession(session: Session, ctx: ChangeContext): SessionChan
 }
 
 /**
- * Turning a project non-billable makes its past time non-billable too (SPEC.md §4
- * "Projects"), running session included. Billed sessions are read-only, so they
- * keep their billable flag.
+ * The project's time that changes when its Billable setting is flipped and the
+ * user chooses to bring existing time along (SPEC.md §4 "Projects"): unbilled
+ * sessions, running one included, not already `billable`. Billed sessions are
+ * read-only, so they're never moved.
  */
-export function makeProjectSessionsNonBillable(
+export function projectSessionsToConvert(
+  sessions: readonly Session[],
+  projectId: string,
+  billable: boolean,
+): Session[] {
+  return sessions.filter(
+    (s) =>
+      s.projectId === projectId && s.deletedAt === null && s.billable !== billable && !isLocked(s),
+  )
+}
+
+// Bulk edits from the Time tab (SPEC.md §6 "Editing"). All or nothing: one billed
+// or deleted session throws, and nothing is changed.
+
+export function setSessionsBillable(
+  sessions: readonly Session[],
+  billable: boolean,
+  ctx: ChangeContext,
+): SessionChange[] {
+  return sessions.map((s) => editSession(s, { billable }, ctx))
+}
+
+export function moveSessions(
   sessions: readonly Session[],
   projectId: string,
   ctx: ChangeContext,
 ): SessionChange[] {
-  return sessions
-    .filter((s) => s.projectId === projectId && s.deletedAt === null && s.billable && !isLocked(s))
-    .map((s) => update(ctx, s.id, { billable: false }))
+  return sessions.map((s) => editSession(s, { projectId }, ctx))
+}
+
+export function deleteSessions(sessions: readonly Session[], ctx: ChangeContext): SessionChange[] {
+  return sessions.map((s) => deleteSession(s, ctx))
 }
 
 /**

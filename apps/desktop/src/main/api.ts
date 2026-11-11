@@ -16,8 +16,11 @@ import {
   clientPatch,
   createManualSession,
   deleteProjectSessions,
-  makeProjectSessionsNonBillable,
+  projectSessionsToConvert,
   deleteSession,
+  deleteSessions,
+  moveSessions,
+  setSessionsBillable,
   editSession,
   findOverlaps,
   newClient,
@@ -173,6 +176,8 @@ const sessionInput = z.strictObject({
   note,
   billable: z.boolean(),
 })
+const sessionIdList = z.array(id).min(1).max(10_000)
+const bulkEdits = z.strictObject({ billable: z.boolean().optional(), projectId: id.optional() })
 const sessionEdits = z.strictObject({
   projectId: id.optional(),
   startedAt: time.optional(),
@@ -398,22 +403,26 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     updateProject: (...args) => {
-      const [projectId, edits] = z.tuple([id, projectEdits]).parse(args)
+      const [projectId, edits, moveTime] = z
+        .tuple([id, projectEdits, z.boolean().optional()])
+        .parse(args)
       const project = existingProject(projectId)
       const patch = projectPatch(edits, ctx())
       // Only checked when the budget changes: a rate removed later just shows "No rate".
       if (edits.budget !== undefined) {
         assertBudgetHasRate({ ...project, ...patch }, existingClient(project.clientId))
       }
-      if (project.billableByDefault && edits.billableByDefault === false) {
-        // Turning a project non-billable makes its past (unbilled) time non-billable too.
+      const billable = edits.billableByDefault
+      if (moveTime && billable !== undefined && billable !== project.billableByDefault) {
+        // The user chose to bring the project's unbilled time along (SPEC.md §4).
         changeSessions(() => {
           updateProject(db, projectId, patch)
-          return makeProjectSessionsNonBillable(
+          const toConvert = projectSessionsToConvert(
             listProjectSessions(db, [projectId]),
             projectId,
-            ctx(),
+            billable,
           )
+          return setSessionsBillable(toConvert, billable, ctx())
         })
       } else {
         updateProject(db, projectId, patch)
@@ -494,6 +503,24 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     deleteSession: (...args) => {
       const [sessionId] = z.tuple([id]).parse(args)
       changeSessions(() => [deleteSession(existingSession(sessionId), ctx())])
+    },
+
+    updateSessions: (...args) => {
+      const [sessionIds, edits] = z.tuple([sessionIdList, bulkEdits]).parse(args)
+      if (edits.projectId !== undefined) assertStartable(existingProject(edits.projectId))
+      changeSessions(() => {
+        const sessions = sessionIds.map(existingSession)
+        const c = ctx()
+        return [
+          ...(edits.billable !== undefined ? setSessionsBillable(sessions, edits.billable, c) : []),
+          ...(edits.projectId !== undefined ? moveSessions(sessions, edits.projectId, c) : []),
+        ]
+      })
+    },
+
+    deleteSessions: (...args) => {
+      const [sessionIds] = z.tuple([sessionIdList]).parse(args)
+      changeSessions(() => deleteSessions(sessionIds.map(existingSession), ctx()))
     },
 
     exportCsv: async (...args) => {

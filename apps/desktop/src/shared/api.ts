@@ -126,7 +126,11 @@ export interface StintApi {
   moveClient(id: string, beforeId: string | null): Promise<Client>
   listProjects(): Promise<Project[]>
   createProject(input: ProjectInput): Promise<Project>
-  updateProject(id: string, edits: ProjectEdits): Promise<Project>
+  /**
+   * `moveTime`: when Billable changes, also change the project's unbilled time to
+   * match (the user is asked first). Billed time never changes.
+   */
+  updateProject(id: string, edits: ProjectEdits, moveTime?: boolean): Promise<Project>
   /** Move a project among its client's projects (before `beforeId`, null = end). */
   moveProject(id: string, beforeId: string | null): Promise<Project>
   /** Projects that have recorded time (and so can't be deleted). */
@@ -154,6 +158,10 @@ export interface StintApi {
   /** Split a session in two at `at` (epoch ms). */
   splitSession(id: string, at: number): Promise<void>
   deleteSession(id: string): Promise<void>
+  /** Edit several sessions at once. All or nothing: refused if any is billed. */
+  updateSessions(ids: string[], edits: { billable?: boolean; projectId?: string }): Promise<void>
+  /** Delete several sessions at once. All or nothing: refused if any is billed. */
+  deleteSessions(ids: string[]): Promise<void>
 
   /** Ask where to save, then write a CSV of the sessions overlapping `range`. */
   exportCsv(range: TimeRange, zone: string): Promise<ExportResult>
@@ -247,6 +255,8 @@ export const apiMethods = [
   'updateSession',
   'splitSession',
   'deleteSession',
+  'updateSessions',
+  'deleteSessions',
   'exportCsv',
   'showExportedFile',
   'getPreferences',

@@ -7,7 +7,9 @@ import {
   favoriteSlot,
   formatClock,
   formatMoney,
+  projectSessionsToConvert,
   projectSummaries,
+  sessionDuration,
   toHoursInput,
   type BudgetUsage,
   type Client,
@@ -79,7 +81,8 @@ export interface ClientsViewProps {
   onCreateClient: (input: ClientInput) => Promise<unknown>
   onUpdateClient: (id: string, edits: ClientEdits) => Promise<unknown>
   onCreateProject: (input: ProjectInput) => Promise<unknown>
-  onUpdateProject: (id: string, edits: ProjectEdits) => Promise<unknown>
+  /** `moveTime`: also change the project's unbilled time when Billable changes. */
+  onUpdateProject: (id: string, edits: ProjectEdits, moveTime?: boolean) => Promise<unknown>
   onDeleteClient: (id: string) => Promise<unknown>
   onDeleteProject: (id: string) => Promise<unknown>
   /** Reorder: put the item just before `beforeId` (null = at the end). */
@@ -239,8 +242,16 @@ export function ClientsView(props: ClientsViewProps) {
           client={editing.client}
           project={editing.project}
           weekStartsOn={props.weekStartsOn}
-          onSubmit={async (values) => {
-            if (editing.project) await props.onUpdateProject(editing.project.id, values)
+          timeToConvert={(billable) => {
+            if (!editing.project) return 0
+            const now = Date.now()
+            return projectSessionsToConvert(props.sessions, editing.project.id, billable).reduce(
+              (ms, s) => ms + sessionDuration(s, now),
+              0,
+            )
+          }}
+          onSubmit={async (values, moveTime) => {
+            if (editing.project) await props.onUpdateProject(editing.project.id, values, moveTime)
             else await props.onCreateProject({ ...values, clientId: editing.client.id })
           }}
           onClose={close}

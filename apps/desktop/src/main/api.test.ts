@@ -74,7 +74,7 @@ describe('projects', () => {
     expect(api.updateProject(project.id, { name: 'Site' }).name).toBe('Site')
   })
 
-  it('turning a project non-billable makes its past time non-billable', () => {
+  it('changing Billable moves unbilled time only when asked, in both directions', () => {
     const client = api.createClient(acme)
     const project = api.createProject({
       clientId: client.id,
@@ -87,10 +87,15 @@ describe('projects', () => {
     api.toggleTimer(project.id)
     clock += MIN
     api.toggleTimer(project.id) // still running
+    const billable = () => api.listSessions({ start: 0, end: clock + 1 }).map((s) => s.billable)
+
     api.updateProject(project.id, { billableByDefault: false })
-    const sessions = api.listSessions({ start: 0, end: clock + 1 })
-    expect(sessions).toHaveLength(2)
-    expect(sessions.every((s) => !s.billable)).toBe(true)
+    expect(billable()).toEqual([true, true])
+    api.updateProject(project.id, { billableByDefault: true })
+    api.updateProject(project.id, { billableByDefault: false }, true)
+    expect(billable()).toEqual([false, false])
+    api.updateProject(project.id, { billableByDefault: true }, true)
+    expect(billable()).toEqual([true, true])
   })
 
   it('saves, edits and clears a budget', () => {

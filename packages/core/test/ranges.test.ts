@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { monthRange, resolveRange, type RangePreset } from '../src/ranges'
+import {
+  ALL_TIME_RANGE,
+  monthRange,
+  periodRange,
+  resolveRange,
+  resolveTimeSelection,
+  type RangePreset,
+} from '../src/ranges'
 import { HOUR, at } from './fixtures'
 
 const NY = 'America/New_York'
@@ -51,5 +58,36 @@ describe('monthRange', () => {
       start: at(2026, 12, 1, 5),
       end: at(2027, 1, 1, 5),
     })
+  })
+})
+
+describe('periodRange', () => {
+  it('matches the presets at offsets 0 and -1', () => {
+    expect(periodRange('day', 0, now, NY, 1)).toEqual(preset('today'))
+    expect(periodRange('day', -1, now, NY, 1)).toEqual(preset('yesterday'))
+    expect(periodRange('week', 0, now, NY, 1)).toEqual(preset('thisWeek'))
+    expect(periodRange('week', -1, now, NY, 1)).toEqual(preset('lastWeek'))
+    expect(periodRange('month', 0, now, NY, 1)).toEqual(preset('thisMonth'))
+    expect(periodRange('month', -1, now, NY, 1)).toEqual(preset('lastMonth'))
+  })
+
+  it('steps further back across years', () => {
+    expect(periodRange('month', -3, now, NY, 1)).toEqual({
+      start: at(2025, 12, 1, 5),
+      end: at(2026, 1, 1, 5),
+    })
+    expect(periodRange('week', -2, now, NY, 1)).toEqual({
+      start: at(2026, 2, 23, 5),
+      end: at(2026, 3, 2, 5),
+    })
+  })
+})
+
+describe('resolveTimeSelection', () => {
+  it('covers all time and custom dates', () => {
+    expect(resolveTimeSelection({ kind: 'all' }, now, NY, 1)).toEqual(ALL_TIME_RANGE)
+    expect(
+      resolveTimeSelection({ kind: 'custom', from: '2026-03-10', to: '2026-03-11' }, now, NY, 1),
+    ).toEqual({ start: at(2026, 3, 10, 4), end: at(2026, 3, 12, 4) })
   })
 })

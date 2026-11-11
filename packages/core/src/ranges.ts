@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Named date ranges for reports ("this week", "last month", custom dates), in the
 // user's time zone. All ranges are half-open: [start, end).
-import { addMonths, startOfMonth } from 'date-fns'
+import { addDays, addMonths, addWeeks, startOfMonth } from 'date-fns'
 import { tz } from '@date-fns/tz'
 import { fromLocalParts } from './log'
 import { dayRange, weekRange, type WeekStartDay } from './time'
@@ -51,5 +51,59 @@ export function resolveRange(
       return monthRange(now, zone)
     case 'lastMonth':
       return monthRange(monthRange(now, zone).start - 1, zone)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The Time tab's range (SPEC.md §6 "Time tab"): a day, week or month that the
+// arrows step through, all time, or custom dates.
+
+export type Period = 'day' | 'week' | 'month'
+
+export type TimeSelection =
+  /** `offset` counts periods from the current one: 0 = this week, -1 = last week. */
+  | { kind: 'period'; period: Period; offset: number }
+  | { kind: 'all' }
+  /** Inclusive local dates, as in RangeSelection. */
+  | { kind: 'custom'; from: string; to: string }
+
+/** Everything, for "All Time". */
+export const ALL_TIME_RANGE: TimeRange = { start: 0, end: Number.MAX_SAFE_INTEGER }
+
+export function periodRange(
+  period: Period,
+  offset: number,
+  now: number,
+  zone: string,
+  weekStartsOn: WeekStartDay,
+): TimeRange {
+  const opts = { in: tz(zone) }
+  // Step from the current period's start, then take the period containing that
+  // moment, so DST changes and months of different lengths line up.
+  switch (period) {
+    case 'day':
+      return dayRange(addDays(dayRange(now, zone).start, offset, opts).getTime(), zone)
+    case 'week': {
+      const start = weekRange(now, zone, weekStartsOn).start
+      return weekRange(addWeeks(start, offset, opts).getTime(), zone, weekStartsOn)
+    }
+    case 'month':
+      return monthRange(addMonths(monthRange(now, zone).start, offset, opts).getTime(), zone)
+  }
+}
+
+export function resolveTimeSelection(
+  selection: TimeSelection,
+  now: number,
+  zone: string,
+  weekStartsOn: WeekStartDay,
+): TimeRange {
+  switch (selection.kind) {
+    case 'period':
+      return periodRange(selection.period, selection.offset, now, zone, weekStartsOn)
+    case 'all':
+      return ALL_TIME_RANGE
+    case 'custom':
+      return resolveRange(selection, now, zone, weekStartsOn)
   }
 }

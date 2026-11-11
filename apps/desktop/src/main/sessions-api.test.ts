@@ -141,3 +141,28 @@ describe('split and delete', () => {
     expect(toResult(() => api.deleteSession(s.id))).toMatchObject({ error: { code: 'not-found' } })
   })
 })
+
+describe('bulk edits', () => {
+  it('sets billable, moves, and deletes several sessions at once', () => {
+    const s1 = api.createSession(entry(3, 2))
+    const s2 = api.createSession(entry(2, 1))
+    api.updateSessions([s1.id, s2.id], { billable: false, projectId: b.id })
+    const all = api.listSessions({ start: 0, end: NOW })
+    expect(all.map((s) => [s.billable, s.projectId])).toEqual([
+      [false, b.id],
+      [false, b.id],
+    ])
+    api.deleteSessions([s1.id, s2.id])
+    expect(api.listSessions({ start: 0, end: NOW })).toEqual([])
+  })
+
+  it('is all or nothing', () => {
+    const s1 = api.createSession(entry(3, 2))
+    const s2 = api.createSession(entry(2, 1))
+    api.deleteSession(s2.id)
+    expect(toResult(() => api.updateSessions([s1.id, s2.id], { billable: false }))).toMatchObject({
+      error: { code: 'not-found' },
+    })
+    expect(api.listSessions({ start: 0, end: NOW })[0]!.billable).toBe(true)
+  })
+})

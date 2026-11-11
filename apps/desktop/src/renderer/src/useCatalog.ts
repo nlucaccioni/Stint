@@ -64,7 +64,8 @@ export function useCatalog() {
     updateClient: (id: string, edits: ClientEdits) => mutate(api.updateClient(id, edits)),
     moveClient: (id: string, beforeId: string | null) => mutate(api.moveClient(id, beforeId)),
     createProject: (input: ProjectInput) => mutate(api.createProject(input)),
-    updateProject: (id: string, edits: ProjectEdits) => mutate(api.updateProject(id, edits)),
+    updateProject: (id: string, edits: ProjectEdits, moveTime?: boolean) =>
+      mutate(api.updateProject(id, edits, moveTime)),
     moveProject: (id: string, beforeId: string | null) => mutate(api.moveProject(id, beforeId)),
     deleteClient: (id: string) => mutate(api.deleteClient(id)),
     deleteProject: (id: string) => mutate(api.deleteProject(id)),

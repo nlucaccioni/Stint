@@ -3,6 +3,7 @@
 // lives in the project's ⋯ menu.
 import { useState, type FormEvent } from 'react'
 import {
+  formatClock,
   formatMoney,
   parseHours,
   parseMoney,
@@ -50,7 +51,13 @@ export interface ProjectFormProps {
   project?: Project
   /** Default reset weekday for a new weekly budget. */
   weekStartsOn: WeekStartDay
-  onSubmit: (values: ProjectValues) => Promise<void>
+  /**
+   * How much of the project's unbilled time would change to `billable` (ms). When
+   * Billable is flipped and there's some, the user is asked whether to move it.
+   */
+  timeToConvert?: (billable: boolean) => number
+  /** `moveTime`: change the project's unbilled time to match Billable too. */
+  onSubmit: (values: ProjectValues, moveTime: boolean) => Promise<void>
   onClose: () => void
 }
 
@@ -58,6 +65,7 @@ export function ProjectForm({
   client,
   project,
   weekStartsOn,
+  timeToConvert,
   onSubmit,
   onClose,
 }: ProjectFormProps) {
@@ -83,6 +91,8 @@ export function ProjectForm({
   )
   const [monthDay, setMonthDay] = useState(initial?.period === 'month' ? initial.resetDay : 1)
   const { saving, error, run } = useSubmit()
+  // Billable was flipped and there's existing time that could follow it.
+  const [confirm, setConfirm] = useState<{ values: ProjectValues; ms: number } | null>(null)
 
   const clientRate =
     client.hourlyRateCents === null
@@ -100,14 +110,56 @@ export function ProjectForm({
   function submit(e: FormEvent) {
     e.preventDefault()
     void run(async () => {
-      await onSubmit({
+      const values: ProjectValues = {
         name,
         hourlyRateCents: parseMoney(rate, client.currency),
         billableByDefault: billable,
         budget: budget(),
-      })
+      }
+      const ms =
+        project && billable !== project.billableByDefault ? (timeToConvert?.(billable) ?? 0) : 0
+      if (ms > 0) {
+        setConfirm({ values, ms })
+        return
+      }
+      await onSubmit(values, false)
       onClose()
     })
+  }
+
+  if (confirm && project) {
+    const save = (moveTime: boolean) =>
+      void run(async () => {
+        await onSubmit(confirm.values, moveTime)
+        onClose()
+      })
+    const time = formatClock(confirm.ms)
+    return (
+      // Closing goes back to the form, so nothing is saved yet.
+      <Dialog title="Change Existing Time?" onClose={() => setConfirm(null)}>
+        <div className={styles.form}>
+          <p className={styles.note}>
+            {billable
+              ? `${project.name} has ${time} of non-billable time. Make it billable too?`
+              : `Make ${project.name}'s ${time} of unbilled time non-billable too?`}{' '}
+            Billed time doesn't change.
+          </p>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <div className={styles.actions}>
+            <Button variant="secondary" disabled={saving} onClick={() => save(false)}>
+              {billable ? 'Keep Non-Billable' : 'Keep Billable'}
+            </Button>
+            <Button variant="primary" disabled={saving} onClick={() => save(true)}>
+              {billable ? 'Make Billable' : 'Make Non-Billable'}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    )
   }
 
   return (

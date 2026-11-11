@@ -122,7 +122,7 @@ All synced records are designed for future sync from day one.
 ### Project
 
 - `id`, `clientId`, `name`, `hourlyRateCents` (nullable; overrides client rate), `billableByDefault` (default true), `archived`, budget fields (below), sync fields.
-- Turning a project non-billable also makes its existing unbilled sessions non-billable (the running one included); billed sessions are read-only and keep theirs. Turning it billable again only changes the default for new sessions.
+- Changing a project's Billable setting asks whether to change its existing unbilled time too (the running session included), when there is any: all of it or none. Billed sessions are read-only and never change.
 - `sortKey`: the project's place among its client's projects (see Ordering below).
 - Projects have no color of their own; they always use their client's color. (The original schema has a `color` column on projects; it is no longer read or written.)
 - **Budget** (optional hard cap, see §6):
@@ -192,6 +192,14 @@ All editing is allowed on unbilled sessions:
 - Split a session into two at a chosen time.
 - Add a manual entry.
 - Delete (soft delete).
+- Several at once from the Time tab: make billable or non-billable, move to another project, or delete. All or nothing: billed sessions can't be selected, and the action is refused if any selected session is locked.
+
+### Time tab
+
+- Range: Today, This Week, Last Week, This Month, Last Month, All Time, or custom dates. For a day, week or month, the arrows step back and forward one period (never past the current one).
+- Filters: a client or one of its projects (all clients by default), and billing: All, Billable, Non-Billable, Unbilled, Billed, Paid.
+- The header's total and session count follow the range and filters.
+- Range and filters stay as set until the app restarts.
 
 ### Locking
 
