@@ -5,8 +5,10 @@ import {
   NO_FILTER,
   resolveRange,
   resolveTimeSelection,
+  toTimeSelection,
   toLocalParts,
   type RangeSelection,
+  type ScopeFilter,
   type Session,
   type SessionFilter,
   type TimeSelection,
@@ -75,6 +77,12 @@ export function App() {
   })
   const [timeFilter, setTimeFilter] = useState<SessionFilter>(NO_FILTER)
   const timeRange = resolveTimeSelection(timeSelection, now, zone, weekStartsOn)
+  /** "Show Time" shortcuts: the Time tab, filtered to a client or project. */
+  function showTime(scope: ScopeFilter, selection: TimeSelection) {
+    setTimeFilter({ scope, billing: 'all' })
+    setTimeSelection(selection)
+    setTab('time')
+  }
   const sessions = useSessions(timeRange)
   const [editing, setEditing] = useState<Editing>(null)
 
@@ -189,6 +197,7 @@ export function App() {
                   onDeleteProject={catalog.deleteProject}
                   onMoveClient={catalog.moveClient}
                   onMoveProject={catalog.moveProject}
+                  onShowTime={(scope) => showTime(scope, { kind: 'all' })}
                 />
               )}
               {tab === 'time' && (
@@ -222,6 +231,7 @@ export function App() {
                     api.exportCsv({ start: totalsRange.start, end: totalsRange.end }, zone)
                   }
                   onShowExport={() => void api.showExportedFile()}
+                  onShowTime={(scope) => showTime(scope, toTimeSelection(totalsSelection))}
                 />
               )}
               {tab === 'billing' && (

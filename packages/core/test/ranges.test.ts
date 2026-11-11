@@ -6,6 +6,7 @@ import {
   periodRange,
   resolveRange,
   resolveTimeSelection,
+  toTimeSelection,
   type RangePreset,
 } from '../src/ranges'
 import { HOUR, at } from './fixtures'
@@ -89,5 +90,17 @@ describe('resolveTimeSelection', () => {
     expect(
       resolveTimeSelection({ kind: 'custom', from: '2026-03-10', to: '2026-03-11' }, now, NY, 1),
     ).toEqual({ start: at(2026, 3, 10, 4), end: at(2026, 3, 12, 4) })
+  })
+})
+
+describe('toTimeSelection', () => {
+  it('covers the same dates as the Totals range', () => {
+    const presets: RangePreset[] = ['today', 'yesterday', 'thisWeek', 'lastWeek', 'thisMonth', 'lastMonth']
+    for (const p of presets) {
+      const sel = { kind: 'preset', preset: p } as const
+      expect(resolveTimeSelection(toTimeSelection(sel), now, NY, 1)).toEqual(preset(p))
+    }
+    const custom = { kind: 'custom', from: '2026-03-01', to: '2026-03-05' } as const
+    expect(toTimeSelection(custom)).toEqual(custom)
   })
 })

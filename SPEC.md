@@ -201,6 +201,7 @@ All editing is allowed on unbilled sessions:
 - Tick sessions with their boxes, or press on one box and drag down or up the list to give every row passed over the same state.
 - The header's total and session count follow the range and filters.
 - Range and filters stay as set until the app restarts.
+- "Show Time" opens the Time tab filtered to a client or project (Billing: All): from a client's or project's ⋯ menu on the Projects tab (All Time), and from a client or project row on Totals (Totals' range, marked with a History icon).
 
 ### Locking
 

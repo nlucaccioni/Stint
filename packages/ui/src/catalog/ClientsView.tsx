@@ -18,6 +18,7 @@ import {
   type ProjectEdits,
   type ProjectInput,
   type ProjectSummary,
+  type ScopeFilter,
   type Session,
   type WeekStartDay,
 } from '@stint/core'
@@ -88,6 +89,8 @@ export interface ClientsViewProps {
   /** Reorder: put the item just before `beforeId` (null = at the end). */
   onMoveClient: (id: string, beforeId: string | null) => Promise<unknown>
   onMoveProject: (id: string, beforeId: string | null) => Promise<unknown>
+  /** "Show Time" in a ⋯ menu: the Time tab, filtered to that client or project. */
+  onShowTime: (scope: ScopeFilter) => void
 }
 
 type Editing =
@@ -180,6 +183,7 @@ export function ClientsView(props: ClientsViewProps) {
                 favorites={props.favorites}
                 onToggleTimer={(project) => act(props.onToggleTimer(project.id))}
                 onEdit={() => setEditing({ kind: 'client', client })}
+                onShowTime={() => props.onShowTime({ kind: 'client', id: client.id })}
                 onArchive={() =>
                   act(props.onUpdateClient(client.id, { archived: !client.archived }))
                 }
@@ -192,6 +196,9 @@ export function ClientsView(props: ClientsViewProps) {
                 }
                 onAddProject={() => setEditing({ kind: 'project', client })}
                 onEditProject={(project) => setEditing({ kind: 'project', client, project })}
+                onShowProjectTime={(project) =>
+                  props.onShowTime({ kind: 'project', id: project.id })
+                }
                 onArchiveProject={(project) =>
                   act(props.onUpdateProject(project.id, { archived: !project.archived }))
                 }
@@ -275,10 +282,12 @@ interface ClientCardProps {
   favorites: readonly (string | null)[]
   onToggleTimer: (project: Project) => void
   onEdit: () => void
+  onShowTime: () => void
   onArchive: () => void
   onDelete: () => void
   onAddProject: () => void
   onEditProject: (project: Project) => void
+  onShowProjectTime: (project: Project) => void
   onArchiveProject: (project: Project) => void
   onDeleteProject: (project: Project) => void
 }
@@ -319,6 +328,7 @@ function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: 
               label={`Actions for ${client.name}`}
               items={[
                 { label: 'Edit', onSelect: on.onEdit },
+                { label: 'Show Time', onSelect: on.onShowTime },
                 ...reorder.menuItems(client.id),
                 { label: client.archived ? 'Unarchive' : 'Archive', onSelect: on.onArchive },
                 { label: 'Delete…', onSelect: on.onDelete, danger: true },
@@ -363,6 +373,7 @@ function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: 
                     reorder={projectOrder}
                     onToggleTimer={() => on.onToggleTimer(project)}
                     onEdit={() => on.onEditProject(project)}
+                    onShowTime={() => on.onShowProjectTime(project)}
                     onArchive={() => on.onArchiveProject(project)}
                     onDelete={() => on.onDeleteProject(project)}
                   />
@@ -392,6 +403,7 @@ function ProjectRow(props: {
   reorder: ReturnType<typeof useReorder>
   onToggleTimer: () => void
   onEdit: () => void
+  onShowTime: () => void
   onArchive: () => void
   onDelete: () => void
 }) {
@@ -432,6 +444,7 @@ function ProjectRow(props: {
           label={`Actions for ${project.name}`}
           items={[
             { label: 'Edit', onSelect: props.onEdit },
+            { label: 'Show Time', onSelect: props.onShowTime },
             ...props.reorder.menuItems(project.id),
             { label: project.archived ? 'Unarchive' : 'Archive', onSelect: props.onArchive },
             { label: 'Delete…', onSelect: props.onDelete, danger: true },

@@ -107,3 +107,17 @@ export function resolveTimeSelection(
       return resolveRange(selection, now, zone, weekStartsOn)
   }
 }
+
+/** The Time tab's version of a Totals range, for "Show Time" from Totals. */
+export function toTimeSelection(selection: RangeSelection): TimeSelection {
+  if (selection.kind === 'custom') return selection
+  const periods: Record<RangePreset, { period: Period; offset: number }> = {
+    today: { period: 'day', offset: 0 },
+    yesterday: { period: 'day', offset: -1 },
+    thisWeek: { period: 'week', offset: 0 },
+    lastWeek: { period: 'week', offset: -1 },
+    thisMonth: { period: 'month', offset: 0 },
+    lastMonth: { period: 'month', offset: -1 },
+  }
+  return { kind: 'period', ...periods[selection.preset] }
+}

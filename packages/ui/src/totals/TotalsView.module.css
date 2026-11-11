@@ -149,3 +149,55 @@
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
+
+/* Client and project rows open their time on the Time tab ("Show Time"). */
+.linkRow {
+  cursor: pointer;
+}
+
+.linkRow:hover > * {
+  background: var(--color-wash);
+}
+
+.showTimeCol {
+  width: 28px;
+  text-align: right;
+}
+
+/* The History icon: faint until its row is hovered or it has focus. */
+.showTime {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+}
+
+.showTime > svg {
+  width: 14px;
+  height: 14px;
+}
+
+.linkRow:hover .showTime,
+.showTime:focus-visible {
+  color: var(--color-text);
+}
+
+.showTime:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -14,9 +14,11 @@ import {
   type Project,
   type RangePreset,
   type RangeSelection,
+  type ScopeFilter,
   type Session,
   type TimeRange,
 } from '@stint/core'
+import { History } from 'lucide-react'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import tableStyles from '../components/Table.module.css'
@@ -49,6 +51,8 @@ export interface TotalsViewProps {
   onExport: () => Promise<{ saved: boolean; count: number }>
   /** Reveal the last exported file in Finder / Explorer. */
   onShowExport: () => void
+  /** A client or project row: its time on the Time tab, for the same range. */
+  onShowTime: (scope: ScopeFilter) => void
 }
 
 export function TotalsView(props: TotalsViewProps) {
@@ -185,6 +189,9 @@ export function TotalsView(props: TotalsViewProps) {
               <th scope="col" className={tableStyles.num}>
                 Amount
               </th>
+              <th scope="col" className={styles.showTimeCol}>
+                <span className={styles.visuallyHidden}>Show Time</span>
+              </th>
             </tr>
           </thead>
           {inListOrder(totals.byClient, clients, (ct) => ct.clientId).map((ct) => {
@@ -196,24 +203,39 @@ export function TotalsView(props: TotalsViewProps) {
             )
             return (
               <tbody key={ct.clientId}>
-                <tr className={styles.clientRow}>
+                <tr
+                  className={`${styles.clientRow} ${styles.linkRow}`}
+                  onClick={() => props.onShowTime({ kind: 'client', id: ct.clientId })}
+                >
                   <th scope="row">
                     <Name color={client?.color}>{client?.name ?? 'Unknown Client'}</Name>
                   </th>
                   <td className={tableStyles.num}>{formatClock(ct.ms)}</td>
                   <td className={tableStyles.num}>{formatClock(ct.billableMs)}</td>
                   <td className={tableStyles.num}>{amountsLabel(ct.amounts)}</td>
+                  <ShowTimeCell
+                    name={client?.name ?? 'this client'}
+                    onShow={() => props.onShowTime({ kind: 'client', id: ct.clientId })}
+                  />
                 </tr>
                 {own.map((pt) => {
                   const project = projectById.get(pt.projectId)
                   return (
-                    <tr key={pt.projectId} className={styles.projectRow}>
+                    <tr
+                      key={pt.projectId}
+                      className={`${styles.projectRow} ${styles.linkRow}`}
+                      onClick={() => props.onShowTime({ kind: 'project', id: pt.projectId })}
+                    >
                       <th scope="row">
                         <Name color={client?.color}>{project?.name ?? 'Unknown Project'}</Name>
                       </th>
                       <td className={tableStyles.num}>{formatClock(pt.ms)}</td>
                       <td className={tableStyles.num}>{formatClock(pt.billableMs)}</td>
                       <td className={tableStyles.num}>{amountsLabel(pt.amounts)}</td>
+                      <ShowTimeCell
+                        name={project?.name ?? 'this project'}
+                        onShow={() => props.onShowTime({ kind: 'project', id: pt.projectId })}
+                      />
                     </tr>
                   )
                 })}
@@ -246,6 +268,29 @@ export function TotalsView(props: TotalsViewProps) {
         </Card>
       )}
     </section>
+  )
+}
+
+/**
+ * The row's History button. The whole row is clickable with a mouse; this is the
+ * part that takes keyboard focus and has a name for screen readers.
+ */
+function ShowTimeCell({ name, onShow }: { name: string; onShow: () => void }) {
+  return (
+    <td className={styles.showTimeCol}>
+      <button
+        type="button"
+        className={styles.showTime}
+        aria-label={`Show Time for ${name}`}
+        title="Show Time"
+        onClick={(e) => {
+          e.stopPropagation() // the row's own click would open it a second time
+          onShow()
+        }}
+      >
+        <History aria-hidden />
+      </button>
+    </td>
   )
 }
 
