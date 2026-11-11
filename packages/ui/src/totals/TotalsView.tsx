@@ -123,6 +123,7 @@ export function TotalsView(props: TotalsViewProps) {
           onChange={props.onFilterChange}
           clients={clients}
           projects={projects}
+          compact
         />
         {exportStatus?.kind === 'done' && (
           <span className={styles.exported} role="status">

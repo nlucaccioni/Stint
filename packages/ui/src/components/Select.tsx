@@ -30,6 +30,8 @@ export interface SelectProps<T extends string | number> {
   /** Monospace text, for numbers like "01". */
   mono?: boolean
   disabled?: boolean
+  /** "sm": as tall as a Button, for toolbars and headings. */
+  size?: 'md' | 'sm'
 }
 
 export function Select<T extends string | number>(props: SelectProps<T>) {
@@ -84,6 +86,7 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
         id={props.id}
         className={[styles.trigger, props.className].filter(Boolean).join(' ')}
         data-mono={props.mono || undefined}
+        data-size={props.size === 'sm' ? 'sm' : undefined}
         aria-haspopup="listbox"
         aria-describedby={props['aria-describedby']}
         aria-label={props['aria-label']}

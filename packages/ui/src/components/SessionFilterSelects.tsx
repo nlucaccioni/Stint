@@ -20,6 +20,8 @@ export interface SessionFilterSelectsProps {
   onChange: (filter: SessionFilter) => void
   clients: readonly Client[]
   projects: readonly Project[]
+  /** Smaller dropdowns, for a heading row (Totals). */
+  compact?: boolean
 }
 
 export function SessionFilterSelects({
@@ -27,6 +29,7 @@ export function SessionFilterSelects({
   onChange,
   clients,
   projects,
+  compact,
 }: SessionFilterSelectsProps) {
   // All Clients, then each client with its projects indented under it.
   const scopeOptions = useMemo(() => {
@@ -44,9 +47,10 @@ export function SessionFilterSelects({
   const scopeValue = filter.scope.kind === 'all' ? 'all' : `${filter.scope.kind}:${filter.scope.id}`
 
   return (
-    <div className={styles.selects}>
+    <div className={styles.selects} data-compact={compact || undefined}>
       <Select
         aria-label="Client or Project"
+        size={compact ? 'sm' : 'md'}
         className={styles.scope}
         value={scopeValue}
         options={scopeOptions}
@@ -57,6 +61,7 @@ export function SessionFilterSelects({
       />
       <Select
         aria-label="Billing"
+        size={compact ? 'sm' : 'md'}
         className={styles.billing}
         value={filter.billing}
         options={BILLING_OPTIONS}
