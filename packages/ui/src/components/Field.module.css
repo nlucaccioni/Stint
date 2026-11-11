@@ -77,7 +77,8 @@ textarea.control {
   cursor: pointer;
 }
 
-.checkInput:hover:not(:disabled) {
+/* Only while empty, so a ticked box keeps its fill under the pointer. */
+.checkInput:hover:not(:disabled, :checked, :indeterminate) {
   background-color: var(--color-wash);
 }
 
@@ -85,6 +86,14 @@ textarea.control {
   border-color: var(--color-text);
   background: var(--color-text)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23161616' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+}
+
+/* Some but not all ticked (e.g. Select All): a dash. */
+.checkInput:indeterminate {
+  border-color: var(--color-text);
+  background: var(--color-text)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23161616' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E")
     center / 12px no-repeat;
 }
 
