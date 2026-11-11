@@ -195,13 +195,23 @@
   background: var(--color-wash-strong);
 }
 
+/* The whole strip left of the session is the box's target, so a drag down the
+   list doesn't have to hit each 16px box. */
 .tick {
   display: grid;
   flex: none;
+  align-self: stretch;
   place-items: center;
-  width: 16px;
-  margin-left: var(--space-3);
+  width: calc(16px + var(--space-3) * 2);
+  margin-right: calc(var(--space-3) * -1);
   color: var(--color-text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.tick[data-locked] {
+  cursor: default;
 }
 
 .row {

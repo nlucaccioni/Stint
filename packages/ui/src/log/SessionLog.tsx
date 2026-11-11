@@ -2,7 +2,14 @@
 // The Time tab (SPEC.md §6 "Time tab"): recorded time for a range, filtered by
 // client/project and billing state, grouped by day (newest first). Click a row to
 // edit it, or tick several to change them together.
-import { useMemo, useState, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react'
 import {
   billingStatus,
   filterSessions,
@@ -92,6 +99,30 @@ export function SessionLog(props: SessionLogProps) {
   const [dialog, setDialog] = useState<'move' | 'delete' | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Drag to tick: press on a row's box and move over other rows to give them the
+  // same state (ticked or not) as the first one got. Ends wherever the pointer
+  // is let go.
+  const dragTo = useRef<boolean | null>(null)
+  useEffect(() => {
+    const end = () => {
+      dragTo.current = null
+    }
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+    return () => {
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+    }
+  }, [])
+
+  function startDrag(id: string, e: PointerEvent) {
+    if (e.button !== 0) return
+    e.preventDefault() // no text selection while dragging
+    const on = !ticked.has(id)
+    dragTo.current = on
+    tick(id, on)
+  }
 
   function tick(id: string, on: boolean) {
     setTicked((prev) => {
@@ -323,14 +354,27 @@ export function SessionLog(props: SessionLogProps) {
                   className={styles.item}
                   data-running={s.endedAt === null || undefined}
                   data-ticked={ticked.has(s.id) || undefined}
+                  onPointerEnter={() => {
+                    if (dragTo.current !== null && !locked) tick(s.id, dragTo.current)
+                  }}
                 >
-                  <span className={styles.tick}>
+                  <span
+                    className={styles.tick}
+                    data-locked={locked || undefined}
+                    onPointerDown={locked ? undefined : (e) => startDrag(s.id, e)}
+                  >
                     {locked ? (
                       <Lock size={12} aria-label="Billed sessions can't be selected" />
                     ) : (
                       <CheckInput
                         aria-label={`Select ${project?.name ?? 'session'}`}
                         checked={ticked.has(s.id)}
+                        // A pointer press already ticked it (see startDrag); the
+                        // click that follows would undo that. Keyboard (Space)
+                        // clicks have no detail and still toggle here.
+                        onClick={(e) => {
+                          if (e.detail > 0) e.preventDefault()
+                        }}
                         onChange={(e) => tick(s.id, e.target.checked)}
                       />
                     )}

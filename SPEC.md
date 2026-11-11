@@ -198,6 +198,7 @@ All editing is allowed on unbilled sessions:
 
 - Range: Today, This Week, Last Week, This Month, Last Month, All Time, or custom dates. For a day, week or month, the arrows step back and forward one period (never past the current one).
 - Filters: a client or one of its projects (all clients by default), and billing: All, Billable, Non-Billable, Unbilled, Billed, Paid.
+- Tick sessions with their boxes, or press on one box and drag down or up the list to give every row passed over the same state.
 - The header's total and session count follow the range and filters.
 - Range and filters stay as set until the app restarts.
 
