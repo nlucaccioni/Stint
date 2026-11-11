@@ -2,14 +2,7 @@
 // The Time tab (SPEC.md §6 "Time tab"): recorded time for a range, filtered by
 // client/project and billing state, grouped by day (newest first). Click a row to
 // edit it, or tick several to change them together.
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type PointerEvent,
-} from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import {
   billingStatus,
   filterSessions,
@@ -140,6 +133,20 @@ export function SessionLog(props: SessionLogProps) {
 
   const today = toLocalParts(now, zone).date
   const period = selection.kind === 'period' ? selection : null
+  // Custom dates: the chosen ones, or else the range being shown (today, for All
+  // Time), which is where choosing Custom starts.
+  const customFrom =
+    selection.kind === 'custom'
+      ? selection.from
+      : selection.kind === 'all'
+        ? today
+        : toLocalParts(props.range.start, zone).date
+  const customTo =
+    selection.kind === 'custom'
+      ? selection.to
+      : selection.kind === 'all'
+        ? today
+        : toLocalParts(Math.min(props.range.end - 1, now), zone).date
 
   return (
     <section className={styles.log}>
@@ -187,15 +194,7 @@ export function SessionLog(props: SessionLogProps) {
               className={styles.chip}
               aria-pressed={selection.kind === 'custom'}
               onClick={() =>
-                // Starts from the range being shown (today, for All Time).
-                props.onSelectionChange({
-                  kind: 'custom',
-                  from: selection.kind === 'all' ? today : toLocalParts(props.range.start, zone).date,
-                  to:
-                    selection.kind === 'all'
-                      ? today
-                      : toLocalParts(Math.min(props.range.end - 1, now), zone).date,
-                })
+                props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
               }
             >
               Custom
@@ -223,21 +222,29 @@ export function SessionLog(props: SessionLogProps) {
             </div>
           )}
         </div>
-        {selection.kind === 'custom' && (
-          <div className={styles.custom}>
-            <DateInput
-              aria-label="From"
-              value={selection.from}
-              onChange={(from) => props.onSelectionChange({ ...selection, from })}
-            />
-            <span aria-hidden>–</span>
-            <DateInput
-              aria-label="To"
-              value={selection.to}
-              onChange={(to) => props.onSelectionChange({ ...selection, to })}
-            />
+        {/* Slides open under the chips when Custom is chosen, as on Totals;
+            inert while closed so it can't be tabbed into. */}
+        <div
+          className={styles.customReveal}
+          data-open={selection.kind === 'custom' || undefined}
+          inert={selection.kind !== 'custom'}
+        >
+          <div className={styles.customRevealInner}>
+            <div className={styles.custom}>
+              <DateInput
+                aria-label="From"
+                value={customFrom}
+                onChange={(from) => props.onSelectionChange({ kind: 'custom', from, to: customTo })}
+              />
+              <span aria-hidden>–</span>
+              <DateInput
+                aria-label="To"
+                value={customTo}
+                onChange={(to) => props.onSelectionChange({ kind: 'custom', from: customFrom, to })}
+              />
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className={styles.toolbar}>
