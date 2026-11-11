@@ -332,6 +332,7 @@ function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: 
                 otherMs={nonBillableMs}
                 otherBillable={false}
                 label="Unbilled billable time. Resets when you bill this client."
+                short
               />
             </span>
             <IconButton

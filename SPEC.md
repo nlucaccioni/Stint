@@ -254,7 +254,7 @@ All editing is allowed on unbilled sessions:
   - Project rows show name, favorite slot badge, rate, a ⋯ menu, time, and a start/stop button. A "Non-billable" pill appears only on non-billable projects. Projects with a budget show the budget bar.
   - The ⋯ menus hold Edit, Archive/Unarchive, and Delete.
   - Time on a project row is its unbilled billable time (all time, including a running session), so it resets when the client is billed. A non-billable project's row shows its non-billable time instead (which is never billed), The client total is the sum of its projects' unbilled billable time, whichever kind of project it's on.
-  - When a project has both kinds of time, the other kind shows in small type under its time, as hours:minutes with a dollar icon (crossed out for non-billable): "+$0:45". The client total does the same with its projects' non-billable time. Hovering a time explains what it counts.
+  - When a project has both kinds of time, the other kind shows in small type under its time, as hours:minutes with a dollar icon (crossed out for non-billable): "+$0:45". The client total does the same with its projects' non-billable time, and shows hours:minutes rather than seconds. Hovering a time explains what it counts.
   - While one of a client's projects is running, its card has a soft glow in the client's color.
   - Search opens the quick switcher. "Show archived" toggles archived clients and projects.
 

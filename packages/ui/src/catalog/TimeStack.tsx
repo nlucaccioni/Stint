@@ -18,15 +18,19 @@ export interface TimeStackProps {
   otherBillable: boolean
   /** What `ms` is, for the tooltip ("Unbilled billable time"). */
   label: string
+  /** Hours:minutes instead of to the second (client totals); the tooltip keeps the seconds. */
+  short?: boolean
 }
 
-export function TimeStack({ ms, otherMs, otherBillable, label }: TimeStackProps) {
+export function TimeStack({ ms, otherMs, otherBillable, label, short }: TimeStackProps) {
   const showOther = otherMs >= MIN_OTHER_MS
   const otherLabel = `${formatClock(otherMs)} ${otherBillable ? 'billable' : 'non-billable'}`
   const Icon = otherBillable ? DollarSign : DollarSignOff
+  const title = [short ? `${formatClock(ms)} ${label.toLowerCase()}` : label]
+  if (showOther) title.push(`+${otherLabel}`)
   return (
-    <span className={styles.timeStack} title={showOther ? `${label}\n+${otherLabel}` : label}>
-      <span className={styles.elapsed}>{formatClock(ms)}</span>
+    <span className={styles.timeStack} title={title.join('\n')}>
+      <span className={styles.elapsed}>{short ? formatHoursMinutes(ms) : formatClock(ms)}</span>
       {showOther && (
         <span className={styles.otherTime}>
           +<Icon aria-hidden />
