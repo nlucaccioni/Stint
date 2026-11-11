@@ -20,7 +20,7 @@ export interface SessionFilterSelectsProps {
   onChange: (filter: SessionFilter) => void
   clients: readonly Client[]
   projects: readonly Project[]
-  /** Smaller dropdowns, for a heading row (Totals). */
+  /** Smaller dropdowns, button height, for heading rows and toolbars. */
   compact?: boolean
 }
 

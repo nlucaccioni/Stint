@@ -107,7 +107,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  min-height: 40px;
+  min-height: 26px;
   /* Lines the Select All box up with the rows' boxes. */
   padding-left: var(--space-3);
   font-size: var(--text-sm);

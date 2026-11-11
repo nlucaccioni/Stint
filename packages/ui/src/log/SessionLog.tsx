@@ -257,6 +257,7 @@ export function SessionLog(props: SessionLogProps) {
               onChange={props.onFilterChange}
               clients={props.clients}
               projects={props.projects}
+              compact
             />
           </div>
         ) : (
