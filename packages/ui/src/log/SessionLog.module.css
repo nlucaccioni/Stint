@@ -12,6 +12,12 @@
   gap: var(--space-3);
 }
 
+/* Centered on the heading, as Export CSV is on Totals, so both headers are the
+   heading's height and the range chips line up between the tabs. */
+.header > button:last-child {
+  align-self: center;
+}
+
 .heading {
   margin: 0;
   font-size: var(--text-xl);

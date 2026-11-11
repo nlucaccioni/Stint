@@ -14,6 +14,15 @@
   gap: var(--space-3);
 }
 
+/* The dropdowns and Export CSV are centered on the heading instead of sitting on
+   its baseline, where they hung below it and made this header taller than the
+   Time tab's. Both headers are now the heading's height, so the range chips sit
+   at the same place on both tabs. */
+.header > div,
+.header > button:last-child {
+  align-self: center;
+}
+
 .heading {
   margin: 0;
   font-size: var(--text-xl);
