@@ -5,7 +5,6 @@
 import { useState, type CSSProperties } from 'react'
 import {
   favoriteSlot,
-  formatClock,
   formatMoney,
   projectSessionsToConvert,
   projectSummaries,
@@ -42,6 +41,7 @@ import { useReorder } from './useReorder'
 import { ClientForm } from './ClientForm'
 import { ConfirmDelete, type DeleteTarget } from './ConfirmDelete'
 import { ProjectForm } from './ProjectForm'
+import { TimeStack } from './TimeStack'
 import styles from './ClientsView.module.css'
 
 /** Suggested colors for new clients, cycled in order. All at full brightness, like every client color (see ColorPicker). */
@@ -291,6 +291,7 @@ function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: 
     on.onMoveProject,
   )
   const totalMs = projects.reduce((n, p) => n + (summaries.get(p.id)?.unbilledMs ?? 0), 0)
+  const nonBillableMs = projects.reduce((n, p) => n + (summaries.get(p.id)?.nonBillableMs ?? 0), 0)
   return (
     <li
       className={styles.clientCard}
@@ -326,7 +327,12 @@ function ClientCard({ client, projects, summaries, reorder, collapsed, ...on }: 
             <span className={styles.statsDivider} aria-hidden />
             <span className={styles.clientTotal}>
               <span className={styles.clientTotalLabel}>Total</span>
-              <span className={styles.elapsed}>{formatClock(totalMs)}</span>
+              <TimeStack
+                ms={totalMs}
+                otherMs={nonBillableMs}
+                otherBillable={false}
+                label="Unbilled billable time. Resets when you bill this client."
+              />
             </span>
             <IconButton
               label={collapsed ? `Show Projects for ${client.name}` : `Hide Projects`}
@@ -432,12 +438,23 @@ function ProjectRow(props: {
         />
         <span className={styles.statsDivider} aria-hidden />
         {/* Unbilled billable time; a non-billable project shows its non-billable
-            time instead (never billed, so not part of the client total). */}
-        <span className={styles.elapsed}>
-          {formatClock(
-            (project.billableByDefault ? summary?.unbilledMs : summary?.nonBillableMs) ?? 0,
-          )}
-        </span>
+            time instead (never billed, so not part of the client total). The
+            other kind, if any, goes under it. */}
+        {project.billableByDefault ? (
+          <TimeStack
+            ms={summary?.unbilledMs ?? 0}
+            otherMs={summary?.nonBillableMs ?? 0}
+            otherBillable={false}
+            label="Unbilled billable time"
+          />
+        ) : (
+          <TimeStack
+            ms={summary?.nonBillableMs ?? 0}
+            otherMs={summary?.unbilledMs ?? 0}
+            otherBillable
+            label="Non-billable time"
+          />
+        )}
         <button
           type="button"
           className={styles.startStop}
