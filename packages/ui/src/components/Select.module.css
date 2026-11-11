@@ -89,6 +89,10 @@
   cursor: pointer;
 }
 
+.option[data-indent] {
+  padding-left: calc(var(--space-3) + var(--space-4));
+}
+
 .option:hover,
 .option:focus-visible {
   background: var(--color-wash);

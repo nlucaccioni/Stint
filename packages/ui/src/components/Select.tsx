@@ -13,6 +13,8 @@ export interface SelectOption<T extends string | number> {
   label: string
   /** Options sharing a group are listed under its heading (like <optgroup>). */
   group?: string
+  /** Indented under the option above it (e.g. a client's projects). */
+  indent?: boolean
 }
 
 export interface SelectProps<T extends string | number> {
@@ -116,6 +118,7 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
             role="option"
             aria-selected={o.value === value}
             className={styles.option}
+            data-indent={o.indent || undefined}
             onClick={() => choose(o.value)}
           >
             <span>{o.label}</span>

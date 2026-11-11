@@ -5,9 +5,10 @@
   gap: var(--space-4);
 }
 
+/* The range sits on the heading's baseline (as on Totals). */
 .header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-3);
 }
 
@@ -17,21 +18,131 @@
   font-weight: 700;
 }
 
-.nav {
-  display: flex;
+.range {
+  color: var(--color-text-muted);
+}
+
+.spacer {
   flex: 1;
+}
+
+.total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+/* Range chips, as on Totals, with the period arrows at the end of their row. */
+.rangePicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
 }
 
-.week {
-  min-width: 130px;
-  text-align: center;
+.chip {
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.total {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+.chip:hover {
+  color: var(--color-text);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--color-wash);
+  color: var(--color-text);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.stepper {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.custom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+/* Select All, then the filters, or the actions for ticked sessions. Same height
+   either way, so the list doesn't jump. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  /* Lines the Select All box up with the rows' boxes. */
+  padding-left: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.filterSelects,
+.bulk {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.scopeSelect {
+  min-width: 200px;
+}
+
+.billingSelect {
+  min-width: 140px;
+}
+
+.selectedCount {
+  margin-right: auto;
+  color: var(--color-text-muted);
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
 }
 
 .empty {
@@ -69,11 +180,36 @@
   border-top: 1px solid var(--color-border);
 }
 
-.row {
+/* A row: its tick box, then the session (a button that opens it). */
+.item {
   display: flex;
   align-items: center;
+}
+
+.item:hover {
+  background: var(--color-wash);
+}
+
+.item[data-running],
+.item[data-ticked] {
+  background: var(--color-wash-strong);
+}
+
+.tick {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  margin-left: var(--space-3);
+  color: var(--color-text-tertiary);
+}
+
+.row {
+  display: flex;
+  flex: 1;
+  align-items: center;
   gap: var(--space-3);
-  width: 100%;
+  min-width: 0;
   padding: var(--space-2) var(--space-3);
   border: 0;
   background: transparent;
@@ -83,17 +219,9 @@
   cursor: pointer;
 }
 
-.row:hover {
-  background: var(--color-wash);
-}
-
 .row:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: -2px;
-}
-
-.row[data-running] {
-  background: var(--color-wash-strong);
 }
 
 /* The client's dot, with a soft glow in its color (as on Billing). */

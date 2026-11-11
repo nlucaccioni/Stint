@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { cloneElement, useId, type InputHTMLAttributes, type ReactElement } from 'react'
+import { cloneElement, useId, type ComponentProps, type ReactElement } from 'react'
 import { Check } from 'lucide-react'
 import styles from './Field.module.css'
 
@@ -34,7 +34,7 @@ export function Field({ label, hint, children }: FieldProps) {
 }
 
 /** A styled checkbox on its own (e.g. in a list row); the native one is OS-drawn. */
-export function CheckInput({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+export function CheckInput({ className, ...rest }: ComponentProps<'input'>) {
   return (
     <input
       type="checkbox"
@@ -48,7 +48,7 @@ export function CheckInput({ className, ...rest }: InputHTMLAttributes<HTMLInput
 export function Checkbox({
   label,
   ...rest
-}: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string } & ComponentProps<'input'>) {
   return (
     <label className={styles.checkbox}>
       <CheckInput {...rest} />

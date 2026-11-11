@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect, useState, type CSSProperties } from 'react'
 import {
+  ALL_TIME_RANGE,
+  NO_FILTER,
   resolveRange,
+  resolveTimeSelection,
   toLocalParts,
-  weekRange,
   type RangeSelection,
   type Session,
+  type SessionFilter,
+  type TimeSelection,
 } from '@stint/core'
 import {
   BillingView,
@@ -50,7 +54,6 @@ const TABS: { tab: Tab; label: string }[] = [
 type Editing = { session?: Session } | null
 
 /** Every session, for the Projects tab's unbilled totals and budgets. */
-const ALL_TIME = { start: 0, end: Number.MAX_SAFE_INTEGER }
 
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null)
@@ -62,13 +65,17 @@ export function App() {
   const billing = useBilling()
   const weekStartsOn = prefs.preferences.weekStartsOn
 
-  // The week shown in the log, identified by its start (null = this week). `now`
-  // refreshes each minute so "this week" rolls over at the start of a new week.
+  // The Time tab's range and filters, kept until the app restarts. `now` refreshes
+  // each minute so "this week" rolls over at the start of a new week.
   const now = useNow(true, 60_000)
-  const thisWeek = weekRange(now, zone, weekStartsOn)
-  const [weekStart, setWeekStart] = useState<number | null>(null)
-  const week = weekRange(weekStart ?? thisWeek.start, zone, weekStartsOn)
-  const sessions = useSessions(week)
+  const [timeSelection, setTimeSelection] = useState<TimeSelection>({
+    kind: 'period',
+    period: 'week',
+    offset: 0,
+  })
+  const [timeFilter, setTimeFilter] = useState<SessionFilter>(NO_FILTER)
+  const timeRange = resolveTimeSelection(timeSelection, now, zone, weekStartsOn)
+  const sessions = useSessions(timeRange)
   const [editing, setEditing] = useState<Editing>(null)
 
   const [totalsSelection, setTotalsSelection] = useState<RangeSelection>({
@@ -77,7 +84,7 @@ export function App() {
   })
   const totalsRange = resolveRange(totalsSelection, now, zone, weekStartsOn)
   const totalsSessions = useSessions(totalsRange)
-  const allSessions = useSessions(ALL_TIME)
+  const allSessions = useSessions(ALL_TIME_RANGE)
   const collapsedClients = useCollapsedClients()
 
   useEffect(() => {
@@ -186,20 +193,20 @@ export function App() {
               )}
               {tab === 'time' && (
                 <SessionLog
-                  week={week}
-                  isCurrentWeek={week.start === thisWeek.start}
+                  selection={timeSelection}
+                  onSelectionChange={setTimeSelection}
+                  range={timeRange}
+                  filter={timeFilter}
+                  onFilterChange={setTimeFilter}
                   sessions={sessions}
                   projects={catalog.projects}
                   clients={catalog.clients}
                   batches={billing.batches}
                   zone={zone}
-                  onPrevWeek={() =>
-                    setWeekStart(weekRange(week.start - 1, zone, weekStartsOn).start)
-                  }
-                  onNextWeek={() => setWeekStart(week.end)}
-                  onThisWeek={() => setWeekStart(null)}
                   onAdd={() => setEditing({})}
                   onEdit={(session) => setEditing({ session })}
+                  onUpdateMany={api.updateSessions}
+                  onDeleteMany={api.deleteSessions}
                 />
               )}
               {tab === 'totals' && (
