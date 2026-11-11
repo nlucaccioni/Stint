@@ -26,7 +26,9 @@ export function TimeStack({ ms, otherMs, otherBillable, label, short }: TimeStac
   const showOther = otherMs >= MIN_OTHER_MS
   const otherLabel = `${formatClock(otherMs)} ${otherBillable ? 'billable' : 'non-billable'}`
   const Icon = otherBillable ? DollarSign : DollarSignOff
-  const title = [short ? `${formatClock(ms)} ${label.toLowerCase()}` : label]
+  // "5:30:12 unbilled billable time. Resets when…": the exact time leads when the
+  // figure itself is rounded to minutes.
+  const title = [short ? `${formatClock(ms)} ${label[0]!.toLowerCase()}${label.slice(1)}` : label]
   if (showOther) title.push(`+${otherLabel}`)
   return (
     <span className={styles.timeStack} title={title.join('\n')}>
