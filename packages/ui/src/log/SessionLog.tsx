@@ -19,7 +19,6 @@ import {
   sessionDuration,
   toLocalParts,
   type BillingBatch,
-  type BillingFilter,
   type Client,
   type Period,
   type Project,
@@ -32,7 +31,7 @@ import { ChevronLeft, ChevronRight, Lock, Plus } from 'lucide-react'
 import { Button } from '../components/Button'
 import { DateInput } from '../components/DateInput'
 import { CheckInput, Checkbox } from '../components/Field'
-import { Select, type SelectOption } from '../components/Select'
+import { SessionFilterSelects } from '../components/SessionFilterSelects'
 import { useNow } from '../timer/useNow'
 import { BulkDelete, BulkMove } from './BulkDialogs'
 import styles from './SessionLog.module.css'
@@ -46,15 +45,6 @@ const PERIOD_CHIPS: { period: Period; offset: number; label: string }[] = [
 ]
 
 const PERIOD_NAMES: Record<Period, string> = { day: 'Day', week: 'Week', month: 'Month' }
-
-const BILLING_OPTIONS: SelectOption<BillingFilter>[] = [
-  { value: 'all', label: 'All Billing' },
-  { value: 'billable', label: 'Billable' },
-  { value: 'nonBillable', label: 'Non-Billable' },
-  { value: 'unbilled', label: 'Unbilled' },
-  { value: 'billed', label: 'Billed' },
-  { value: 'paid', label: 'Paid' },
-]
 
 export interface SessionLogProps {
   selection: TimeSelection
@@ -147,20 +137,6 @@ export function SessionLog(props: SessionLogProps) {
     }
   }
   const ids = () => selected.map((s) => s.id)
-
-  const scopeOptions = useMemo(() => {
-    const options: SelectOption<string>[] = [{ value: 'all', label: 'All Clients' }]
-    for (const c of props.clients) {
-      options.push({ value: `client:${c.id}`, label: c.name })
-      for (const p of props.projects) {
-        if (p.clientId === c.id) {
-          options.push({ value: `project:${p.id}`, label: p.name, indent: true })
-        }
-      }
-    }
-    return options
-  }, [props.clients, props.projects])
-  const scopeValue = filter.scope.kind === 'all' ? 'all' : `${filter.scope.kind}:${filter.scope.id}`
 
   const today = toLocalParts(now, zone).date
   const period = selection.kind === 'period' ? selection : null
@@ -276,25 +252,11 @@ export function SessionLog(props: SessionLogProps) {
         />
         {selected.length === 0 ? (
           <div className={styles.filterSelects}>
-            <Select
-              aria-label="Client or Project"
-              className={styles.scopeSelect}
-              value={scopeValue}
-              options={scopeOptions}
-              onChange={(value) => {
-                const [kind, id] = value.split(':') as ['client' | 'project', string]
-                props.onFilterChange({
-                  ...filter,
-                  scope: value === 'all' ? { kind: 'all' } : { kind, id },
-                })
-              }}
-            />
-            <Select
-              aria-label="Billing"
-              className={styles.billingSelect}
-              value={filter.billing}
-              options={BILLING_OPTIONS}
-              onChange={(billing) => props.onFilterChange({ ...filter, billing })}
+            <SessionFilterSelects
+              filter={filter}
+              onChange={props.onFilterChange}
+              clients={props.clients}
+              projects={props.projects}
             />
           </div>
         ) : (

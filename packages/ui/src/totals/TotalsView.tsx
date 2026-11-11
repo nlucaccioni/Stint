@@ -4,6 +4,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   computeTotals,
+  filterSessions,
   dailyTotals,
   formatClock,
   formatMoney,
@@ -15,6 +16,8 @@ import {
   type RangePreset,
   type RangeSelection,
   type ScopeFilter,
+  type SessionFilter,
+  type BillingBatch,
   type Session,
   type TimeRange,
 } from '@stint/core'
@@ -23,6 +26,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import tableStyles from '../components/Table.module.css'
 import { DateInput } from '../components/DateInput'
+import { SessionFilterSelects } from '../components/SessionFilterSelects'
 import { useNow } from '../timer/useNow'
 import styles from './TotalsView.module.css'
 
@@ -44,6 +48,11 @@ export interface TotalsViewProps {
   onSelectionChange: (selection: RangeSelection) => void
   /** The selection resolved to times. */
   range: TimeRange
+  /** Client/project and billing filters, as on the Time tab. */
+  filter: SessionFilter
+  onFilterChange: (filter: SessionFilter) => void
+  /** For the billing filter (billed vs paid). */
+  batches: readonly BillingBatch[]
   sessions: readonly Session[]
   projects: readonly Project[]
   clients: readonly Client[]
@@ -57,7 +66,12 @@ export interface TotalsViewProps {
 }
 
 export function TotalsView(props: TotalsViewProps) {
-  const { selection, range, sessions, projects, clients, zone } = props
+  const { selection, range, filter, projects, clients, zone } = props
+  const batchById = useMemo(() => new Map(props.batches.map((b) => [b.id, b])), [props.batches])
+  const sessions = useMemo(
+    () => filterSessions(props.sessions, filter, projects, batchById),
+    [props.sessions, filter, projects, batchById],
+  )
   const [exportStatus, setExportStatus] = useState<
     { kind: 'done'; count: number } | { kind: 'error'; message: string } | null
   >(null)
@@ -122,28 +136,37 @@ export function TotalsView(props: TotalsViewProps) {
       </header>
 
       <div className={styles.rangePicker}>
-        <div className={styles.filters} role="group" aria-label="Date Range">
-          {PRESETS.map(({ preset, label }) => (
+        {/* The range chips, with the client/project and billing filters at the end. */}
+        <div className={styles.rangeRow}>
+          <div className={styles.filters} role="group" aria-label="Date Range">
+            {PRESETS.map(({ preset, label }) => (
+              <button
+                key={preset}
+                type="button"
+                className={styles.chip}
+                aria-pressed={selection.kind === 'preset' && selection.preset === preset}
+                onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
+              >
+                {label}
+              </button>
+            ))}
             <button
-              key={preset}
               type="button"
               className={styles.chip}
-              aria-pressed={selection.kind === 'preset' && selection.preset === preset}
-              onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
+              aria-pressed={selection.kind === 'custom'}
+              onClick={() =>
+                props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
+              }
             >
-              {label}
+              Custom
             </button>
-          ))}
-          <button
-            type="button"
-            className={styles.chip}
-            aria-pressed={selection.kind === 'custom'}
-            onClick={() =>
-              props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
-            }
-          >
-            Custom
-          </button>
+          </div>
+          <SessionFilterSelects
+            filter={filter}
+            onChange={props.onFilterChange}
+            clients={clients}
+            projects={projects}
+          />
         </div>
         {/* Its own row under the chips, starting at the left edge. */}
         {selection.kind === 'custom' && (
@@ -179,7 +202,12 @@ export function TotalsView(props: TotalsViewProps) {
       <Card
         compact
         title="By Client and Project"
-        empty={totals.byClient.length === 0 && 'No time recorded in this range.'}
+        empty={
+          totals.byClient.length === 0 &&
+          (props.sessions.length === 0
+            ? 'No time recorded in this range.'
+            : 'No time matches these filters.')
+        }
       >
         <table className={tableStyles.table}>
           <thead>

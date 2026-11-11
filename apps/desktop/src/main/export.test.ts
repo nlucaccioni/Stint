@@ -63,6 +63,18 @@ describe('exportCsv', () => {
     expect(saved!.contents).toContain("'=SUM(A1)")
   })
 
+  it('exports only the sessions matching a filter', async () => {
+    const all = { kind: 'all' } as const
+    expect(await api.exportCsv(day, NY, { scope: all, billing: 'billable' })).toEqual({
+      saved: true,
+      count: 1,
+    })
+    expect(await api.exportCsv(day, NY, { scope: all, billing: 'nonBillable' })).toEqual({
+      saved: true,
+      count: 0,
+    })
+  })
+
   it('names multi-day exports with both dates', async () => {
     await api.exportCsv({ start: day.start, end: day.end + 6 * 24 * HOUR }, NY)
     expect(saved!.name).toBe('stint-2026-03-10-to-2026-03-16.csv')

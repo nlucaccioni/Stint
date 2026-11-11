@@ -21,6 +21,7 @@ import type {
   ProjectInput,
   Session,
   SessionEdits,
+  SessionFilter,
   TimeRange,
 } from '@stint/core'
 
@@ -164,7 +165,8 @@ export interface StintApi {
   deleteSessions(ids: string[]): Promise<void>
 
   /** Ask where to save, then write a CSV of the sessions overlapping `range`. */
-  exportCsv(range: TimeRange, zone: string): Promise<ExportResult>
+  /** `filter`: only sessions matching it (Totals' client/project and billing filters). */
+  exportCsv(range: TimeRange, zone: string, filter?: SessionFilter): Promise<ExportResult>
   /** Show the most recently exported file in Finder / Explorer. */
   showExportedFile(): Promise<void>
 

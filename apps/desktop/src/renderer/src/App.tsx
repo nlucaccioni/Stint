@@ -8,6 +8,7 @@ import {
   toTimeSelection,
   toLocalParts,
   type RangeSelection,
+  type BillingFilter,
   type ScopeFilter,
   type Session,
   type SessionFilter,
@@ -78,8 +79,8 @@ export function App() {
   const [timeFilter, setTimeFilter] = useState<SessionFilter>(NO_FILTER)
   const timeRange = resolveTimeSelection(timeSelection, now, zone, weekStartsOn)
   /** "Show Time" shortcuts: the Time tab, filtered to a client or project. */
-  function showTime(scope: ScopeFilter, selection: TimeSelection) {
-    setTimeFilter({ scope, billing: 'all' })
+  function showTime(scope: ScopeFilter, selection: TimeSelection, billing: BillingFilter = 'all') {
+    setTimeFilter({ scope, billing })
     setTimeSelection(selection)
     setTab('time')
   }
@@ -92,6 +93,7 @@ export function App() {
   })
   const totalsRange = resolveRange(totalsSelection, now, zone, weekStartsOn)
   const totalsSessions = useSessions(totalsRange)
+  const [totalsFilter, setTotalsFilter] = useState<SessionFilter>(NO_FILTER)
   const allSessions = useSessions(ALL_TIME_RANGE)
   const collapsedClients = useCollapsedClients()
 
@@ -228,10 +230,19 @@ export function App() {
                   clients={catalog.clients}
                   zone={zone}
                   onExport={() =>
-                    api.exportCsv({ start: totalsRange.start, end: totalsRange.end }, zone)
+                    api.exportCsv(
+                      { start: totalsRange.start, end: totalsRange.end },
+                      zone,
+                      totalsFilter,
+                    )
                   }
                   onShowExport={() => void api.showExportedFile()}
-                  onShowTime={(scope) => showTime(scope, toTimeSelection(totalsSelection))}
+                  filter={totalsFilter}
+                  onFilterChange={setTotalsFilter}
+                  batches={billing.batches}
+                  onShowTime={(scope) =>
+                    showTime(scope, toTimeSelection(totalsSelection), totalsFilter.billing)
+                  }
                 />
               )}
               {tab === 'billing' && (

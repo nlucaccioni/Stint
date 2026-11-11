@@ -19,6 +19,7 @@ import {
   projectSessionsToConvert,
   deleteSession,
   deleteSessions,
+  filterSessions,
   moveSessions,
   setSessionsBillable,
   editSession,
@@ -175,6 +176,14 @@ const sessionInput = z.strictObject({
   endedAt: time,
   note,
   billable: z.boolean(),
+})
+const sessionFilter = z.strictObject({
+  scope: z.discriminatedUnion('kind', [
+    z.strictObject({ kind: z.literal('all') }),
+    z.strictObject({ kind: z.literal('client'), id }),
+    z.strictObject({ kind: z.literal('project'), id }),
+  ]),
+  billing: z.enum(['all', 'billable', 'nonBillable', 'unbilled', 'billed', 'paid']),
 })
 const sessionIdList = z.array(id).min(1).max(10_000)
 const bulkEdits = z.strictObject({ billable: z.boolean().optional(), projectId: id.optional() })
@@ -524,14 +533,26 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
     },
 
     exportCsv: async (...args) => {
-      const [range, zone] = z.tuple([timeRange, timeZone]).parse(args)
+      const [range, zone, filter] = z
+        .tuple([timeRange, timeZone, sessionFilter.optional()])
+        .parse(args)
       if (!deps.saveFile) throw new Error('Saving files is not available.')
-      const sessions = listSessions(db, range)
+      const projects = listProjects(db)
+      const batches = listBatches(db)
+      // Same filters as on screen (Totals), so the file matches what's shown.
+      const sessions = filter
+        ? filterSessions(
+            listSessions(db, range),
+            filter,
+            projects,
+            new Map(batches.map((b) => [b.id, b])),
+          )
+        : listSessions(db, range)
       const csv = sessionsToCsv({
         sessions,
-        projects: listProjects(db),
+        projects,
         clients: listClients(db),
-        batches: listBatches(db),
+        batches,
         zone,
         now: ctx().now,
       })
