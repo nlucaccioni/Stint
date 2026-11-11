@@ -8,7 +8,13 @@ import { dayRange, weekRange, type WeekStartDay } from './time'
 import type { TimeRange } from './types'
 
 export type RangePreset =
-  'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth'
+  | 'today'
+  | 'yesterday'
+  | 'thisWeek'
+  | 'lastWeek'
+  | 'thisMonth'
+  | 'lastMonth'
+  | 'allTime'
 
 export type RangeSelection =
   | { kind: 'preset'; preset: RangePreset }
@@ -51,6 +57,8 @@ export function resolveRange(
       return monthRange(now, zone)
     case 'lastMonth':
       return monthRange(monthRange(now, zone).start - 1, zone)
+    case 'allTime':
+      return ALL_TIME_RANGE
   }
 }
 
@@ -111,7 +119,8 @@ export function resolveTimeSelection(
 /** The Time tab's version of a Totals range, for "Show Time" from Totals. */
 export function toTimeSelection(selection: RangeSelection): TimeSelection {
   if (selection.kind === 'custom') return selection
-  const periods: Record<RangePreset, { period: Period; offset: number }> = {
+  if (selection.preset === 'allTime') return { kind: 'all' }
+  const periods: Record<Exclude<RangePreset, 'allTime'>, { period: Period; offset: number }> = {
     today: { period: 'day', offset: 0 },
     yesterday: { period: 'day', offset: -1 },
     thisWeek: { period: 'week', offset: 0 },

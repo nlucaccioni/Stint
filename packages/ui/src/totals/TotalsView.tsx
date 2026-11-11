@@ -33,6 +33,7 @@ const PRESETS: { preset: RangePreset; label: string }[] = [
   { preset: 'lastWeek', label: 'Last Week' },
   { preset: 'thisMonth', label: 'This Month' },
   { preset: 'lastMonth', label: 'Last Month' },
+  { preset: 'allTime', label: 'All Time' },
 ]
 
 /** Longest range that gets a per-day list. */
@@ -96,7 +97,11 @@ export function TotalsView(props: TotalsViewProps) {
     <section className={styles.view}>
       <header className={styles.header}>
         <h1 className={styles.heading}>Totals</h1>
-        <span className={styles.range}>{rangeLabel(range, zone)}</span>
+        <span className={styles.range}>
+          {selection.kind === 'preset' && selection.preset === 'allTime'
+            ? 'All Time'
+            : rangeLabel(range, zone)}
+        </span>
         <span className={styles.spacer} />
         {exportStatus?.kind === 'done' && (
           <span className={styles.exported} role="status">

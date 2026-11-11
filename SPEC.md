@@ -239,7 +239,7 @@ All editing is allowed on unbilled sessions:
 
 ### Totals & reporting
 
-- Totals for today, this week, custom range; grouped by client and by project.
+- Totals for today, this week, custom range, or all time; grouped by client and by project.
 - Sessions that cross a range boundary (e.g. midnight, week start) are clipped to the range when totaling. Day/week boundaries use the local time zone.
 - Amounts = hours × effective rate (project rate, else client rate).
 - Amounts in different currencies are never summed together; money totals are grouped by currency.

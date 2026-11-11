@@ -100,6 +100,8 @@ describe('toTimeSelection', () => {
       const sel = { kind: 'preset', preset: p } as const
       expect(resolveTimeSelection(toTimeSelection(sel), now, NY, 1)).toEqual(preset(p))
     }
+    expect(toTimeSelection({ kind: 'preset', preset: 'allTime' })).toEqual({ kind: 'all' })
+    expect(preset('allTime')).toEqual(ALL_TIME_RANGE)
     const custom = { kind: 'custom', from: '2026-03-01', to: '2026-03-05' } as const
     expect(toTimeSelection(custom)).toEqual(custom)
   })
