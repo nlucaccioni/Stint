@@ -8,13 +8,7 @@ import { dayRange, weekRange, type WeekStartDay } from './time'
 import type { TimeRange } from './types'
 
 export type RangePreset =
-  | 'today'
-  | 'yesterday'
-  | 'thisWeek'
-  | 'lastWeek'
-  | 'thisMonth'
-  | 'lastMonth'
-  | 'allTime'
+  'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'allTime'
 
 export type RangeSelection =
   | { kind: 'preset'; preset: RangePreset }

@@ -5,9 +5,7 @@ import { billingStatus } from './billing'
 import type { BillingBatch, Project, Session } from './types'
 
 export type ScopeFilter =
-  | { kind: 'all' }
-  | { kind: 'client'; id: string }
-  | { kind: 'project'; id: string }
+  { kind: 'all' } | { kind: 'client'; id: string } | { kind: 'project'; id: string }
 
 export type BillingFilter = 'all' | 'billable' | 'nonBillable' | 'unbilled' | 'billed' | 'paid'
 

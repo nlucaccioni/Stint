@@ -45,10 +45,7 @@ export function CheckInput({ className, ...rest }: ComponentProps<'input'>) {
 }
 
 /** A styled checkbox with its label beside it. */
-export function Checkbox({
-  label,
-  ...rest
-}: { label: string } & ComponentProps<'input'>) {
+export function Checkbox({ label, ...rest }: { label: string } & ComponentProps<'input'>) {
   return (
     <label className={styles.checkbox}>
       <CheckInput {...rest} />

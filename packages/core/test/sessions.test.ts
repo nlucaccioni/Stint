@@ -245,16 +245,22 @@ describe('bulk edits', () => {
 
   it('sets billable, moves and deletes each session', () => {
     const c = ctx(now)
-    expect(setSessionsBillable(open, false, c).map((x) => x.kind === 'update' && x.patch.billable))
-      .toEqual([false, false])
-    expect(moveSessions(open, 'p2', c).map((x) => x.kind === 'update' && x.patch.projectId))
-      .toEqual(['p2', 'p2'])
-    expect(deleteSessions(open, c).map((x) => x.kind === 'update' && x.patch.deletedAt))
-      .toEqual([now, now])
+    expect(
+      setSessionsBillable(open, false, c).map((x) => x.kind === 'update' && x.patch.billable),
+    ).toEqual([false, false])
+    expect(
+      moveSessions(open, 'p2', c).map((x) => x.kind === 'update' && x.patch.projectId),
+    ).toEqual(['p2', 'p2'])
+    expect(deleteSessions(open, c).map((x) => x.kind === 'update' && x.patch.deletedAt)).toEqual([
+      now,
+      now,
+    ])
   })
 
   it('refuses the whole batch if any session is billed', () => {
-    expect(code(() => setSessionsBillable([...open, billed], true, ctx(now)))).toBe('session-locked')
+    expect(code(() => setSessionsBillable([...open, billed], true, ctx(now)))).toBe(
+      'session-locked',
+    )
     expect(code(() => moveSessions([...open, billed], 'p2', ctx(now)))).toBe('session-locked')
     expect(code(() => deleteSessions([...open, billed], ctx(now)))).toBe('session-locked')
   })

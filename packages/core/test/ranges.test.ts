@@ -95,7 +95,14 @@ describe('resolveTimeSelection', () => {
 
 describe('toTimeSelection', () => {
   it('covers the same dates as the Totals range', () => {
-    const presets: RangePreset[] = ['today', 'yesterday', 'thisWeek', 'lastWeek', 'thisMonth', 'lastMonth']
+    const presets: RangePreset[] = [
+      'today',
+      'yesterday',
+      'thisWeek',
+      'lastWeek',
+      'thisMonth',
+      'lastMonth',
+    ]
     for (const p of presets) {
       const sel = { kind: 'preset', preset: p } as const
       expect(resolveTimeSelection(toTimeSelection(sel), now, NY, 1)).toEqual(preset(p))

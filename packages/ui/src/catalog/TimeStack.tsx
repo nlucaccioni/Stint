@@ -37,7 +37,10 @@ export function TimeStack({ ms, otherMs, otherBillable, label, short }: TimeStac
         <span className={styles.otherTime}>
           +<Icon aria-hidden />
           {formatHoursMinutes(otherMs)}
-          <span className={styles.visuallyHidden}> {otherBillable ? 'billable' : 'non-billable'}</span>
+          <span className={styles.visuallyHidden}>
+            {' '}
+            {otherBillable ? 'billable' : 'non-billable'}
+          </span>
         </span>
       )}
     </span>
