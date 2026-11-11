@@ -167,22 +167,30 @@ export function TotalsView(props: TotalsViewProps) {
             Custom
           </button>
         </div>
-        {/* Its own row under the chips, starting at the left edge. */}
-        {selection.kind === 'custom' && (
-          <div className={styles.custom}>
-            <DateInput
-              aria-label="From"
-              value={selection.from}
-              onChange={(from) => props.onSelectionChange({ ...selection, from })}
-            />
-            <span aria-hidden>–</span>
-            <DateInput
-              aria-label="To"
-              value={selection.to}
-              onChange={(to) => props.onSelectionChange({ ...selection, to })}
-            />
+        {/* Its own row under the chips, starting at the left edge. Always in the
+            page so it can slide open (and push the content down) when Custom is
+            chosen; inert while closed so it can't be tabbed into. */}
+        <div
+          className={styles.customReveal}
+          data-open={selection.kind === 'custom' || undefined}
+          inert={selection.kind !== 'custom'}
+        >
+          <div className={styles.customRevealInner}>
+            <div className={styles.custom}>
+              <DateInput
+                aria-label="From"
+                value={customFrom}
+                onChange={(from) => props.onSelectionChange({ kind: 'custom', from, to: customTo })}
+              />
+              <span aria-hidden>–</span>
+              <DateInput
+                aria-label="To"
+                value={customTo}
+                onChange={(to) => props.onSelectionChange({ kind: 'custom', from: customFrom, to })}
+              />
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className={styles.tiles}>
