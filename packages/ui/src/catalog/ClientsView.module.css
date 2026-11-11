@@ -183,11 +183,26 @@
 
 .clientTotal {
   display: flex;
-  /* "Total" sits on the time's baseline, also when a second line is under it. */
-  align-items: baseline;
+  /* "Total" is centered on the time, or on both lines when there's a second one,
+     in line with the rest of the client bar. */
+  align-items: center;
   gap: var(--space-1);
   font-family: var(--font-mono);
   white-space: nowrap;
+}
+
+/* Space Mono and Space Grotesk sit at different heights in their line boxes, so
+   centering the boxes leaves the time looking low. Trimming each line to its
+   capitals and baseline centers the letters you actually see. */
+.clientTotal .clientTotalLabel,
+.clientTotal .elapsed,
+.clientTotal .otherTime {
+  text-box: trim-both cap alphabetic;
+}
+
+/* With the lines trimmed, the space between them is set here instead. */
+.clientTotal .timeStack {
+  gap: 4px;
 }
 
 .clientTotalLabel {
