@@ -117,6 +117,13 @@ export function TotalsView(props: TotalsViewProps) {
             : rangeLabel(range, zone)}
         </span>
         <span className={styles.spacer} />
+        {/* The client/project and billing filters, beside Export (which follows them). */}
+        <SessionFilterSelects
+          filter={filter}
+          onChange={props.onFilterChange}
+          clients={clients}
+          projects={projects}
+        />
         {exportStatus?.kind === 'done' && (
           <span className={styles.exported} role="status">
             Exported {exportStatus.count} {exportStatus.count === 1 ? 'session' : 'sessions'}.{' '}
@@ -136,37 +143,28 @@ export function TotalsView(props: TotalsViewProps) {
       </header>
 
       <div className={styles.rangePicker}>
-        {/* The range chips, with the client/project and billing filters at the end. */}
-        <div className={styles.rangeRow}>
-          <div className={styles.filters} role="group" aria-label="Date Range">
-            {PRESETS.map(({ preset, label }) => (
-              <button
-                key={preset}
-                type="button"
-                className={styles.chip}
-                aria-pressed={selection.kind === 'preset' && selection.preset === preset}
-                onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
-              >
-                {label}
-              </button>
-            ))}
+        <div className={styles.filters} role="group" aria-label="Date Range">
+          {PRESETS.map(({ preset, label }) => (
             <button
+              key={preset}
               type="button"
               className={styles.chip}
-              aria-pressed={selection.kind === 'custom'}
-              onClick={() =>
-                props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
-              }
+              aria-pressed={selection.kind === 'preset' && selection.preset === preset}
+              onClick={() => props.onSelectionChange({ kind: 'preset', preset })}
             >
-              Custom
+              {label}
             </button>
-          </div>
-          <SessionFilterSelects
-            filter={filter}
-            onChange={props.onFilterChange}
-            clients={clients}
-            projects={projects}
-          />
+          ))}
+          <button
+            type="button"
+            className={styles.chip}
+            aria-pressed={selection.kind === 'custom'}
+            onClick={() =>
+              props.onSelectionChange({ kind: 'custom', from: customFrom, to: customTo })
+            }
+          >
+            Custom
+          </button>
         </div>
         {/* Its own row under the chips, starting at the left edge. */}
         {selection.kind === 'custom' && (
