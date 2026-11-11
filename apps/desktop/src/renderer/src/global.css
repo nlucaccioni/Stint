@@ -13,6 +13,11 @@ body {
   font-size: var(--text-sm);
   background: var(--color-bg);
   color: var(--color-text);
+  /* The page scrolls inside the app (App.module.css .scroll), never the window.
+     At 125% zoom the overlay scrollbar's thumb could end a fraction of a pixel
+     below the window, which made the window scrollable and showed a second,
+     native scrollbar. */
+  overflow: hidden;
 }
 
 /* The app fills the window, so it can keep its header fixed and scroll the rest. */

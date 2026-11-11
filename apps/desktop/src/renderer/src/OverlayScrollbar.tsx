@@ -31,7 +31,10 @@ export function OverlayScrollbar({ target }: { target: HTMLElement | null }) {
         setThumb(null)
         return
       }
-      const height = Math.max(MIN_THUMB, (trackHeight * el.clientHeight) / el.scrollHeight)
+      const height = Math.min(
+        trackHeight,
+        Math.max(MIN_THUMB, (trackHeight * el.clientHeight) / el.scrollHeight),
+      )
       setThumb({ height, top: (el.scrollTop / scrollable) * (trackHeight - height) })
     }
     measure()
