@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings that belong to this computer rather than syncing (desktop only).
 import { useEffect, useState } from 'react'
-import { Card, Checkbox } from '@stint/ui'
+import { Card, Checkbox, SavedNote, useSavedFlash } from '@stint/ui'
 import type { LaunchAtLogin } from '../../shared/api'
 import { api } from './api'
 import styles from './ShortcutSettings.module.css'
@@ -9,6 +9,7 @@ import styles from './ShortcutSettings.module.css'
 export function SystemSettings() {
   const [login, setLogin] = useState<LaunchAtLogin | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const saved = useSavedFlash()
 
   useEffect(() => {
     let active = true
@@ -24,12 +25,15 @@ export function SystemSettings() {
     setError(null)
     api
       .setLaunchAtLogin(enabled)
-      .then(setLogin)
+      .then((l) => {
+        setLogin(l)
+        saved.show('system')
+      })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }
 
   return (
-    <Card title="This Computer">
+    <Card title="This Computer" status={<SavedNote shown={saved.shownIn('system')} />}>
       <Checkbox
         label="Open Stint When I Log In (It Starts in the Tray / Menu Bar)"
         checked={login.enabled}

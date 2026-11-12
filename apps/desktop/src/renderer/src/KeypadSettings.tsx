@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Local API that the MX Keypad plugin connects to (device-local, desktop only).
 import { useEffect, useState, type FormEvent } from 'react'
-import { Button, Card, Checkbox, Field } from '@stint/ui'
+import { Button, Card, Checkbox, Field, SavedNote, useSavedFlash } from '@stint/ui'
 import type { LocalApiStatus } from '../../shared/api'
 import { api, onEvent } from './api'
 import styles from './ShortcutSettings.module.css'
@@ -10,6 +10,7 @@ export function KeypadSettings() {
   const [status, setStatus] = useState<LocalApiStatus | null>(null)
   const [port, setPort] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const saved = useSavedFlash()
 
   useEffect(() => {
     let active = true
@@ -34,6 +35,7 @@ export function KeypadSettings() {
       .then((s) => {
         setStatus(s)
         setPort(String(s.port))
+        saved.show('keypad')
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }
@@ -44,7 +46,7 @@ export function KeypadSettings() {
   }
 
   return (
-    <Card title="MX Keypad">
+    <Card title="MX Keypad" status={<SavedNote shown={saved.shownIn('keypad')} />}>
       <Checkbox
         label="Allow the MX Keypad Plugin to Connect"
         checked={status.enabled}

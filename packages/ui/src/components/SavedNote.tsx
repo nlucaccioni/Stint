@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // A brief "✓ Saved" that fades in after a setting saves, then out again.
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import styles from './SavedNote.module.css'
 
@@ -26,12 +26,11 @@ export function useSavedFlash() {
   const [section, setSection] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])
-  return {
-    shownIn: (name: string) => section === name,
-    show: (name: string) => {
-      setSection(name)
-      clearTimeout(timer.current)
-      timer.current = setTimeout(() => setSection(null), 2000)
-    },
-  }
+  // Stable, so it can sit in an effect's dependencies without re-running it.
+  const show = useCallback((name: string) => {
+    setSection(name)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setSection(null), 2000)
+  }, [])
+  return { shownIn: (name: string) => section === name, show }
 }

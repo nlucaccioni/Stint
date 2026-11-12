@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings section for global keyboard shortcuts (desktop only).
 import { useEffect, useState } from 'react'
-import { Button, Card } from '@stint/ui'
+import { Button, Card, SavedNote, useSavedFlash } from '@stint/ui'
 import type { HotkeyState, HotkeyStatus } from '../../shared/api'
 import {
   acceleratorFromKeyPress,
@@ -25,6 +25,8 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
   const [state, setState] = useState<HotkeyState | null>(null)
   const [recording, setRecording] = useState<HotkeyAction | null>(null)
   const [hint, setHint] = useState<string | null>(null)
+  const saved = useSavedFlash()
+  const { show } = saved
 
   useEffect(() => {
     let active = true
@@ -52,7 +54,10 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
       if (result.kind === 'invalid') setHint(result.reason)
       if (result.kind !== 'accelerator') return
       setRecording(null)
-      void api.setHotkey(action, result.accelerator).then(setState)
+      void api.setHotkey(action, result.accelerator).then((s) => {
+        setState(s)
+        show('shortcuts')
+      })
     }
 
     window.addEventListener('keydown', onKeyDown, true)
@@ -61,9 +66,16 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
       setHint(null)
       void api.pauseHotkeys(false).then(setState)
     }
-  }, [recording, platform])
+  }, [recording, platform, show])
 
   if (!state) return null
+
+  /** Save a change, then show "Saved" beside the title. */
+  const change = (request: Promise<HotkeyState>) =>
+    void request.then((s) => {
+      setState(s)
+      show('shortcuts')
+    })
 
   const label = (accelerator: string | null) =>
     accelerator ? formatAccelerator(accelerator, platform) : 'None'
@@ -71,8 +83,9 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
   return (
     <Card
       title="Keyboard Shortcuts"
+      status={<SavedNote shown={saved.shownIn('shortcuts')} />}
       actions={
-        <Button size="sm" variant="subtle" onClick={() => void api.resetHotkeys().then(setState)}>
+        <Button size="sm" variant="subtle" onClick={() => change(api.resetHotkeys())}>
           Reset All to Defaults
         </Button>
       }
@@ -113,7 +126,7 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => void api.setHotkey(action, null).then(setState)}
+                    onClick={() => change(api.setHotkey(action, null))}
                   >
                     Clear
                   </Button>
@@ -123,7 +136,7 @@ export function ShortcutSettings({ platform }: { platform: Platform }) {
                     size="sm"
                     variant="ghost"
                     title={`Reset to ${label(fallback)}`}
-                    onClick={() => void api.setHotkey(action, fallback).then(setState)}
+                    onClick={() => change(api.setHotkey(action, fallback))}
                   >
                     Reset
                   </Button>

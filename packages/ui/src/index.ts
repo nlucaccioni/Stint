@@ -16,6 +16,7 @@ export {
 export { Tag, type TagProps } from './components/Tag'
 export { CheckBox, CheckInput, Checkbox, Field, type FieldProps } from './components/Field'
 export { Card, type CardProps } from './components/Card'
+export { SavedNote, useSavedFlash } from './components/SavedNote'
 export { Dialog, type DialogProps } from './components/Dialog'
 export { ClientForm, type ClientFormProps } from './catalog/ClientForm'
 export { ProjectForm, type ProjectFormProps, type ProjectValues } from './catalog/ProjectForm'
