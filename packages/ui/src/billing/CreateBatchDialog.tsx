@@ -17,13 +17,14 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
-import { CheckInput, Field } from '../components/Field'
+import { Field } from '../components/Field'
+import { useDragTick } from '../components/useDragTick'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
 import { amountLabel, roundingLabel } from './format'
 import { ProjectPicker, type ProjectChoice } from './ProjectPicker'
-import { SessionLine } from './SessionLine'
+import { SessionLine, SessionTick } from './SessionLine'
 import styles from './BillingView.module.css'
 
 export interface NewBatchValues {
@@ -134,11 +135,14 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   }
 
   function toggle(id: string, include: boolean) {
-    const next = new Set(excluded)
-    if (include) next.delete(id)
-    else next.add(id)
-    setExcluded(next)
+    setExcluded((prev) => {
+      const next = new Set(prev)
+      if (include) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
+  const drag = useDragTick((id) => !excluded.has(id), toggle)
 
   function submit(e: FormEvent) {
     e.preventDefault()
@@ -161,7 +165,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
 
   return (
     <Dialog title="Create Batch" onClose={props.onClose}>
-      <form className={formStyles.form} onSubmit={submit}>
+      <form className={`${formStyles.form} ${styles.fill}`} onSubmit={submit}>
         <Field label="Client or Project">
           <ProjectPicker
             options={pickerOptions}
@@ -182,8 +186,8 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
           </div>
         </div>
 
-        {/* A fixed height, empty or full, so the dialog doesn't move (and the open
-            dropdown with it) as projects are ticked and unticked. */}
+        {/* Sized by the window, empty or full, so the dialog doesn't move (and the
+            open dropdown with it) as projects are ticked and unticked. */}
         {candidates.length === 0 ? (
           <div className={`${styles.sessions} ${styles.steady} ${styles.noSessions}`}>
             <p className={formStyles.note}>
@@ -201,11 +205,14 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
                 project={projectById.get(s.projectId)}
                 zone={zone}
                 now={now}
+                onPointerEnter={() => drag.enter(s.id)}
                 before={
-                  <CheckInput
-                    aria-label="Include"
+                  <SessionTick
+                    label="Include"
                     checked={!excluded.has(s.id)}
-                    onChange={(e) => toggle(s.id, e.target.checked)}
+                    onToggle={(on) => toggle(s.id, on)}
+                    onPointerDown={(e) => drag.start(s.id, e)}
+                    onClick={drag.onClick}
                   />
                 }
               />
@@ -225,10 +232,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
 
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
-            <Field
-              label="Reference"
-              hint="Invoice number, tool, or anything that helps you find it."
-            >
+            <Field label="Reference" hint="Invoice number, tool, etc.">
               <input
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}

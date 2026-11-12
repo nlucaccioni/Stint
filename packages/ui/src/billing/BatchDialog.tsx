@@ -21,13 +21,14 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
-import { CheckInput, Field } from '../components/Field'
+import { Field } from '../components/Field'
+import { useDragTick } from '../components/useDragTick'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { DeleteAction } from '../catalog/DeleteAction'
 import { useNow } from '../timer/useNow'
 import { amountLabel, formatDay, roundingLabel } from './format'
-import { SessionLine } from './SessionLine'
+import { SessionLine, SessionTick } from './SessionLine'
 import styles from './BillingView.module.css'
 
 export interface BatchDialogActions {
@@ -301,6 +302,15 @@ function AddSessions(props: {
   )
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
   const projectById = new Map(props.projects.map((p) => [p.id, p]))
+  function pick(id: string, on: boolean) {
+    setPicked((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+  const drag = useDragTick((id) => picked.has(id), pick)
   if (candidates.length === 0) {
     return (
       <p className={formStyles.note}>
@@ -321,16 +331,14 @@ function AddSessions(props: {
             project={projectById.get(s.projectId)}
             zone={props.zone}
             now={props.now}
+            onPointerEnter={() => drag.enter(s.id)}
             before={
-              <CheckInput
-                aria-label="Add"
+              <SessionTick
+                label="Add"
                 checked={picked.has(s.id)}
-                onChange={(e) => {
-                  const next = new Set(picked)
-                  if (e.target.checked) next.add(s.id)
-                  else next.delete(s.id)
-                  setPicked(next)
-                }}
+                onToggle={(on) => pick(s.id, on)}
+                onPointerDown={(e) => drag.start(s.id, e)}
+                onClick={drag.onClick}
               />
             }
           />

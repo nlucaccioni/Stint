@@ -64,6 +64,8 @@
 
 /* Shared by the batch dialogs */
 .sessions {
+  /* A row: its 16px checkbox (the tallest thing in it) and its padding. */
+  --session-row: calc(16px + 2 * var(--space-1));
   max-height: 260px;
   margin: 0;
   padding: 0;
@@ -83,6 +85,20 @@
 
 .sessionRow + .sessionRow {
   border-top: 1px solid var(--color-border);
+}
+
+/* A row's checkbox, in a box as tall as the row and padded out to its edge, so
+   it's easy to press and drag from (see useDragTick). */
+.tick {
+  display: grid;
+  flex: none;
+  align-self: stretch;
+  place-items: center;
+  margin: calc(var(--space-1) * -1) 0 calc(var(--space-1) * -1) calc(var(--space-3) * -1);
+  padding: 0 0 0 var(--space-3);
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
 }
 
 .sessionWhat {
@@ -180,10 +196,19 @@
   white-space: nowrap;
 }
 
-/* Create Batch: the session list keeps its full height when it has fewer (or no)
-   sessions, and the summary under it two lines, so the dialog keeps its size. */
+/* Create Batch: the session list takes the dialog's spare height, from 3 rows up
+   to its usual 260px, so the dialog fits the window without scrolling. Its size
+   comes from the window, never from how many sessions it has, so the dialog keeps
+   still as projects are ticked. The summary under it keeps two lines for the same
+   reason. */
+.fill {
+  min-height: 0;
+}
+
 .sessions.steady {
-  height: 260px;
+  flex: 0 1 260px;
+  min-height: calc(3 * var(--session-row) + 4px); /* + borders */
+  max-height: none;
 }
 
 .summary.steady {

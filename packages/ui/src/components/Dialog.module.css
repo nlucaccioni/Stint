@@ -9,12 +9,21 @@
   color: var(--color-text);
 }
 
+/* A column, so a dialog's body can shrink to fit the window and let one part of
+   it scroll (Create Batch's session list). Only while open: a closed dialog
+   stays hidden. */
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
 .dialog::backdrop {
   background: rgb(0 0 0 / 0.4);
 }
 
 .header {
   display: flex;
+  flex: none;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
