@@ -53,6 +53,11 @@
   align-items: center;
 }
 
+/* After the value: what else is chosen, e.g. "· Website, App" in Create Batch. */
+.summary {
+  color: var(--color-text-muted);
+}
+
 /* A client's color before its name, with a soft glow like elsewhere. */
 .dot {
   display: inline-block;

@@ -17,12 +17,12 @@ import {
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
-import { CheckInput, Checkbox, Field } from '../components/Field'
-import { Select, type SelectOption } from '../components/Select'
+import { CheckInput, Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
 import { amountLabel, roundingLabel } from './format'
+import { ProjectPicker, type ProjectChoice } from './ProjectPicker'
 import { SessionLine } from './SessionLine'
 import styles from './BillingView.module.css'
 
@@ -70,7 +70,6 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
     )
     return projects.filter((p) => withTime.has(p.id))
   }
-  const billable = projectsWithTime(clientId)
   // Which of them to bill: all, or the one the dialog was opened for.
   const [projectIds, setProjectIds] = useState<ReadonlySet<string>>(
     () =>
@@ -81,11 +80,14 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
       ),
   )
 
-  const clientOptions = useMemo(
+  // Clients with unbilled time, each with its projects that have some.
+  const pickerOptions = useMemo(
     () =>
       clients
-        .filter((c) => batchCandidates(unbilledSessions, projects, c.id, ALL).length > 0)
-        .map((c): SelectOption<string> => ({ value: c.id, label: c.name, color: c.color })),
+        .map((c) => ({ client: c, projects: projectsWithTime(c.id) }))
+        .filter((o) => o.projects.length > 0),
+    // projectsWithTime only reads these.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [clients, projects, unbilledSessions],
   )
 
@@ -124,20 +126,11 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   const summary = billingSummary(chosen, projects, client, rounding, now, zone)
   const projectById = new Map(projects.map((p) => [p.id, p]))
 
-  function chooseClient(id: string) {
-    const all = new Set(projectsWithTime(id).map((p) => p.id))
-    setClientId(id)
-    setProjectIds(all)
-    setFrom(oldest(id, all))
-    setExcluded(new Set())
-  }
-
-  function toggleProject(id: string, include: boolean) {
-    const next = new Set(projectIds)
-    if (include) next.add(id)
-    else next.delete(id)
-    setProjectIds(next)
-    if (next.size > 0) setFrom(oldest(clientId, next))
+  function choose(next: ProjectChoice) {
+    if (next.clientId !== clientId) setExcluded(new Set())
+    setClientId(next.clientId)
+    setProjectIds(next.projectIds)
+    if (next.projectIds.size > 0) setFrom(oldest(next.clientId, next.projectIds))
   }
 
   function toggle(id: string, include: boolean) {
@@ -169,23 +162,13 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   return (
     <Dialog title="Create Batch" onClose={props.onClose}>
       <form className={formStyles.form} onSubmit={submit}>
-        <Field label="Client">
-          <Select value={clientId} options={clientOptions} onChange={chooseClient} />
+        <Field label="Client or Project">
+          <ProjectPicker
+            options={pickerOptions}
+            value={{ clientId, projectIds }}
+            onChange={choose}
+          />
         </Field>
-        {/* Only worth choosing when there's more than one. */}
-        {billable.length > 1 && (
-          <fieldset className={styles.projectChoice}>
-            <legend className={styles.projectChoiceLabel}>Projects</legend>
-            {billable.map((p) => (
-              <Checkbox
-                key={p.id}
-                label={p.name}
-                checked={projectIds.has(p.id)}
-                onChange={(e) => toggleProject(p.id, e.target.checked)}
-              />
-            ))}
-          </fieldset>
-        )}
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
             <Field label="From">
