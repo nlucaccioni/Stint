@@ -23,7 +23,7 @@ import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { DeleteAction } from '../catalog/DeleteAction'
 import { useNow } from '../timer/useNow'
-import { amountLabel, formatDay } from './format'
+import { amountLabel, formatDay, roundingLabel } from './format'
 import { SessionLine } from './SessionLine'
 import styles from './BillingView.module.css'
 
@@ -50,8 +50,12 @@ export function BatchDialog(props: BatchDialogProps) {
   const now = useNow(true, 60_000)
   const today = toLocalParts(now, zone).date
   const isPaid = batch.paidAt !== null
-  const rounding = { minutes: batch.roundingMinutes, mode: batch.roundingMode }
-  const summary = billingSummary(sessions, projects, client, rounding, now)
+  const rounding = {
+    minutes: batch.roundingMinutes,
+    mode: batch.roundingMode,
+    scope: batch.roundingScope,
+  }
+  const summary = billingSummary(sessions, projects, client, rounding, now, zone)
   const projectById = new Map(projects.map((p) => [p.id, p]))
 
   const [reference, setReference] = useState(batch.reference)
@@ -85,8 +89,7 @@ export function BatchDialog(props: BatchDialogProps) {
           {isPaid
             ? `Paid on ${formatDay(batch.paidAt!, zone)}.`
             : `Billed ${formatDay(batch.billedAt, zone)}, waiting for payment.`}
-          {batch.roundingMinutes > 0 &&
-            ` Rounded ${batch.roundingMode} to ${batch.roundingMinutes} min per session.`}
+          {batch.roundingMinutes > 0 && ` ${capitalize(roundingLabel(rounding))}.`}
         </p>
 
         <ul className={styles.sessions} aria-label="Sessions in This Batch">
@@ -306,4 +309,8 @@ function AddSessions(props: {
       </div>
     </>
   )
+}
+
+function capitalize(text: string): string {
+  return text[0]!.toUpperCase() + text.slice(1)
 }

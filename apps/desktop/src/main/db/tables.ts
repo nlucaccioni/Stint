@@ -72,6 +72,7 @@ export const batchesTable = defineTable<BillingBatch>({
     note: 'note',
     roundingMinutes: 'rounding_minutes',
     roundingMode: 'rounding_mode',
+    roundingScope: 'rounding_scope',
   },
   booleans: [],
 })

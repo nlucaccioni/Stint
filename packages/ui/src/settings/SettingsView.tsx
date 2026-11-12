@@ -6,6 +6,7 @@ import {
   type Preferences,
   type Project,
   type RoundingMode,
+  type RoundingScope,
   type WeekStartDay,
 } from '@stint/core'
 import { Button } from '../components/Button'
@@ -25,6 +26,12 @@ export interface SettingsViewProps {
   onSave: (edits: Partial<Preferences>) => Promise<unknown>
 }
 
+const ROUNDING_SCOPE_HINTS: Record<RoundingScope, string> = {
+  project: 'Adds up each project’s time in a batch, then rounds once.',
+  day: 'Adds up each project’s time for each day, then rounds each day.',
+  session: 'Rounds every session on its own. Short sessions add up quickly.',
+}
+
 export function SettingsView({ preferences, projects, clients, onSave }: SettingsViewProps) {
   const [idle, setIdle] = useState(String(preferences.idleMinutes))
   const [nudge, setNudge] = useState(String(preferences.nudgeHours))
@@ -33,6 +40,9 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   const [favorites, setFavorites] = useState(preferences.favorites)
   const [roundingMinutes, setRoundingMinutes] = useState(preferences.billingRoundingMinutes)
   const [roundingMode, setRoundingMode] = useState<RoundingMode>(preferences.billingRoundingMode)
+  const [roundingScope, setRoundingScope] = useState<RoundingScope>(
+    preferences.billingRoundingScope,
+  )
   const [saved, setSaved] = useState(false)
   const { saving, error, run } = useSubmit()
 
@@ -51,6 +61,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
         favorites,
         billingRoundingMinutes: roundingMinutes,
         billingRoundingMode: roundingMode,
+        billingRoundingScope: roundingScope,
       })
       setSaved(true)
     })
@@ -112,7 +123,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             <div className={formStyles.grow}>
               <Field
                 label="Round Billed Time"
-                hint="Applies to each session when you bill it. The log and totals always show actual time."
+                hint="Applies when you bill. The log and totals always show actual time."
               >
                 <Select
                   value={roundingMinutes}
@@ -143,6 +154,21 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
               />
             </Field>
           </div>
+          <Field label="Round" hint={ROUNDING_SCOPE_HINTS[roundingScope]}>
+            <Select
+              value={roundingScope}
+              disabled={roundingMinutes === 0}
+              options={[
+                { value: 'project', label: 'Each Project’s Total' },
+                { value: 'day', label: 'Each Project’s Time per Day' },
+                { value: 'session', label: 'Each Session' },
+              ]}
+              onChange={(scope) => {
+                setRoundingScope(scope as RoundingScope)
+                setSaved(false)
+              }}
+            />
+          </Field>
         </Card>
 
         <Card title="Favorites">

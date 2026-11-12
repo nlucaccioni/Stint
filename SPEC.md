@@ -219,7 +219,9 @@ All editing is allowed on unbilled sessions:
 - Views: unbilled time per client (hours and amount), outstanding batches (billed, not paid, with days waiting), paid history.
 - Non-billable time doesn't appear in billing views (it stays in the log and totals).
 - Partial payments are out of scope for v1.
-- **Rounding** (setting, off by default): round each billed session up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.
+- **Rounding** (setting, off by default): round billed time up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.
+  - What's rounded (setting): each project's total in the batch (default), each project's time per day (days in the user's time zone), or each session. Sessions at different rates are never rounded together, so each rounded group is one invoice line.
+  - Batches made before this setting existed rounded each session and keep doing so.
 
 ### Deleting clients and projects
 

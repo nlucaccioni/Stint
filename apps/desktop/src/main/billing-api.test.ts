@@ -69,14 +69,20 @@ function bill(ids = sessions.map((s) => s.id)) {
 
 describe('creating a batch', () => {
   it('locks the chosen sessions at their current rate and records rounding', () => {
-    api.updatePreferences({ billingRoundingMinutes: 15, billingRoundingMode: 'nearest' })
+    api.updatePreferences({
+      billingRoundingMinutes: 15,
+      billingRoundingMode: 'nearest',
+      billingRoundingScope: 'day',
+    })
     const batch = bill([sessions[0]!.id, sessions[1]!.id])
     expect(batch).toMatchObject({
       reference: 'INV-1',
       paidAt: null,
       roundingMinutes: 15,
       roundingMode: 'nearest',
+      roundingScope: 'day',
     })
+    expect(api.listBatches()[0]).toMatchObject({ roundingScope: 'day' })
     const inBatch = api.listBatchSessions(batch.id)
     expect(inBatch.map((s) => [s.billingBatchId, s.billedRateCents])).toEqual([
       [batch.id, 10_000],

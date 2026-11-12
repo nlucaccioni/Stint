@@ -3,9 +3,9 @@
 // Device-only settings (API token, window position) live elsewhere.
 import { StintError } from './errors'
 import { isSupportedCurrency } from './money'
-import { ROUNDING_STEPS } from './billing'
+import { ROUNDING_SCOPES, ROUNDING_STEPS } from './billing'
 import type { WeekStartDay } from './time'
-import type { RoundingMode } from './types'
+import type { RoundingMode, RoundingScope } from './types'
 
 export interface Preferences {
   /** Ask about idle time after this many minutes away. 0 = never ask. */
@@ -21,9 +21,11 @@ export interface Preferences {
    * hotkeys, the tray menu, and the Keypad.
    */
   favorites: (string | null)[]
-  /** Round each billed session to this many minutes; 0 = off. */
+  /** Round billed time to this many minutes; 0 = off. */
   billingRoundingMinutes: number
   billingRoundingMode: RoundingMode
+  /** What's rounded: each project's total in a batch, each project per day, or each session. */
+  billingRoundingScope: RoundingScope
 }
 
 export const FAVORITE_SLOTS = 9
@@ -36,6 +38,7 @@ export const defaultPreferences: Preferences = {
   favorites: Array.from({ length: 9 }, () => null),
   billingRoundingMinutes: 0,
   billingRoundingMode: 'up',
+  billingRoundingScope: 'project',
 }
 
 export const preferenceKeys = Object.keys(defaultPreferences) as (keyof Preferences)[]
@@ -77,6 +80,12 @@ export function validatePreferences(edits: Partial<Preferences>): Partial<Prefer
       throw new StintError('invalid-preference', 'Rounding must be "up" or "nearest".')
     }
     out.billingRoundingMode = edits.billingRoundingMode
+  }
+  if (edits.billingRoundingScope !== undefined) {
+    if (!ROUNDING_SCOPES.includes(edits.billingRoundingScope)) {
+      throw new StintError('invalid-preference', 'Choose what rounding applies to from the list.')
+    }
+    out.billingRoundingScope = edits.billingRoundingScope
   }
   if (edits.favorites !== undefined) {
     const favs = edits.favorites

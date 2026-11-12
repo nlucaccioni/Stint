@@ -128,4 +128,11 @@ export const migrations: readonly string[] = [
     ) AS r WHERE r.id = projects.id
   );
   `,
+
+  // 6 — what billing rounding applies to. Existing batches rounded each session,
+  // so they keep that and their totals don't change.
+  `
+  ALTER TABLE billing_batches ADD COLUMN rounding_scope TEXT NOT NULL DEFAULT 'session'
+    CHECK (rounding_scope IN ('project', 'day', 'session'));
+  `,
 ]

@@ -48,11 +48,11 @@ export function BillingView(props: BillingViewProps) {
   const unbilled = useMemo(
     () =>
       inListOrder(
-        unbilledByClient(unbilledSessions, projects, clients, rounding, now),
+        unbilledByClient(unbilledSessions, projects, clients, rounding, now, zone),
         clients,
         (row) => row.clientId,
       ),
-    [unbilledSessions, projects, clients, rounding, now],
+    [unbilledSessions, projects, clients, rounding, now, zone],
   )
 
   // Each batch's figures, using the rounding it was created with.
@@ -68,13 +68,14 @@ export function BillingView(props: BillingViewProps) {
           own,
           projects,
           client,
-          { minutes: batch.roundingMinutes, mode: batch.roundingMode },
+          { minutes: batch.roundingMinutes, mode: batch.roundingMode, scope: batch.roundingScope },
           now,
+          zone,
         ),
       )
     }
     return map
-  }, [batches, billedSessions, projects, clientById, now])
+  }, [batches, billedSessions, projects, clientById, now, zone])
 
   const outstanding = batches.filter((b) => b.paidAt === null)
   const paid = batches.filter((b) => b.paidAt !== null).sort((a, b) => b.paidAt! - a.paidAt!)

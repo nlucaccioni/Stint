@@ -16,7 +16,9 @@ import { computeTotals } from '../src/totals'
 import { HOUR, MIN, at, batch, client, ctx, project, session } from './fixtures'
 
 const now = at(2026, 3, 31, 12)
-const off = { minutes: 0, mode: 'up' as const }
+const off = { minutes: 0, mode: 'up' as const, scope: 'project' as const }
+const up15 = (scope: 'project' | 'day' | 'session') => ({ minutes: 15, mode: 'up' as const, scope })
+const zone = 'UTC'
 const acme = client({ id: 'c1', hourlyRateCents: 10_000, currency: 'USD' })
 const other = client({ id: 'c2', name: 'Other' })
 const projects = [
@@ -76,7 +78,7 @@ describe('batchCandidates', () => {
 describe('billingSummary', () => {
   it('uses current rates for unbilled sessions and recorded rates for billed ones', () => {
     const recorded = s('r', 3, 1, { billingBatchId: 'x', billedRateCents: 5_000 })
-    const sum = billingSummary([s('a', 2, 1), recorded], projects, acme, off, now)
+    const sum = billingSummary([s('a', 2, 1), recorded], projects, acme, off, now, zone)
     expect(sum).toEqual({
       count: 2,
       ms: 2 * HOUR,
@@ -85,27 +87,66 @@ describe('billingSummary', () => {
     })
   })
 
-  it('applies rounding per session to billed time and amount, not actual time', () => {
-    const short = [
-      s('x', 2, 0, { endedAt: at(2026, 3, 2, 9, 7) }),
-      s('y', 3, 0, { endedAt: at(2026, 3, 3, 9, 7) }),
-    ]
-    const sum = billingSummary(short, projects, acme, { minutes: 15, mode: 'up' }, now)
-    expect(sum.ms).toBe(14 * MIN)
+  // Two 7-minute sessions on Mar 2 and one on Mar 3, all on p1.
+  const short = [
+    s('x', 2, 0, { endedAt: at(2026, 3, 2, 9, 7) }),
+    s('x2', 2, 0, { startedAt: at(2026, 3, 2, 14), endedAt: at(2026, 3, 2, 14, 7) }),
+    s('y', 3, 0, { endedAt: at(2026, 3, 3, 9, 7) }),
+  ]
+
+  it("rounds each project's total once, applying to billed time and amount, not actual time", () => {
+    const sum = billingSummary(short, projects, acme, up15('project'), now, zone)
+    expect(sum.ms).toBe(21 * MIN)
     expect(sum.billedMs).toBe(30 * MIN)
     expect(sum.amount).toEqual({ currency: 'USD', cents: 5_000 })
   })
 
+  it("rounds each project's time per day", () => {
+    const sum = billingSummary(short, projects, acme, up15('day'), now, zone)
+    expect(sum.billedMs).toBe(30 * MIN) // 14 → 15 on Mar 2, 7 → 15 on Mar 3
+  })
+
+  it('days follow the time zone', () => {
+    // 23:00 and 01:00 UTC are different days in UTC, but 8:00 and 10:00 the same day in Tokyo.
+    const night = [
+      s('n1', 2, 0, { startedAt: at(2026, 3, 2, 23), endedAt: at(2026, 3, 2, 23, 7) }),
+      s('n2', 3, 0, { startedAt: at(2026, 3, 3, 1), endedAt: at(2026, 3, 3, 1, 7) }),
+    ]
+    expect(billingSummary(night, projects, acme, up15('day'), now, 'UTC').billedMs).toBe(30 * MIN)
+    expect(billingSummary(night, projects, acme, up15('day'), now, 'Asia/Tokyo').billedMs).toBe(
+      15 * MIN,
+    )
+  })
+
+  it('rounds each session when asked', () => {
+    const sum = billingSummary(short, projects, acme, up15('session'), now, zone)
+    expect(sum.billedMs).toBe(45 * MIN)
+    expect(sum.amount).toEqual({ currency: 'USD', cents: 7_500 })
+  })
+
+  it('rounds each project separately, and never rounds different rates together', () => {
+    const mixed = [
+      s('p1a', 2, 0, { endedAt: at(2026, 3, 2, 9, 7) }),
+      s('p2a', 2, 0, { projectId: 'p2', endedAt: at(2026, 3, 2, 9, 7) }),
+      s('old', 3, 0, { endedAt: at(2026, 3, 3, 9, 7), billedRateCents: 5_000 }),
+    ]
+    const sum = billingSummary(mixed, projects, acme, up15('project'), now, zone)
+    expect(sum.billedMs).toBe(45 * MIN)
+    // 15 min each at $100, $150 and $50 an hour.
+    expect(sum.amount).toEqual({ currency: 'USD', cents: 2_500 + 3_750 + 1_250 })
+  })
+
   it('has no amount when nothing has a rate', () => {
     expect(
-      billingSummary([s('a', 2, 1)], projects, client({ hourlyRateCents: null }), off, now).amount,
+      billingSummary([s('a', 2, 1)], projects, client({ hourlyRateCents: null }), off, now, zone)
+        .amount,
     ).toBeNull()
   })
 })
 
 describe('unbilledByClient', () => {
   it('summarizes billable unbilled time per client with the oldest date', () => {
-    const rows = unbilledByClient(sessions, projects, [acme, other], off, now)
+    const rows = unbilledByClient(sessions, projects, [acme, other], off, now, zone)
     expect(rows.map((r) => [r.clientId, r.count, r.billedMs / HOUR])).toEqual([
       ['c1', 3, 4], // a, b, april
       ['c2', 1, 1],
@@ -127,7 +168,7 @@ describe('createBatch', () => {
     sessions,
     projects,
     client: acme,
-    rounding: { minutes: 6, mode: 'up' as const },
+    rounding: { minutes: 6, mode: 'up' as const, scope: 'day' as const },
   }
 
   it('creates the batch and locks each session with its current rate', () => {
@@ -139,6 +180,7 @@ describe('createBatch', () => {
       paidAt: null,
       roundingMinutes: 6,
       roundingMode: 'up',
+      roundingScope: 'day',
     })
     expect(changes).toEqual([
       {

@@ -20,7 +20,7 @@ import { CheckInput, Field } from '../components/Field'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
-import { amountLabel } from './format'
+import { amountLabel, roundingLabel } from './format'
 import { SessionLine } from './SessionLine'
 import styles from './BillingView.module.css'
 
@@ -73,7 +73,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
     [unbilledSessions, projects, client.id, range],
   )
   const chosen = candidates.filter((s) => !excluded.has(s.id))
-  const summary = billingSummary(chosen, projects, client, rounding, now)
+  const summary = billingSummary(chosen, projects, client, rounding, now, zone)
   const projectById = new Map(projects.map((p) => [p.id, p]))
 
   function toggle(id: string, include: boolean) {
@@ -144,7 +144,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
           <span>
             {chosen.length} of {candidates.length} sessions
             {rounding.minutes > 0 &&
-              ` · rounded ${rounding.mode} to ${rounding.minutes} min (actual ${formatClock(summary.ms)})`}
+              ` · ${roundingLabel(rounding)} (actual ${formatClock(summary.ms)})`}
           </span>
           <strong>
             {formatClock(summary.billedMs)} · {amountLabel(summary.amount)}

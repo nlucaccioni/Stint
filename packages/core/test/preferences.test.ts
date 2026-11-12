@@ -26,6 +26,7 @@ describe('preferences', () => {
       favorites: [null, null, null, null, null, null, null, null, null],
       billingRoundingMinutes: 0,
       billingRoundingMode: 'up',
+      billingRoundingScope: 'project',
     })
   })
 

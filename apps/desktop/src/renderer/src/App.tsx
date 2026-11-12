@@ -255,6 +255,7 @@ export function App() {
                   rounding={{
                     minutes: prefs.preferences.billingRoundingMinutes,
                     mode: prefs.preferences.billingRoundingMode,
+                    scope: prefs.preferences.billingRoundingScope,
                   }}
                   zone={zone}
                   onCreateBatch={api.createBatch}

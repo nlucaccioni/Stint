@@ -76,9 +76,17 @@ export interface BillingBatch extends SyncFields {
   /** Billing rounding in effect when the batch was created (0 = none). */
   roundingMinutes: number
   roundingMode: RoundingMode
+  /** What was rounded. Batches made before this setting existed rounded each session. */
+  roundingScope: RoundingScope
 }
 
 export type RoundingMode = 'up' | 'nearest'
+
+/**
+ * What billing rounding applies to: each project's total in a batch, each
+ * project's time per day, or each session.
+ */
+export type RoundingScope = 'project' | 'day' | 'session'
 
 export type BillingStatus = 'unbilled' | 'billed' | 'paid'
 

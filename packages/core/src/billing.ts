@@ -6,7 +6,7 @@ import { update, type ChangeContext, type SessionChange } from './changes'
 import { StintError } from './errors'
 import { newId as defaultNewId } from './ids'
 import { effectiveRate, exactAmountCents } from './rates'
-import { sessionDuration } from './time'
+import { dayRange, sessionDuration } from './time'
 import type {
   BillingBatch,
   BillingStatus,
@@ -14,6 +14,7 @@ import type {
   Money,
   Project,
   RoundingMode,
+  RoundingScope,
   Session,
   TimeRange,
 } from './types'
@@ -36,15 +37,18 @@ export function isLocked(session: Pick<Session, 'billingBatchId'>): boolean {
 // Rounding
 
 export interface Rounding {
-  /** Round each session to this many minutes; 0 = no rounding. */
+  /** Round to this many minutes; 0 = no rounding. */
   minutes: number
   mode: RoundingMode
+  scope: RoundingScope
 }
 
 export const ROUNDING_STEPS = [0, 1, 5, 6, 10, 15, 30, 60] as const
 
-/** A session's billed length after rounding (per session, as most invoicing tools do). */
-export function roundDuration(ms: number, rounding: Rounding): number {
+export const ROUNDING_SCOPES: readonly RoundingScope[] = ['project', 'day', 'session']
+
+/** A length of time after rounding. */
+export function roundDuration(ms: number, rounding: Pick<Rounding, 'minutes' | 'mode'>): number {
   if (rounding.minutes <= 0 || ms <= 0) return ms
   const step = rounding.minutes * 60_000
   const steps = rounding.mode === 'up' ? Math.ceil(ms / step) : Math.round(ms / step)
@@ -92,6 +96,11 @@ export interface BillingSummary {
 /**
  * Totals for sessions billed (or about to be billed) together for one client.
  * Uses each session's recorded rate if billed, otherwise the current rate.
+ *
+ * Rounding applies to groups of sessions, by `rounding.scope`: each project's
+ * total, each project's time per day (in `zone`), or each session. Sessions at
+ * different rates are never rounded together, so a group is always one line on
+ * an invoice.
  */
 export function billingSummary(
   sessions: readonly Session[],
@@ -99,22 +108,36 @@ export function billingSummary(
   client: Client,
   rounding: Rounding,
   now: number,
+  zone: string,
 ): BillingSummary {
   const projectById = new Map(projects.map((p) => [p.id, p]))
+  const groups = new Map<string, { ms: number; rate: number | null }>()
   let ms = 0
+  for (const s of sessions) {
+    const duration = sessionDuration(s, now)
+    ms += duration
+    const project = projectById.get(s.projectId)
+    const rate =
+      s.billedRateCents ?? (project ? (effectiveRate(project, client)?.cents ?? null) : null)
+    const key =
+      rounding.scope === 'session'
+        ? s.id
+        : rounding.scope === 'day'
+          ? `${s.projectId}|${rate}|${dayRange(s.startedAt, zone).start}`
+          : `${s.projectId}|${rate}`
+    const group = groups.get(key)
+    if (group) group.ms += duration
+    else groups.set(key, { ms: duration, rate })
+  }
   let billedMs = 0
   let cents = 0
   let hasRate = false
-  for (const s of sessions) {
-    const duration = sessionDuration(s, now)
-    const billed = roundDuration(duration, rounding)
-    ms += duration
+  for (const group of groups.values()) {
+    const billed = roundDuration(group.ms, rounding)
     billedMs += billed
-    const project = projectById.get(s.projectId)
-    const rate = s.billedRateCents ?? (project ? effectiveRate(project, client)?.cents : null)
-    if (rate != null) {
+    if (group.rate !== null) {
       hasRate = true
-      cents += exactAmountCents(billed, rate)
+      cents += exactAmountCents(billed, group.rate)
     }
   }
   return {
@@ -138,6 +161,7 @@ export function unbilledByClient(
   clients: readonly Client[],
   rounding: Rounding,
   now: number,
+  zone: string,
 ): UnbilledClient[] {
   const result: UnbilledClient[] = []
   for (const client of clients) {
@@ -146,7 +170,7 @@ export function unbilledByClient(
     result.push({
       clientId: client.id,
       oldestStartedAt: own[0]!.startedAt,
-      ...billingSummary(own, projects, client, rounding, now),
+      ...billingSummary(own, projects, client, rounding, now, zone),
     })
   }
   return result.sort((a, b) => b.billedMs - a.billedMs)
@@ -218,6 +242,7 @@ export function createBatch(
     note: input.note.trim(),
     roundingMinutes: context.rounding.minutes,
     roundingMode: context.rounding.mode,
+    roundingScope: context.rounding.scope,
   }
   return {
     batch,

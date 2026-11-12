@@ -73,6 +73,7 @@ export function batch(overrides: Partial<BillingBatch> = {}): BillingBatch {
     note: '',
     roundingMinutes: 0,
     roundingMode: 'up',
+    roundingScope: 'project',
     ...overrides,
   }
 }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { mkdtempSync, rmSync } from 'node:fs'
+import { DatabaseSync } from 'node:sqlite'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
@@ -79,6 +80,24 @@ describe('migrations', () => {
     newer.exec(`PRAGMA user_version = ${migrations.length + 1}`)
     newer.close()
     expect(() => openDatabase(path)).toThrow(/newer than this app supports/)
+  })
+
+  it('keeps per-session rounding on batches made before rounding had a scope', () => {
+    const path = tempDbPath()
+    const old = new DatabaseSync(path)
+    for (const sql of migrations.slice(0, 5)) old.exec(sql)
+    old.exec(`
+      PRAGMA user_version = 5;
+      INSERT INTO billing_batches (id, client_id, range_start, range_end, reference, billed_at,
+        rounding_minutes, rounding_mode, created_at, updated_at, device_id)
+      VALUES ('b1', 'c1', 0, 1, '', 0, 15, 'up', 0, 0, 'dev');
+    `)
+    old.close()
+    const upgraded = openDatabase(path)
+    expect(upgraded.prepare('SELECT rounding_scope FROM billing_batches').get()).toEqual({
+      rounding_scope: 'session',
+    })
+    upgraded.close()
   })
 })
 

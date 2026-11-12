@@ -208,6 +208,7 @@ const preferenceEdits = z.strictObject({
   favorites: z.array(id.nullable()).max(20).optional(),
   billingRoundingMinutes: z.number().optional(),
   billingRoundingMode: z.enum(['up', 'nearest']).optional(),
+  billingRoundingScope: z.enum(['project', 'day', 'session']).optional(),
 })
 const timeZone = z.string().refine(isTimeZone, 'Unknown time zone')
 const reference = z.string().max(500)
@@ -258,7 +259,11 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
 
   function rounding() {
     const prefs = getPreferences(db)
-    return { minutes: prefs.billingRoundingMinutes, mode: prefs.billingRoundingMode }
+    return {
+      minutes: prefs.billingRoundingMinutes,
+      mode: prefs.billingRoundingMode,
+      scope: prefs.billingRoundingScope,
+    }
   }
 
   function hotkeys() {
