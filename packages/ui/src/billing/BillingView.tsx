@@ -19,7 +19,7 @@ import { Card } from '../components/Card'
 import tableStyles from '../components/Table.module.css'
 import { useNow } from '../timer/useNow'
 import { BatchDialog, type BatchDialogActions } from './BatchDialog'
-import { CreateBatchDialog, type NewBatchValues } from './CreateBatchDialog'
+import { CreateBatchDialog, type BillTarget, type NewBatchValues } from './CreateBatchDialog'
 import { amountLabel, formatDay } from './format'
 import styles from './BillingView.module.css'
 
@@ -36,7 +36,7 @@ export interface BillingViewProps extends BatchDialogActions {
   onCreateBatch: (values: NewBatchValues) => Promise<unknown>
 }
 
-type Open = { kind: 'create'; clientId: string } | { kind: 'batch'; batchId: string } | null
+type Open = { kind: 'create'; target: BillTarget } | { kind: 'batch'; batchId: string } | null
 
 export function BillingView(props: BillingViewProps) {
   const { clients, projects, batches, unbilledSessions, billedSessions, rounding, zone } = props
@@ -55,16 +55,18 @@ export function BillingView(props: BillingViewProps) {
     [unbilledSessions, projects, clients, rounding, now, zone],
   )
 
-  // Each batch's figures, using the rounding it was created with.
+  // Each batch's figures, using the rounding it was created with, and the
+  // projects its sessions are from (derived, never stored).
   const summaries = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof billingSummary>>()
+    const map = new Map<string, BatchFigures>()
     for (const batch of batches) {
       const client = clientById.get(batch.clientId)
       if (!client) continue
       const own = billedSessions.filter((s) => s.billingBatchId === batch.id)
-      map.set(
-        batch.id,
-        billingSummary(
+      const ids = new Set(own.map((s) => s.projectId))
+      map.set(batch.id, {
+        projectNames: projects.filter((p) => ids.has(p.id)).map((p) => p.name),
+        ...billingSummary(
           own,
           projects,
           client,
@@ -72,7 +74,7 @@ export function BillingView(props: BillingViewProps) {
           now,
           zone,
         ),
-      )
+      })
     }
     return map
   }, [batches, billedSessions, projects, clientById, now, zone])
@@ -83,7 +85,16 @@ export function BillingView(props: BillingViewProps) {
 
   return (
     <section className={styles.view}>
-      <h1 className={styles.heading}>Billing</h1>
+      <header className={styles.header}>
+        <h1 className={styles.heading}>Billing</h1>
+        {unbilled.length > 0 && (
+          <Button
+            onClick={() => setOpen({ kind: 'create', target: { clientId: unbilled[0]!.clientId } })}
+          >
+            Create Batch
+          </Button>
+        )}
+      </header>
 
       <Card
         compact
@@ -119,7 +130,9 @@ export function BillingView(props: BillingViewProps) {
                     <Button
                       size="sm"
                       variant="tertiary"
-                      onClick={() => setOpen({ kind: 'create', clientId: row.clientId })}
+                      onClick={() =>
+                        setOpen({ kind: 'create', target: { clientId: row.clientId } })
+                      }
                     >
                       Create Batch
                     </Button>
@@ -162,9 +175,10 @@ export function BillingView(props: BillingViewProps) {
         />
       </Card>
 
-      {open?.kind === 'create' && clientById.get(open.clientId) && (
+      {open?.kind === 'create' && clientById.get(open.target.clientId) && (
         <CreateBatchDialog
-          client={clientById.get(open.clientId)!}
+          clients={clients}
+          initial={open.target}
           projects={projects}
           unbilledSessions={unbilledSessions}
           rounding={rounding}
@@ -192,9 +206,14 @@ export function BillingView(props: BillingViewProps) {
   )
 }
 
+type BatchFigures = ReturnType<typeof billingSummary> & {
+  /** The projects of the batch's sessions, in the user's order. */
+  projectNames: string[]
+}
+
 function BatchTable(props: {
   batches: readonly BillingBatch[]
-  summaries: ReadonlyMap<string, ReturnType<typeof billingSummary>>
+  summaries: ReadonlyMap<string, BatchFigures>
   clientById: ReadonlyMap<string, Client>
   zone: string
   dateHeading: string
@@ -229,6 +248,13 @@ function BatchTable(props: {
             >
               <th scope="row">
                 <ClientName client={props.clientById.get(b.clientId)} />
+                {sum && sum.projectNames.length > 0 && (
+                  <span className={styles.projects}>
+                    {sum.projectNames.length > 2
+                      ? `${sum.projectNames.length} Projects`
+                      : sum.projectNames.join(', ')}
+                  </span>
+                )}
               </th>
               <td className={styles.muted}>{b.reference || 'No Reference'}</td>
               <td className={styles.muted}>{props.dateColumn(b)}</td>

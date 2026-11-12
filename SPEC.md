@@ -212,13 +212,13 @@ All editing is allowed on unbilled sessions:
 
 ### Billing batches
 
-- Create: pick a client and date range. Stint gathers all unbilled, billable, finished sessions that _started_ within the range (whole sessions; running timers excluded); the user can deselect individual sessions before confirming.
+- Create: pick a client, or one of its projects, and a date range. Stint gathers all unbilled, billable, finished sessions of that client or project that _started_ within the range (whole sessions; running timers excluded); the user can deselect individual sessions before confirming. A batch always belongs to a client; which projects it covers is derived from its sessions, never stored.
 - Record a free-text `reference` for where it was invoiced, a billed date, and an optional note.
 - Each session records its effective rate (`billedRateCents`) and the batch records the rounding in effect, so later rate or setting changes never alter a sent invoice.
-- Forgotten sessions can be added to an unpaid batch.
+- Forgotten sessions can be added to an unpaid batch. For a batch whose sessions are all from one project, only that project's sessions are offered.
 - Mark paid: set `paidAt` (date picker, defaults to today). Can be un-marked.
 - Unlock one session (removes it from its batch, with confirmation). Un-bill a whole batch (releases all sessions) only when unpaid; mark it unpaid first.
-- Views: unbilled time per client (hours and amount), outstanding batches (billed, not paid, with days waiting), paid history.
+- Views: unbilled time per client (hours and amount), outstanding batches (billed, not paid, with days waiting), paid history. Each batch shows its projects under the client ("Website", "Website, App", or "3 Projects"), and the batch dialog lists what was billed per project and rate (time after rounding, amount), like the invoice's lines. Each line's amount is rounded to the cent and the total is their sum.
 - Non-billable time doesn't appear in billing views (it stays in the log and totals).
 - Partial payments are out of scope for v1.
 - **Rounding** (setting, off by default): round billed time up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.

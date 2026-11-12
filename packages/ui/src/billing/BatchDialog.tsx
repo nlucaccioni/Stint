@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// One billing batch: its sessions, details, paid status, and the deliberate
-// actions that change what's billed (unlock one session, add more, un-bill all).
+// One billing batch: what it billed per project, its sessions, details, paid
+// status, and the deliberate actions that change what's billed (unlock one
+// session, add more, un-bill all).
 import { useState, type FormEvent } from 'react'
 import { LockOpen } from 'lucide-react'
 import {
   batchCandidates,
+  billingLines,
   billingSummary,
   formatClock,
+  formatMoney,
   fromLocalParts,
   toLocalParts,
   type BatchEdits,
@@ -56,7 +59,13 @@ export function BatchDialog(props: BatchDialogProps) {
     scope: batch.roundingScope,
   }
   const summary = billingSummary(sessions, projects, client, rounding, now, zone)
+  const lines = billingLines(sessions, projects, client, rounding, now, zone)
   const projectById = new Map(projects.map((p) => [p.id, p]))
+  // A batch for one project: shown in the title, and only that project's time can be added.
+  const onlyProject =
+    sessions.length > 0 && sessions.every((s) => s.projectId === sessions[0]!.projectId)
+      ? projectById.get(sessions[0]!.projectId)
+      : undefined
 
   const [reference, setReference] = useState(batch.reference)
   const [note, setNote] = useState(batch.note)
@@ -81,7 +90,9 @@ export function BatchDialog(props: BatchDialogProps) {
 
   return (
     <Dialog
-      title={`${client.name}${batch.reference ? ` · ${batch.reference}` : ''}`}
+      title={[client.name, onlyProject?.name, batch.reference || undefined]
+        .filter(Boolean)
+        .join(' · ')}
       onClose={props.onClose}
     >
       <form className={formStyles.form} onSubmit={save}>
@@ -91,6 +102,40 @@ export function BatchDialog(props: BatchDialogProps) {
             : `Billed ${formatDay(batch.billedAt, zone)}, waiting for payment.`}
           {batch.roundingMinutes > 0 && ` ${capitalize(roundingLabel(rounding))}.`}
         </p>
+
+        <section className={styles.billedFor} aria-label="Billed For">
+          <h3 className={styles.billedForTitle}>Billed For</h3>
+          <table className={styles.lines}>
+            <tbody>
+              {lines.map((line) => (
+                <tr key={`${line.projectId}|${line.rateCents}`}>
+                  <th scope="row">{projectById.get(line.projectId)?.name ?? 'Unknown Project'}</th>
+                  <td className={styles.muted}>
+                    {line.rateCents === null
+                      ? 'No Rate'
+                      : `${formatMoney(line.rateCents, client.currency)}/hr`}
+                  </td>
+                  <td className={styles.num}>{formatClock(line.billedMs)}</td>
+                  <td className={styles.num}>
+                    {line.amountCents === null
+                      ? '—'
+                      : formatMoney(line.amountCents, client.currency)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Total</th>
+                <td className={styles.muted}>
+                  {summary.count} {summary.count === 1 ? 'session' : 'sessions'}
+                </td>
+                <td className={styles.num}>{formatClock(summary.billedMs)}</td>
+                <td className={styles.num}>{amountLabel(summary.amount)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
 
         <ul className={styles.sessions} aria-label="Sessions in This Batch">
           {sessions.map((s) => (
@@ -136,19 +181,11 @@ export function BatchDialog(props: BatchDialogProps) {
             Unlocking removes this session from the batch so it can be edited. It becomes unbilled.
           </p>
         )}
-        <div className={styles.summary}>
-          <span>
-            {summary.count} {summary.count === 1 ? 'session' : 'sessions'}
-          </span>
-          <strong>
-            {formatClock(summary.billedMs)} · {amountLabel(summary.amount)}
-          </strong>
-        </div>
-
         {!isPaid && adding && (
           <AddSessions
             batch={batch}
             client={client}
+            project={onlyProject}
             projects={projects}
             unbilledSessions={props.unbilledSessions}
             zone={zone}
@@ -246,6 +283,8 @@ export function BatchDialog(props: BatchDialogProps) {
 function AddSessions(props: {
   batch: BillingBatch
   client: Client
+  /** Set for a one-project batch: only that project's time is offered. */
+  project: Project | undefined
   projects: readonly Project[]
   unbilledSessions: readonly Session[]
   zone: string
@@ -253,16 +292,19 @@ function AddSessions(props: {
   onAdd: (ids: string[]) => void
   onCancel: () => void
 }) {
-  const candidates = batchCandidates(props.unbilledSessions, props.projects, props.client.id, {
-    start: 0,
-    end: Infinity,
-  })
+  const candidates = batchCandidates(
+    props.unbilledSessions,
+    props.projects,
+    props.client.id,
+    { start: 0, end: Infinity },
+    props.project?.id,
+  )
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
   const projectById = new Map(props.projects.map((p) => [p.id, p]))
   if (candidates.length === 0) {
     return (
       <p className={formStyles.note}>
-        No other unbilled time for {props.client.name}.{' '}
+        No other unbilled time for {props.project?.name ?? props.client.name}.{' '}
         <Button size="sm" variant="ghost" onClick={props.onCancel}>
           OK
         </Button>

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   addToBatch,
   batchCandidates,
+  billingLines,
   billingSummary,
   createBatch,
   daysWaiting,
@@ -63,6 +64,13 @@ describe('batchCandidates', () => {
   it('takes unbilled, billable, finished sessions of the client that started in range', () => {
     const march = { start: at(2026, 3, 1), end: at(2026, 4, 1) }
     expect(batchCandidates(sessions, projects, 'c1', march).map((x) => x.id)).toEqual(['a', 'b'])
+  })
+
+  it('can take just one project of the client', () => {
+    const march = { start: at(2026, 3, 1), end: at(2026, 4, 1) }
+    expect(batchCandidates(sessions, projects, 'c1', march, 'p2').map((x) => x.id)).toEqual(['b'])
+    // A project of another client gives nothing.
+    expect(batchCandidates(sessions, projects, 'c1', march, 'p9')).toEqual([])
   })
 
   it('includes a session that started in range even if it ends after', () => {
@@ -141,6 +149,78 @@ describe('billingSummary', () => {
       billingSummary([s('a', 2, 1)], projects, client({ hourlyRateCents: null }), off, now, zone)
         .amount,
     ).toBeNull()
+  })
+})
+
+describe('billingLines', () => {
+  it('has one line per project and rate, each rounded on its own', () => {
+    const mixed = [
+      s('w1', 2, 0, { endedAt: at(2026, 3, 2, 9, 50) }),
+      s('app', 3, 0, { projectId: 'p2', endedAt: at(2026, 3, 3, 9, 7) }),
+      s('w2', 4, 0, { endedAt: at(2026, 3, 4, 9, 50) }),
+      s('old', 5, 0, { endedAt: at(2026, 3, 5, 9, 7), billedRateCents: 5_000 }),
+    ]
+    const lines = billingLines(
+      mixed,
+      projects,
+      acme,
+      { minutes: 15, mode: 'up', scope: 'project' },
+      now,
+      'UTC',
+    )
+    expect(lines).toEqual([
+      {
+        projectId: 'p1',
+        rateCents: 10_000,
+        count: 2,
+        ms: 100 * MIN,
+        billedMs: 105 * MIN,
+        amountCents: 17_500,
+      },
+      {
+        projectId: 'p2',
+        rateCents: 15_000,
+        count: 1,
+        ms: 7 * MIN,
+        billedMs: 15 * MIN,
+        amountCents: 3_750,
+      },
+      {
+        projectId: 'p1',
+        rateCents: 5_000,
+        count: 1,
+        ms: 7 * MIN,
+        billedMs: 15 * MIN,
+        amountCents: 1_250,
+      },
+    ])
+  })
+
+  it('leaves the amount out when there is no rate', () => {
+    const [line] = billingLines(
+      [s('a', 2, 1)],
+      projects,
+      client({ hourlyRateCents: null }),
+      off,
+      now,
+      'UTC',
+    )
+    expect(line).toMatchObject({ rateCents: null, billedMs: HOUR, amountCents: null })
+  })
+
+  it('adds up to the summary, rounding each line to the cent', () => {
+    // 20 minutes at $100.01 and $100.01: $33.336… each, so $33.34 twice.
+    const odd = project({ id: 'p3', clientId: 'c1', hourlyRateCents: 10_001 })
+    const odd2 = project({ id: 'p4', clientId: 'c1', hourlyRateCents: 10_001 })
+    const two = [
+      s('x', 2, 0, { projectId: 'p3', endedAt: at(2026, 3, 2, 9, 20) }),
+      s('y', 2, 0, { projectId: 'p4', endedAt: at(2026, 3, 2, 9, 20) }),
+    ]
+    const all = [...projects, odd, odd2]
+    expect(billingLines(two, all, acme, off, now, 'UTC').map((l) => l.amountCents)).toEqual([
+      3_334, 3_334,
+    ])
+    expect(billingSummary(two, all, acme, off, now, 'UTC').amount?.cents).toBe(6_668)
   })
 })
 

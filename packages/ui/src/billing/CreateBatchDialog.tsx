@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Bill a client: pick a date range, untick anything to leave out, add a reference.
+// Bill a client or one of its projects: pick a date range, untick anything to
+// leave out, add a reference.
 import { useMemo, useState, type FormEvent } from 'react'
 import {
   batchCandidates,
@@ -17,6 +18,7 @@ import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { DateInput } from '../components/DateInput'
 import { CheckInput, Field } from '../components/Field'
+import { Select, type SelectOption } from '../components/Select'
 import formStyles from '../catalog/Form.module.css'
 import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
@@ -34,8 +36,16 @@ export interface NewBatchValues {
   note: string
 }
 
+/** What to bill: a whole client, or one of its projects. */
+export interface BillTarget {
+  clientId: string
+  projectId?: string
+}
+
 export interface CreateBatchDialogProps {
-  client: Client
+  clients: readonly Client[]
+  /** Chosen when the dialog opens; can be changed in it. */
+  initial: BillTarget
   projects: readonly Project[]
   unbilledSessions: readonly Session[]
   rounding: Rounding
@@ -44,16 +54,40 @@ export interface CreateBatchDialogProps {
   onClose: () => void
 }
 
+const ALL = { start: 0, end: Infinity }
+
 export function CreateBatchDialog(props: CreateBatchDialogProps) {
-  const { client, projects, unbilledSessions, rounding, zone } = props
+  const { clients, projects, unbilledSessions, rounding, zone } = props
   const now = useNow(true, 60_000)
   const today = toLocalParts(now, zone).date
+  const [target, setTarget] = useState(props.initial)
+  const client = clients.find((c) => c.id === target.clientId)!
+  const project = projects.find((p) => p.id === target.projectId)
+  const unbilledFor = (t: BillTarget) =>
+    batchCandidates(unbilledSessions, projects, t.clientId, ALL, t.projectId)
 
-  // Default range: from the oldest unbilled session for this client to today.
-  const [from, setFrom] = useState(() => {
-    const all = batchCandidates(unbilledSessions, projects, client.id, { start: 0, end: Infinity })
+  // Each client with unbilled time, then its projects that have some, indented.
+  const targets = useMemo(() => {
+    const options: SelectOption<string>[] = []
+    for (const c of clients) {
+      const own = batchCandidates(unbilledSessions, projects, c.id, ALL)
+      if (own.length === 0) continue
+      options.push({ value: `client:${c.id}`, label: c.name })
+      const withTime = new Set(own.map((s) => s.projectId))
+      for (const p of projects) {
+        if (withTime.has(p.id))
+          options.push({ value: `project:${p.id}`, label: p.name, indent: true })
+      }
+    }
+    return options
+  }, [clients, projects, unbilledSessions])
+
+  // Default range: from the oldest unbilled session for what's chosen, to today.
+  const oldest = (t: BillTarget) => {
+    const all = unbilledFor(t)
     return all.length ? toLocalParts(all[0]!.startedAt, zone).date : today
-  })
+  }
+  const [from, setFrom] = useState(() => oldest(props.initial))
   const [to, setTo] = useState(today)
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set())
   const [reference, setReference] = useState('')
@@ -69,12 +103,26 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   }, [from, to, zone])
 
   const candidates = useMemo(
-    () => (range ? batchCandidates(unbilledSessions, projects, client.id, range) : []),
-    [unbilledSessions, projects, client.id, range],
+    () =>
+      range
+        ? batchCandidates(unbilledSessions, projects, target.clientId, range, target.projectId)
+        : [],
+    [unbilledSessions, projects, target, range],
   )
   const chosen = candidates.filter((s) => !excluded.has(s.id))
   const summary = billingSummary(chosen, projects, client, rounding, now, zone)
   const projectById = new Map(projects.map((p) => [p.id, p]))
+
+  function choose(value: string) {
+    const [kind, id] = value.split(':') as ['client' | 'project', string]
+    const next: BillTarget =
+      kind === 'client'
+        ? { clientId: id }
+        : { clientId: projects.find((p) => p.id === id)!.clientId, projectId: id }
+    setTarget(next)
+    setFrom(oldest(next))
+    setExcluded(new Set())
+  }
 
   function toggle(id: string, include: boolean) {
     const next = new Set(excluded)
@@ -103,8 +151,15 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   }
 
   return (
-    <Dialog title={`Bill ${client.name}`} onClose={props.onClose}>
+    <Dialog title="Create Batch" onClose={props.onClose}>
       <form className={formStyles.form} onSubmit={submit}>
+        <Field label="Client or Project">
+          <Select
+            value={target.projectId ? `project:${target.projectId}` : `client:${target.clientId}`}
+            options={targets}
+            onChange={choose}
+          />
+        </Field>
         <div className={formStyles.row}>
           <div className={formStyles.grow}>
             <Field label="From">
@@ -119,7 +174,9 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         </div>
 
         {candidates.length === 0 ? (
-          <p className={formStyles.note}>No unbilled time for {client.name} in this range.</p>
+          <p className={formStyles.note}>
+            No unbilled time for {project?.name ?? client.name} in this range.
+          </p>
         ) : (
           <ul className={styles.sessions} aria-label="Sessions to Bill">
             {candidates.map((s) => (

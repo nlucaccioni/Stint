@@ -6,6 +6,13 @@
   gap: var(--space-4);
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .heading {
   margin: 0;
   font-size: var(--text-xl);
@@ -14,6 +21,19 @@
 
 .muted {
   color: var(--color-text-muted);
+}
+
+/* What a batch was for, under its client: "Website", "Website, App", "3 Projects".
+   Lined up with the client's name, past its dot. */
+.projects {
+  display: block;
+  overflow: hidden;
+  margin: 2px 0 0 calc(10px + var(--space-2));
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .name {
@@ -99,4 +119,59 @@
 /* Un-bill sits at the far right of the Paid On row. */
 .unbill {
   margin-left: auto;
+}
+
+/* The batch dialog's "Billed For": one line per project (and rate), then the total,
+   like the lines of the invoice. */
+.billedFor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.billedForTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.lines {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  border-spacing: 0;
+  font-size: var(--text-sm);
+}
+
+.lines th,
+.lines td {
+  padding: var(--space-1) var(--space-3);
+  font-weight: 400;
+  text-align: left;
+}
+
+.lines tr + tr > *,
+.lines tfoot > tr > * {
+  border-top: 1px solid var(--color-border);
+}
+
+.lines tfoot th,
+.lines tfoot .num {
+  font-weight: 700;
+}
+
+.lines th {
+  width: 100%;
+}
+
+.lines .num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lines .muted {
+  white-space: nowrap;
 }

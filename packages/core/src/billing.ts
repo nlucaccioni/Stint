@@ -59,16 +59,22 @@ export function roundDuration(ms: number, rounding: Pick<Rounding, 'minutes' | '
 // What can be billed
 
 /**
- * Sessions that can go into a new batch for `clientId`: unbilled, billable,
- * finished, and *started* within `range` (whole sessions; you can't bill half).
+ * Sessions that can go into a new batch for `clientId` (or just its project
+ * `projectId`): unbilled, billable, finished, and *started* within `range` (whole
+ * sessions; you can't bill half).
  */
 export function batchCandidates(
   sessions: readonly Session[],
   projects: readonly Project[],
   clientId: string,
   range: TimeRange,
+  projectId?: string,
 ): Session[] {
-  const ownProjects = new Set(projects.filter((p) => p.clientId === clientId).map((p) => p.id))
+  const ownProjects = new Set(
+    projects
+      .filter((p) => p.clientId === clientId && (projectId === undefined || p.id === projectId))
+      .map((p) => p.id),
+  )
   return sessions
     .filter(
       (s) =>
@@ -93,14 +99,83 @@ export interface BillingSummary {
   amount: Money | null
 }
 
+/** One line of an invoice: a project's time at one rate. */
+export interface BillingLine {
+  projectId: string
+  /** Hourly rate in cents; null when neither the project nor the client has one. */
+  rateCents: number | null
+  count: number
+  /** Actual tracked time. */
+  ms: number
+  /** Time as billed (after rounding). */
+  billedMs: number
+  /** Rounded to the cent; null without a rate. */
+  amountCents: number | null
+}
+
 /**
- * Totals for sessions billed (or about to be billed) together for one client.
- * Uses each session's recorded rate if billed, otherwise the current rate.
+ * Sessions billed (or about to be billed) together for one client, as invoice
+ * lines: one per project and rate, in the order each first appears. Uses each
+ * session's recorded rate if billed, otherwise the current rate.
  *
  * Rounding applies to groups of sessions, by `rounding.scope`: each project's
  * total, each project's time per day (in `zone`), or each session. Sessions at
- * different rates are never rounded together, so a group is always one line on
- * an invoice.
+ * different rates are never rounded together, so a group is always inside one line.
+ */
+export function billingLines(
+  sessions: readonly Session[],
+  projects: readonly Project[],
+  client: Client,
+  rounding: Rounding,
+  now: number,
+  zone: string,
+): BillingLine[] {
+  const projectById = new Map(projects.map((p) => [p.id, p]))
+  const lines = new Map<string, BillingLine>()
+  const groups = new Map<string, { line: BillingLine; ms: number }>()
+  for (const s of sessions) {
+    const duration = sessionDuration(s, now)
+    const project = projectById.get(s.projectId)
+    const rate =
+      s.billedRateCents ?? (project ? (effectiveRate(project, client)?.cents ?? null) : null)
+    const lineKey = `${s.projectId}|${rate}`
+    let line = lines.get(lineKey)
+    if (!line) {
+      line = {
+        projectId: s.projectId,
+        rateCents: rate,
+        count: 0,
+        ms: 0,
+        billedMs: 0,
+        amountCents: null,
+      }
+      lines.set(lineKey, line)
+    }
+    line.count += 1
+    line.ms += duration
+    const groupKey =
+      rounding.scope === 'session'
+        ? s.id
+        : rounding.scope === 'day'
+          ? `${lineKey}|${dayRange(s.startedAt, zone).start}`
+          : lineKey
+    const group = groups.get(groupKey)
+    if (group) group.ms += duration
+    else groups.set(groupKey, { line, ms: duration })
+  }
+  for (const { line, ms } of groups.values()) line.billedMs += roundDuration(ms, rounding)
+  for (const line of lines.values()) {
+    if (line.rateCents !== null) {
+      line.amountCents = Math.round(exactAmountCents(line.billedMs, line.rateCents))
+    }
+  }
+  return [...lines.values()]
+}
+
+/**
+ * Totals for sessions billed (or about to be billed) together for one client:
+ * the sum of their invoice lines (see billingLines), so the total always matches
+ * the lines.
  */
 export function billingSummary(
   sessions: readonly Session[],
@@ -110,41 +185,15 @@ export function billingSummary(
   now: number,
   zone: string,
 ): BillingSummary {
-  const projectById = new Map(projects.map((p) => [p.id, p]))
-  const groups = new Map<string, { ms: number; rate: number | null }>()
-  let ms = 0
-  for (const s of sessions) {
-    const duration = sessionDuration(s, now)
-    ms += duration
-    const project = projectById.get(s.projectId)
-    const rate =
-      s.billedRateCents ?? (project ? (effectiveRate(project, client)?.cents ?? null) : null)
-    const key =
-      rounding.scope === 'session'
-        ? s.id
-        : rounding.scope === 'day'
-          ? `${s.projectId}|${rate}|${dayRange(s.startedAt, zone).start}`
-          : `${s.projectId}|${rate}`
-    const group = groups.get(key)
-    if (group) group.ms += duration
-    else groups.set(key, { ms: duration, rate })
-  }
-  let billedMs = 0
-  let cents = 0
-  let hasRate = false
-  for (const group of groups.values()) {
-    const billed = roundDuration(group.ms, rounding)
-    billedMs += billed
-    if (group.rate !== null) {
-      hasRate = true
-      cents += exactAmountCents(billed, group.rate)
-    }
-  }
+  const lines = billingLines(sessions, projects, client, rounding, now, zone)
+  const priced = lines.filter((l) => l.amountCents !== null)
   return {
     count: sessions.length,
-    ms,
-    billedMs,
-    amount: hasRate ? { currency: client.currency, cents: Math.round(cents) } : null,
+    ms: lines.reduce((n, l) => n + l.ms, 0),
+    billedMs: lines.reduce((n, l) => n + l.billedMs, 0),
+    amount: priced.length
+      ? { currency: client.currency, cents: priced.reduce((n, l) => n + l.amountCents!, 0) }
+      : null,
   }
 }
 
