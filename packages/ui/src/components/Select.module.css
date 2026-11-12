@@ -49,8 +49,9 @@
 }
 
 .label {
-  display: inline-flex;
-  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* After the value: what else is chosen, e.g. "· Website, App" in Create Batch. */
@@ -78,7 +79,8 @@
 }
 
 /* Open: the design's dropdown list (as in the color picker), under the trigger and
-   at least as wide; flips above when there's no room below. */
+   at least as wide; flips above when there's no room below. Long names end in "…"
+   rather than widening it past 320px (or the trigger, if that's wider). */
 .list {
   inset: auto;
   margin: 0;
@@ -86,6 +88,7 @@
   position-area: bottom span-right;
   position-try-fallbacks: flip-block;
   min-width: anchor-size(width);
+  max-width: max(anchor-size(width), 320px);
   max-height: 240px;
   overflow-y: auto;
   padding: 0;

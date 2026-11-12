@@ -128,7 +128,7 @@ export function ProjectPicker(props: ProjectPickerProps) {
               className={styles.option}
               onClick={() => pickClient(option)}
             >
-              <span className={styles.label}>
+              <span className={styles.label} title={option.client.name}>
                 <Dot color={option.client.color} />
                 {option.client.name}
               </span>
@@ -151,7 +151,9 @@ export function ProjectPicker(props: ProjectPickerProps) {
                   data-ticked={on || undefined}
                   onClick={() => pickProject(option.client.id, p.id)}
                 >
-                  <span>{p.name}</span>
+                  <span className={styles.label} title={p.name}>
+                    {p.name}
+                  </span>
                   {on && <Check className={styles.check} aria-hidden />}
                 </button>
               )

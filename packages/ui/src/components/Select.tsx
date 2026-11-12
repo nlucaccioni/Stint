@@ -129,7 +129,7 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
             data-indent={o.indent || undefined}
             onClick={() => choose(o.value)}
           >
-            <span className={styles.label}>
+            <span className={styles.label} title={o.label}>
               {o.color && <Dot color={o.color} />}
               {o.label}
             </span>
