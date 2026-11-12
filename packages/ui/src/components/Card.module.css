@@ -26,6 +26,13 @@
   gap: var(--space-3);
 }
 
+.titleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: var(--text-md);

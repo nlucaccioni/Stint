@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import { Check } from 'lucide-react'
+import { useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import {
   ROUNDING_STEPS,
   type Client,
@@ -12,6 +11,7 @@ import {
 } from '@stint/core'
 import { Card } from '../components/Card'
 import { Field } from '../components/Field'
+import { SavedNote, useSavedFlash } from '../components/SavedNote'
 import { Select } from '../components/Select'
 import formStyles from '../catalog/Form.module.css'
 import styles from './SettingsView.module.css'
@@ -29,6 +29,18 @@ const ROUNDING_SCOPE_HINTS: Record<RoundingScope, string> = {
   project: 'Adds up each project’s time in a batch, then rounds once.',
   day: 'Adds up each project’s time for each day, then rounds each day.',
   session: 'Rounds every session on its own. Short sessions add up quickly.',
+}
+
+/** The card each setting is in, where its "Saved" shows. */
+const SECTION: Record<keyof Preferences, string> = {
+  idleMinutes: 'timer',
+  nudgeHours: 'timer',
+  weekStartsOn: 'calendar',
+  defaultCurrency: 'calendar',
+  billingRoundingMinutes: 'billing',
+  billingRoundingMode: 'billing',
+  billingRoundingScope: 'billing',
+  favorites: 'favorites',
 }
 
 export function SettingsView({ preferences, projects, clients, onSave }: SettingsViewProps) {
@@ -49,11 +61,14 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   const weekdays = weekdayNames()
 
   // Each setting saves as soon as it changes (number fields when you leave them or
-  // press Enter), so there's no Save button to scroll down to or forget.
+  // press Enter), so there's no Save button to scroll down to or forget. "Saved"
+  // shows beside the title of the card it's in, where you're looking.
   function save<K extends keyof Preferences>(key: K, value: Preferences[K]) {
     setErrors((errs) => ({ ...errs, [key]: undefined }))
-    onSave({ [key]: value }).then(saved.show, (e: unknown) =>
-      setErrors((errs) => ({ ...errs, [key]: e instanceof Error ? e.message : String(e) })),
+    onSave({ [key]: value }).then(
+      () => saved.show(SECTION[key]),
+      (e: unknown) =>
+        setErrors((errs) => ({ ...errs, [key]: e instanceof Error ? e.message : String(e) })),
     )
   }
 
@@ -84,18 +99,9 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
 
   return (
     <section className={styles.view}>
-      <header className={styles.header}>
-        <h1 className={styles.heading}>Settings</h1>
-        {/* Always in the page so it can fade out; screen readers hear "Saved" when it appears. */}
-        <span className={styles.saved} data-shown={saved.shown || undefined} aria-hidden>
-          <Check size={14} /> Saved
-        </span>
-        <span className={styles.visuallyHidden} role="status">
-          {saved.shown ? 'Saved' : ''}
-        </span>
-      </header>
+      <h1 className={styles.heading}>Settings</h1>
       <div className={styles.form}>
-        <Card title="Timer">
+        <Card title="Timer" status={<SavedNote shown={saved.shownIn('timer')} />}>
           <Field
             label="Ask About Idle Time After (Minutes)"
             hint="When you come back after this long away, Stint asks whether to keep the time. 0 turns it off."
@@ -111,7 +117,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             <input {...numberProps('nudgeHours', nudge, setNudge)} />
           </Field>
         </Card>
-        <Card title="Calendar and Money">
+        <Card title="Calendar and Money" status={<SavedNote shown={saved.shownIn('calendar')} />}>
           <div className={formStyles.row}>
             <div className={formStyles.grow}>
               <Field label="Week Starts On" error={errors.weekStartsOn}>
@@ -139,7 +145,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             </div>
           </div>
         </Card>
-        <Card title="Billing">
+        <Card title="Billing" status={<SavedNote shown={saved.shownIn('billing')} />}>
           <div className={formStyles.row}>
             <div className={formStyles.grow}>
               <Field
@@ -197,7 +203,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
           </Field>
         </Card>
 
-        <Card title="Favorites">
+        <Card title="Favorites" status={<SavedNote shown={saved.shownIn('favorites')} />}>
           <p className={styles.intro}>
             Favorites 1–9 can be started from the tray menu and keyboard shortcuts (and later the MX
             Keypad).
@@ -220,21 +226,6 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
       </div>
     </section>
   )
-}
-
-/** "Saved" beside the heading for a couple of seconds after each save. */
-function useSavedFlash() {
-  const [shown, setShown] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  useEffect(() => () => clearTimeout(timer.current), [])
-  return {
-    shown,
-    show: () => {
-      setShown(true)
-      clearTimeout(timer.current)
-      timer.current = setTimeout(() => setShown(false), 2000)
-    },
-  }
 }
 
 function FavoritePickers(props: {

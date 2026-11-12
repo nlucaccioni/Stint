@@ -7,6 +7,8 @@ import styles from './Card.module.css'
 
 export interface CardProps {
   title: string
+  /** Shown right after the title, e.g. a brief "Saved". */
+  status?: ReactNode
   /** Shown on the right of the title row, e.g. a Reset button. */
   actions?: ReactNode
   /** When set, the card is empty: dashed outline, this message, no children. */
@@ -16,7 +18,7 @@ export interface CardProps {
   children?: ReactNode
 }
 
-export function Card({ title, actions, empty, compact, children }: CardProps) {
+export function Card({ title, status, actions, empty, compact, children }: CardProps) {
   return (
     <section
       className={styles.card}
@@ -24,7 +26,10 @@ export function Card({ title, actions, empty, compact, children }: CardProps) {
       data-compact={compact || undefined}
     >
       <header className={styles.header}>
-        <h2 className={styles.title}>{title}</h2>
+        <div className={styles.titleGroup}>
+          <h2 className={styles.title}>{title}</h2>
+          {status}
+        </div>
         {empty ? <p className={styles.emptyNote}>{empty}</p> : actions}
       </header>
       {!empty && children}
