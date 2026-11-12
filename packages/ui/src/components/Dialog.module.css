@@ -17,6 +17,10 @@
   flex-direction: column;
 }
 
+.dialog[data-wide] {
+  width: min(560px, calc(100vw - 2 * var(--space-4)));
+}
+
 .dialog::backdrop {
   background: rgb(0 0 0 / 0.4);
 }

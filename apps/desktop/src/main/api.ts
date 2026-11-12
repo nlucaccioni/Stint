@@ -5,6 +5,7 @@
 // be tested directly against an in-memory database.
 import { z } from 'zod'
 import {
+  ROUNDING_STEPS,
   addToBatch,
   assertBudgetHasRate,
   keyAtEnd,
@@ -220,6 +221,16 @@ const newBatch = z.strictObject({
   reference,
   billedAt: time,
   note,
+  // Changed for this batch in Create Batch; otherwise the default from Settings.
+  rounding: z
+    .strictObject({
+      minutes: z
+        .number()
+        .refine((m) => (ROUNDING_STEPS as readonly number[]).includes(m), 'Unknown rounding'),
+      mode: z.enum(['up', 'nearest']),
+      scope: z.enum(['project', 'day', 'session']),
+    })
+    .optional(),
 })
 const batchEdits = z.strictObject({
   reference: reference.optional(),
@@ -711,7 +722,7 @@ export function createApiHandlers(deps: ApiDeps): ApiHandlers {
             sessions: listUnbilledSessions(db),
             projects: listProjects(db),
             client,
-            rounding: rounding(),
+            rounding: input.rounding ?? rounding(),
           },
           ctx(),
         )

@@ -2,7 +2,7 @@
 // One billing batch: what it billed per project, its sessions, details, paid
 // status, and the deliberate actions that change what's billed (unlock one
 // session, add more, un-bill all).
-import { useState, type FormEvent } from 'react'
+import { useState, type CSSProperties, type FormEvent } from 'react'
 import { LockOpen } from 'lucide-react'
 import {
   batchCandidates,
@@ -95,8 +95,9 @@ export function BatchDialog(props: BatchDialogProps) {
         .filter(Boolean)
         .join(' · ')}
       onClose={props.onClose}
+      wide
     >
-      <form className={formStyles.form} onSubmit={save}>
+      <form className={`${formStyles.form} ${styles.fill}`} onSubmit={save}>
         <p className={formStyles.note}>
           {isPaid
             ? `Paid on ${formatDay(batch.paidAt!, zone)}.`
@@ -138,7 +139,11 @@ export function BatchDialog(props: BatchDialogProps) {
           </table>
         </section>
 
-        <ul className={styles.sessions} aria-label="Sessions in This Batch">
+        <ul
+          className={styles.sessions}
+          style={rowsStyle(sessions.length)}
+          aria-label="Sessions in This Batch"
+        >
           {sessions.map((s) => (
             <SessionLine
               key={s.id}
@@ -323,7 +328,11 @@ function AddSessions(props: {
   }
   return (
     <>
-      <ul className={styles.sessions} aria-label="Unbilled Sessions to Add">
+      <ul
+        className={styles.sessions}
+        style={rowsStyle(candidates.length)}
+        aria-label="Unbilled Sessions to Add"
+      >
         {candidates.map((s) => (
           <SessionLine
             key={s.id}
@@ -359,6 +368,11 @@ function AddSessions(props: {
       </div>
     </>
   )
+}
+
+/** A session list's smallest height: 3 rows, or all of them if fewer. */
+function rowsStyle(count: number): CSSProperties | undefined {
+  return count < 3 ? ({ '--rows': Math.max(count, 1) } as CSSProperties) : undefined
 }
 
 function capitalize(text: string): string {

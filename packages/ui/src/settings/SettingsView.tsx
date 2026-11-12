@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import {
-  ROUNDING_STEPS,
   type Client,
   type Preferences,
   type Project,
-  type RoundingMode,
-  type RoundingScope,
+  type Rounding,
   type WeekStartDay,
 } from '@stint/core'
 import { Card } from '../components/Card'
 import { Field } from '../components/Field'
 import { SavedNote, useSavedFlash } from '../components/SavedNote'
 import { Select } from '../components/Select'
+import { RoundingFields } from '../billing/RoundingFields'
 import formStyles from '../catalog/Form.module.css'
 import styles from './SettingsView.module.css'
 
@@ -25,11 +24,12 @@ export interface SettingsViewProps {
   onSave: (edits: Partial<Preferences>) => Promise<unknown>
 }
 
-const ROUNDING_SCOPE_HINTS: Record<RoundingScope, string> = {
-  project: 'Adds up each project’s time in a batch, then rounds once.',
-  day: 'Adds up each project’s time for each day, then rounds each day.',
-  session: 'Rounds every session on its own. Short sessions add up quickly.',
-}
+/** Each rounding field's preference. */
+const ROUNDING_KEYS = {
+  minutes: 'billingRoundingMinutes',
+  mode: 'billingRoundingMode',
+  scope: 'billingRoundingScope',
+} as const satisfies Record<keyof Rounding, keyof Preferences>
 
 /** The card each setting is in, where its "Saved" shows. */
 const SECTION: Record<keyof Preferences, string> = {
@@ -49,11 +49,11 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   const [weekStart, setWeekStart] = useState<WeekStartDay>(preferences.weekStartsOn)
   const [currency, setCurrency] = useState(preferences.defaultCurrency)
   const [favorites, setFavorites] = useState(preferences.favorites)
-  const [roundingMinutes, setRoundingMinutes] = useState(preferences.billingRoundingMinutes)
-  const [roundingMode, setRoundingMode] = useState<RoundingMode>(preferences.billingRoundingMode)
-  const [roundingScope, setRoundingScope] = useState<RoundingScope>(
-    preferences.billingRoundingScope,
-  )
+  const [rounding, setRounding] = useState<Rounding>({
+    minutes: preferences.billingRoundingMinutes,
+    mode: preferences.billingRoundingMode,
+    scope: preferences.billingRoundingScope,
+  })
   const [errors, setErrors] = useState<Partial<Record<keyof Preferences, string>>>({})
   const saved = useSavedFlash()
 
@@ -146,61 +146,24 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
           </div>
         </Card>
         <Card title="Billing" status={<SavedNote shown={saved.shownIn('billing')} />}>
-          <div className={formStyles.row}>
-            <div className={formStyles.grow}>
-              <Field
-                label="Round Billed Time"
-                hint="Applies when you bill. The log and totals always show actual time."
-                error={errors.billingRoundingMinutes}
-              >
-                <Select
-                  value={roundingMinutes}
-                  options={ROUNDING_STEPS.map((m) => ({
-                    value: m,
-                    label: m === 0 ? 'Off' : `To ${m} Minute${m === 1 ? '' : 's'}`,
-                  }))}
-                  onChange={(m) => {
-                    setRoundingMinutes(m)
-                    save('billingRoundingMinutes', m)
-                  }}
-                />
-              </Field>
-            </div>
-            <Field label="Direction" error={errors.billingRoundingMode}>
-              <Select
-                className={styles.direction}
-                value={roundingMode}
-                disabled={roundingMinutes === 0}
-                options={[
-                  { value: 'up', label: 'Up' },
-                  { value: 'nearest', label: 'Nearest' },
-                ]}
-                onChange={(mode) => {
-                  setRoundingMode(mode as RoundingMode)
-                  save('billingRoundingMode', mode as RoundingMode)
-                }}
-              />
-            </Field>
-          </div>
-          <Field
-            label="Round"
-            hint={ROUNDING_SCOPE_HINTS[roundingScope]}
-            error={errors.billingRoundingScope}
-          >
-            <Select
-              value={roundingScope}
-              disabled={roundingMinutes === 0}
-              options={[
-                { value: 'project', label: 'Each Project’s Total' },
-                { value: 'day', label: 'Each Project’s Time per Day' },
-                { value: 'session', label: 'Each Session' },
-              ]}
-              onChange={(scope) => {
-                setRoundingScope(scope as RoundingScope)
-                save('billingRoundingScope', scope as RoundingScope)
-              }}
-            />
-          </Field>
+          <p className={styles.intro}>
+            Used for new batches. You can change it for a batch when you create it.
+          </p>
+          <RoundingFields
+            value={rounding}
+            minutesHint="Applies when you bill. The log and totals always show actual time."
+            errors={{
+              minutes: errors.billingRoundingMinutes,
+              mode: errors.billingRoundingMode,
+              scope: errors.billingRoundingScope,
+            }}
+            onChange={(edit) => {
+              setRounding((r) => ({ ...r, ...edit }))
+              for (const [field, value] of Object.entries(edit)) {
+                save(ROUNDING_KEYS[field as keyof Rounding], value as never)
+              }
+            }}
+          />
         </Card>
 
         <Card title="Favorites" status={<SavedNote shown={saved.shownIn('favorites')} />}>

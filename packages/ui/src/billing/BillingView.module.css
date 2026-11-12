@@ -110,9 +110,28 @@
 }
 
 .summary {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
   font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.summaryText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summaryTotal {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.summaryRounding {
+  grid-column: 1 / -1;
+  white-space: nowrap;
 }
 
 .paidRow {
@@ -196,23 +215,22 @@
   white-space: nowrap;
 }
 
-/* Create Batch: the session list takes the dialog's spare height, from 3 rows up
-   to its usual 260px, so the dialog fits the window without scrolling. Its size
-   comes from the window, never from how many sessions it has, so the dialog keeps
-   still as projects are ticked. The summary under it keeps two lines for the same
-   reason. */
+/* The batch dialogs fit the window: their session lists shrink to make room,
+   down to 3 rows (fewer if they have fewer), so the dialog itself doesn't scroll.
+   --rows is set on lists with fewer than 3. */
 .fill {
   min-height: 0;
 }
 
-.sessions.steady {
-  flex: 0 1 260px;
-  min-height: calc(3 * var(--session-row) + 4px); /* + borders */
-  max-height: none;
+.fill .sessions {
+  min-height: calc(var(--rows, 3) * (var(--session-row) + 1px) + 1px); /* + borders */
 }
 
-.summary.steady {
-  min-height: 2lh;
+/* Create Batch: the list's height comes from the window, never from how many
+   sessions it has, so the dialog keeps still as projects are ticked. */
+.sessions.steady {
+  flex: 0 1 260px;
+  max-height: none;
 }
 
 .noSessions {
@@ -220,4 +238,76 @@
   place-items: center;
   padding: var(--space-4);
   text-align: center;
+}
+
+/* Rounding's Direction select: just wide enough for "Nearest". */
+.direction {
+  width: 120px;
+}
+
+/* Create Batch's rounding, in the summary line: reads as part of the sentence,
+   with a dotted underline and a chevron to show it opens. */
+.roundingButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 -4px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.roundingButton:hover {
+  background: var(--color-wash);
+  color: var(--color-text);
+}
+
+.roundingButton svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Shown when this batch's rounding isn't the default. */
+.changedDot {
+  width: 6px;
+  height: 6px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.roundingPanel {
+  inset: auto;
+  margin: 0;
+  margin-top: var(--space-1);
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-block;
+  display: none;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 340px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  box-shadow:
+    0 12px 16px -4px rgb(0 0 0 / 0.35),
+    0 4px 6px -2px rgb(0 0 0 / 0.2);
+}
+
+.roundingPanel:popover-open {
+  display: flex;
+}
+
+.roundingActions {
+  display: flex;
+  justify-content: space-between;
 }

@@ -16,6 +16,7 @@ import type {
   IdleChoice,
   Preferences,
   ClientInput,
+  Rounding,
   Project,
   ProjectEdits,
   ProjectInput,
@@ -69,6 +70,8 @@ export interface NewBatch {
   reference: string
   billedAt: number
   note: string
+  /** How this batch rounds. Leave out to use the default from Settings. */
+  rounding?: Rounding
 }
 
 /** A manual time entry. */

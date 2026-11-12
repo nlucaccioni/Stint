@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Bill a client, or some of its projects: pick a date range, untick anything to
 // leave out, add a reference.
-import { useMemo, useState, type FormEvent } from 'react'
+import { useId, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
+import { ChevronDown } from 'lucide-react'
 import {
   batchCandidates,
   billingSummary,
@@ -24,6 +25,7 @@ import { useSubmit } from '../catalog/useSubmit'
 import { useNow } from '../timer/useNow'
 import { amountLabel, roundingLabel } from './format'
 import { ProjectPicker, type ProjectChoice } from './ProjectPicker'
+import { RoundingFields } from './RoundingFields'
 import { SessionLine, SessionTick } from './SessionLine'
 import styles from './BillingView.module.css'
 
@@ -35,6 +37,8 @@ export interface NewBatchValues {
   reference: string
   billedAt: number
   note: string
+  /** How this batch rounds: the default from Settings, or changed for it. */
+  rounding: Rounding
 }
 
 /** What to bill when the dialog opens: a whole client, or one of its projects. */
@@ -49,6 +53,7 @@ export interface CreateBatchDialogProps {
   initial: BillTarget
   projects: readonly Project[]
   unbilledSessions: readonly Session[]
+  /** The default rounding (Settings). Can be changed for this batch. */
   rounding: Rounding
   zone: string
   onCreate: (values: NewBatchValues) => Promise<unknown>
@@ -58,7 +63,7 @@ export interface CreateBatchDialogProps {
 const ALL = { start: 0, end: Infinity }
 
 export function CreateBatchDialog(props: CreateBatchDialogProps) {
-  const { clients, projects, unbilledSessions, rounding, zone } = props
+  const { clients, projects, unbilledSessions, zone } = props
   const now = useNow(true, 60_000)
   const today = toLocalParts(now, zone).date
   const [clientId, setClientId] = useState(props.initial.clientId)
@@ -105,6 +110,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
   const [reference, setReference] = useState('')
   const [billedOn, setBilledOn] = useState(today)
   const [note, setNote] = useState('')
+  const [rounding, setRounding] = useState<Rounding>(props.rounding)
   const { saving, error, run } = useSubmit()
 
   const range = useMemo(() => {
@@ -158,13 +164,14 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         reference,
         billedAt,
         note,
+        rounding,
       })
       props.onClose()
     })
   }
 
   return (
-    <Dialog title="Create Batch" onClose={props.onClose}>
+    <Dialog title="Create Batch" onClose={props.onClose} wide>
       <form className={`${formStyles.form} ${styles.fill}`} onSubmit={submit}>
         <Field label="Client or Project">
           <ProjectPicker
@@ -219,15 +226,21 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
             ))}
           </ul>
         )}
-        <div className={`${styles.summary} ${styles.steady}`}>
-          <span>
+        {/* Two lines that never wrap, so it reads cleanly and keeps its height:
+            what's billed and its total, then how it's rounded. */}
+        <div className={styles.summary}>
+          <span className={styles.summaryText}>
             {chosen.length} of {candidates.length} sessions
-            {rounding.minutes > 0 &&
-              ` · ${roundingLabel(rounding)} (actual ${formatClock(summary.ms)})`}
+            {rounding.minutes > 0 && (
+              <span className={styles.muted}> · actual {formatClock(summary.ms)}</span>
+            )}
           </span>
-          <strong>
+          <strong className={styles.summaryTotal}>
             {formatClock(summary.billedMs)} · {amountLabel(summary.amount)}
           </strong>
+          <div className={styles.summaryRounding}>
+            <RoundingButton value={rounding} default={props.rounding} onChange={setRounding} />
+          </div>
         </div>
 
         <div className={formStyles.row}>
@@ -261,5 +274,57 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
         </div>
       </form>
     </Dialog>
+  )
+}
+
+/**
+ * The summary's "rounded up to 15 min per project": a button that opens the
+ * rounding fields, to change how this batch rounds. A dot shows when it's not
+ * the default.
+ */
+function RoundingButton(props: {
+  value: Rounding
+  default: Rounding
+  onChange: (value: Rounding) => void
+}) {
+  const { value } = props
+  const panelId = useId()
+  const anchor = `--rounding-${panelId.replace(/[^a-zA-Z0-9_-]/g, '')}`
+  const changed =
+    value.minutes !== props.default.minutes ||
+    value.mode !== props.default.mode ||
+    value.scope !== props.default.scope
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.roundingButton}
+        popoverTarget={panelId}
+        aria-haspopup="dialog"
+        style={{ anchorName: anchor } as CSSProperties}
+      >
+        {value.minutes > 0 ? roundingLabel(value) : 'not rounded'}
+        {changed && <span className={styles.changedDot} title="Changed for this batch" />}
+        <ChevronDown aria-hidden />
+      </button>
+      <div
+        id={panelId}
+        popover="auto"
+        role="dialog"
+        aria-label="Rounding for This Batch"
+        className={styles.roundingPanel}
+        style={{ positionAnchor: anchor } as CSSProperties}
+      >
+        <RoundingFields value={value} onChange={(edit) => props.onChange({ ...value, ...edit })} />
+        <div className={styles.roundingActions}>
+          <Button size="sm" disabled={!changed} onClick={() => props.onChange(props.default)}>
+            Use Default
+          </Button>
+          <Button size="sm" popoverTarget={panelId} popoverTargetAction="hide">
+            Done
+          </Button>
+        </div>
+      </div>
+    </>
   )
 }

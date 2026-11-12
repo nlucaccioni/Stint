@@ -25,10 +25,6 @@
   font-size: var(--text-sm);
 }
 
-.direction {
-  width: 120px;
-}
-
 .favorites {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

@@ -7,6 +7,8 @@ import styles from './Dialog.module.css'
 export interface DialogProps {
   title: string
   onClose: () => void
+  /** Wider, for dialogs with a lot in them (the billing batches). */
+  wide?: boolean
   children: ReactNode
 }
 
@@ -14,7 +16,7 @@ export interface DialogProps {
  * Modal dialog using the native <dialog> element: it traps focus, closes on
  * Escape, and blocks the page behind it. Render it only while it should be open.
  */
-export function Dialog({ title, onClose, children }: DialogProps) {
+export function Dialog({ title, onClose, wide, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
 
@@ -29,6 +31,7 @@ export function Dialog({ title, onClose, children }: DialogProps) {
     <dialog
       ref={ref}
       className={styles.dialog}
+      data-wide={wide || undefined}
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault() // let React unmount it rather than the browser closing it

@@ -93,6 +93,40 @@ describe('creating a batch', () => {
     expect(events).toEqual({ batches: 1, sessions: 1 })
   })
 
+  it('uses rounding changed for the batch instead of the default', () => {
+    const batch = api.createBatch({
+      clientId: client.id,
+      ...MARCH,
+      sessionIds: [sessions[0]!.id],
+      reference: 'INV-1',
+      billedAt: NOW,
+      note: '',
+      rounding: { minutes: 6, mode: 'up', scope: 'session' },
+    })
+    expect(batch).toMatchObject({
+      roundingMinutes: 6,
+      roundingMode: 'up',
+      roundingScope: 'session',
+    })
+    expect(api.getPreferences()).toMatchObject({ billingRoundingMinutes: 0 })
+  })
+
+  it('refuses rounding that Settings would refuse', () => {
+    expect(
+      toResult(() =>
+        api.createBatch({
+          clientId: client.id,
+          ...MARCH,
+          sessionIds: [sessions[0]!.id],
+          reference: '',
+          billedAt: NOW,
+          note: '',
+          rounding: { minutes: 7, mode: 'up', scope: 'project' },
+        }),
+      ),
+    ).toMatchObject({ error: {} })
+  })
+
   it('keeps billed sessions read-only', () => {
     bill()
     expect(toResult(() => api.updateSession(sessions[0]!.id, { note: 'x' }))).toMatchObject({

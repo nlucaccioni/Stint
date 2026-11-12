@@ -224,6 +224,7 @@ All editing is allowed on unbilled sessions:
 - **Rounding** (setting, off by default): round billed time up or to the nearest 1, 5, 6, 10, 15, 30, or 60 minutes. Applies to billing only; the log and totals always show actual time.
   - What's rounded (setting): each project's total in the batch (default), each project's time per day (days in the user's time zone), or each session. Sessions at different rates are never rounded together, so each rounded group is one invoice line.
   - Batches made before this setting existed rounded each session and keep doing so.
+  - The setting is the default for new batches. Create Batch can change it for one batch (the rounding line in its summary opens the same three fields, with "Use Default" to go back); this never changes the setting.
 
 ### Deleting clients and projects
 
