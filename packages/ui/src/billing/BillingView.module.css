@@ -179,3 +179,20 @@
 .lines .muted {
   white-space: nowrap;
 }
+
+/* Create Batch: the session list keeps its full height when it has fewer (or no)
+   sessions, and the summary under it two lines, so the dialog keeps its size. */
+.sessions.steady {
+  height: 260px;
+}
+
+.summary.steady {
+  min-height: 2lh;
+}
+
+.noSessions {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  text-align: center;
+}

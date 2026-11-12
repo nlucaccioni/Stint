@@ -182,14 +182,18 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
           </div>
         </div>
 
+        {/* A fixed height, empty or full, so the dialog doesn't move (and the open
+            dropdown with it) as projects are ticked and unticked. */}
         {candidates.length === 0 ? (
-          <p className={formStyles.note}>
-            {projectIds.size === 0
-              ? 'Choose at least one project.'
-              : `No unbilled time for ${client.name} in this range.`}
-          </p>
+          <div className={`${styles.sessions} ${styles.steady} ${styles.noSessions}`}>
+            <p className={formStyles.note}>
+              {projectIds.size === 0
+                ? 'Choose at least one project.'
+                : `No unbilled time for ${client.name} in this range.`}
+            </p>
+          </div>
         ) : (
-          <ul className={styles.sessions} aria-label="Sessions to Bill">
+          <ul className={`${styles.sessions} ${styles.steady}`} aria-label="Sessions to Bill">
             {candidates.map((s) => (
               <SessionLine
                 key={s.id}
@@ -208,7 +212,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
             ))}
           </ul>
         )}
-        <div className={styles.summary}>
+        <div className={`${styles.summary} ${styles.steady}`}>
           <span>
             {chosen.length} of {candidates.length} sessions
             {rounding.minutes > 0 &&
