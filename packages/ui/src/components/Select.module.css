@@ -114,8 +114,10 @@
   cursor: pointer;
 }
 
+/* A client's projects: further in than the client's name, which starts after its
+   8px dot and gap. */
 .option[data-indent] {
-  padding-left: calc(var(--space-3) + var(--space-4));
+  padding-left: calc(var(--space-3) + 8px + var(--space-2) + var(--space-3));
 }
 
 .option:hover,

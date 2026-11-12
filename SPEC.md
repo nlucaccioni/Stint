@@ -212,7 +212,7 @@ All editing is allowed on unbilled sessions:
 
 ### Billing batches
 
-- Create: pick a client, or one of its projects, and a date range. Stint gathers all unbilled, billable, finished sessions of that client or project that _started_ within the range (whole sessions; running timers excluded); the user can deselect individual sessions before confirming. A batch always belongs to a client; which projects it covers is derived from its sessions, never stored.
+- Create: pick a client and which of its projects to bill (all by default, or the one Create Batch was opened for), and a date range. Stint gathers all unbilled, billable, finished sessions of those projects that _started_ within the range (whole sessions; running timers excluded); the user can deselect individual sessions before confirming. A batch always belongs to a client; which projects it covers is derived from its sessions, never stored.
 - Record a free-text `reference` for where it was invoiced, a billed date, and an optional note.
 - Each session records its effective rate (`billedRateCents`) and the batch records the rounding in effect, so later rate or setting changes never alter a sent invoice.
 - Forgotten sessions can be added to an unpaid batch. For a batch whose sessions are all from one project, only that project's sessions are offered.
