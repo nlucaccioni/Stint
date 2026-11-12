@@ -146,7 +146,7 @@ All synced records are designed for future sync from day one.
 
 Settings are split by whether they belong to the user or to one machine.
 
-The Settings page saves each setting as soon as it changes (number fields when you leave them or press Enter), with a brief "Saved" beside the heading. There is no Save button. A value that can't be used shows its error under the field and isn't saved.
+The Settings page saves each setting as soon as it changes (number fields when you leave them or press Enter), with a brief "Saved" beside the title of the card it's in. There is no Save button. A value that can't be used shows its error under the field and isn't saved.
 
 **Synced preferences** (a table with sync fields):
 
