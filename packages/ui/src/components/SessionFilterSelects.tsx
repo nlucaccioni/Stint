@@ -35,7 +35,7 @@ export function SessionFilterSelects({
   const scopeOptions = useMemo(() => {
     const options: SelectOption<string>[] = [{ value: 'all', label: 'All Clients' }]
     for (const c of clients) {
-      options.push({ value: `client:${c.id}`, label: c.name })
+      options.push({ value: `client:${c.id}`, label: c.name, color: c.color })
       for (const p of projects) {
         if (p.clientId === c.id) {
           options.push({ value: `project:${p.id}`, label: p.name, indent: true })

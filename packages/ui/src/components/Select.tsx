@@ -15,6 +15,8 @@ export interface SelectOption<T extends string | number> {
   group?: string
   /** Indented under the option above it (e.g. a client's projects). */
   indent?: boolean
+  /** A dot in this color before the label (e.g. a client's color). */
+  color?: string
 }
 
 export interface SelectProps<T extends string | number> {
@@ -94,7 +96,10 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
         popoverTarget={listId}
         style={{ anchorName: anchor } as CSSProperties}
       >
-        <span className={styles.value}>{selected?.label ?? ''}</span>
+        <span className={styles.value}>
+          {selected?.color && <Dot color={selected.color} />}
+          {selected?.label ?? ''}
+        </span>
         <ChevronDown className={styles.chevron} aria-hidden />
       </button>
       <div
@@ -124,11 +129,20 @@ export function Select<T extends string | number>(props: SelectProps<T>) {
             data-indent={o.indent || undefined}
             onClick={() => choose(o.value)}
           >
-            <span>{o.label}</span>
+            <span className={styles.label}>
+              {o.color && <Dot color={o.color} />}
+              {o.label}
+            </span>
             {o.value === value && <Check className={styles.check} aria-hidden />}
           </button>,
         ])}
       </div>
     </>
+  )
+}
+
+function Dot({ color }: { color: string }) {
+  return (
+    <span className={styles.dot} style={{ '--dot-color': color } as CSSProperties} aria-hidden />
   )
 }

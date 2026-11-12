@@ -247,14 +247,16 @@ function BatchTable(props: {
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && props.onOpen(b)}
             >
               <th scope="row">
-                <ClientName client={props.clientById.get(b.clientId)} />
-                {sum && sum.projectNames.length > 0 && (
-                  <span className={styles.projects}>
-                    {sum.projectNames.length > 2
-                      ? `${sum.projectNames.length} Projects`
-                      : sum.projectNames.join(', ')}
-                  </span>
-                )}
+                <ClientName
+                  client={props.clientById.get(b.clientId)}
+                  sub={
+                    sum && sum.projectNames.length > 0
+                      ? sum.projectNames.length > 2
+                        ? `${sum.projectNames.length} Projects`
+                        : sum.projectNames.join(', ')
+                      : undefined
+                  }
+                />
               </th>
               <td className={styles.muted}>{b.reference || 'No Reference'}</td>
               <td className={styles.muted}>{props.dateColumn(b)}</td>
@@ -268,7 +270,9 @@ function BatchTable(props: {
   )
 }
 
-function ClientName({ client }: { client: Client | undefined }) {
+/** The client's dot and name, with an optional second line (a batch's projects).
+    The dot is centered on both lines. */
+function ClientName({ client, sub }: { client: Client | undefined; sub?: string }) {
   return (
     <span className={styles.name}>
       <span
@@ -276,7 +280,10 @@ function ClientName({ client }: { client: Client | undefined }) {
         style={{ '--client-color': client?.color } as CSSProperties}
         aria-hidden
       />
-      {client?.name ?? 'Unknown Client'}
+      <span className={styles.nameLines}>
+        {client?.name ?? 'Unknown Client'}
+        {sub && <span className={styles.projects}>{sub}</span>}
+      </span>
     </span>
   )
 }

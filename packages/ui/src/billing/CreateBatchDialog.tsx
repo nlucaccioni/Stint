@@ -72,7 +72,7 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
     for (const c of clients) {
       const own = batchCandidates(unbilledSessions, projects, c.id, ALL)
       if (own.length === 0) continue
-      options.push({ value: `client:${c.id}`, label: c.name })
+      options.push({ value: `client:${c.id}`, label: c.name, color: c.color })
       const withTime = new Set(own.map((s) => s.projectId))
       for (const p of projects) {
         if (withTime.has(p.id))

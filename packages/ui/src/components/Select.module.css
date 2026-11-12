@@ -48,6 +48,24 @@
   white-space: nowrap;
 }
 
+.label {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A client's color before its name, with a soft glow like elsewhere. */
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--dot-color);
+  box-shadow: 0 0 8px 0 color-mix(in srgb, var(--dot-color) 60%, transparent);
+  vertical-align: 1px;
+}
+
 .chevron {
   flex: none;
   width: 12px;

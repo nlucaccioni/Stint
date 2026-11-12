@@ -23,12 +23,11 @@
   color: var(--color-text-muted);
 }
 
-/* What a batch was for, under its client: "Website", "Website, App", "3 Projects".
-   Lined up with the client's name, past its dot. */
+/* What a batch was for, under its client: "Website", "Website, App", "3 Projects". */
 .projects {
   display: block;
   overflow: hidden;
-  margin: 2px 0 0 calc(10px + var(--space-2));
+  margin-top: 2px;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   font-weight: 400;
@@ -40,6 +39,11 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  max-width: 100%;
+}
+
+.nameLines {
+  min-width: 0;
 }
 
 /* Waiting for Payment and Paid: five equal columns (Figma), so their columns line
