@@ -6,14 +6,21 @@ import styles from './Field.module.css'
 export interface FieldProps {
   label: string
   hint?: string
+  /** Shown in place of the hint, in red, when the value can't be used. */
+  error?: string | null
   /** A single input/select; it gets the id, styling, and aria wiring. */
-  children: ReactElement<{ id?: string; className?: string; 'aria-describedby'?: string }>
+  children: ReactElement<{
+    id?: string
+    className?: string
+    'aria-describedby'?: string
+    'aria-invalid'?: boolean
+  }>
 }
 
 /** Label + control + optional hint, wired up for screen readers. */
-export function Field({ label, hint, children }: FieldProps) {
+export function Field({ label, hint, error, children }: FieldProps) {
   const id = useId()
-  const hintId = hint ? `${id}-hint` : undefined
+  const hintId = error || hint ? `${id}-hint` : undefined
   return (
     <div className={styles.field}>
       <label htmlFor={id} className={styles.label}>
@@ -23,11 +30,18 @@ export function Field({ label, hint, children }: FieldProps) {
         id,
         className: [styles.control, children.props.className].filter(Boolean).join(' '),
         'aria-describedby': hintId,
+        'aria-invalid': error ? true : undefined,
       })}
-      {hint && (
-        <p id={hintId} className={styles.hint}>
-          {hint}
+      {error ? (
+        <p id={hintId} className={styles.error} role="alert">
+          {error}
         </p>
+      ) : (
+        hint && (
+          <p id={hintId} className={styles.hint}>
+            {hint}
+          </p>
+        )
       )}
     </div>
   )

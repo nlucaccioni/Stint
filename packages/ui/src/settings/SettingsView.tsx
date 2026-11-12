@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { Check } from 'lucide-react'
 import {
   ROUNDING_STEPS,
   type Client,
@@ -9,12 +10,10 @@ import {
   type RoundingScope,
   type WeekStartDay,
 } from '@stint/core'
-import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Field } from '../components/Field'
 import { Select } from '../components/Select'
 import formStyles from '../catalog/Form.module.css'
-import { useSubmit } from '../catalog/useSubmit'
 import styles from './SettingsView.module.css'
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'JPY']
@@ -43,75 +42,97 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
   const [roundingScope, setRoundingScope] = useState<RoundingScope>(
     preferences.billingRoundingScope,
   )
-  const [saved, setSaved] = useState(false)
-  const { saving, error, run } = useSubmit()
+  const [errors, setErrors] = useState<Partial<Record<keyof Preferences, string>>>({})
+  const saved = useSavedFlash()
 
   const currencies = CURRENCIES.includes(currency) ? CURRENCIES : [currency, ...CURRENCIES]
   const weekdays = weekdayNames()
 
-  function submit(e: FormEvent) {
-    e.preventDefault()
-    setSaved(false)
-    void run(async () => {
-      await onSave({
-        idleMinutes: Number(idle),
-        nudgeHours: Number(nudge),
-        weekStartsOn: weekStart,
-        defaultCurrency: currency,
-        favorites,
-        billingRoundingMinutes: roundingMinutes,
-        billingRoundingMode: roundingMode,
-        billingRoundingScope: roundingScope,
-      })
-      setSaved(true)
-    })
+  // Each setting saves as soon as it changes (number fields when you leave them or
+  // press Enter), so there's no Save button to scroll down to or forget.
+  function save<K extends keyof Preferences>(key: K, value: Preferences[K]) {
+    setErrors((errs) => ({ ...errs, [key]: undefined }))
+    onSave({ [key]: value }).then(saved.show, (e: unknown) =>
+      setErrors((errs) => ({ ...errs, [key]: e instanceof Error ? e.message : String(e) })),
+    )
+  }
+
+  /** A number field, saved when you leave it or press Enter, if it changed. */
+  function numberProps(
+    key: 'idleMinutes' | 'nudgeHours',
+    text: string,
+    setText: (text: string) => void,
+  ) {
+    const commit = () => {
+      if (text.trim() === '') {
+        setErrors((errs) => ({ ...errs, [key]: 'Enter a number. 0 turns it off.' }))
+      } else if (Number(text) !== preferences[key] || errors[key]) {
+        save(key, Number(text))
+      }
+    }
+    return {
+      type: 'number',
+      step: 1,
+      value: text,
+      onChange: (e: ChangeEvent<HTMLInputElement>) => setText(e.target.value),
+      onBlur: commit,
+      onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') commit()
+      },
+    }
   }
 
   return (
     <section className={styles.view}>
-      <h1 className={styles.heading}>Settings</h1>
-      <form className={styles.form} onSubmit={submit} onChange={() => setSaved(false)}>
+      <header className={styles.header}>
+        <h1 className={styles.heading}>Settings</h1>
+        {/* Always in the page so it can fade out; screen readers hear "Saved" when it appears. */}
+        <span className={styles.saved} data-shown={saved.shown || undefined} aria-hidden>
+          <Check size={14} /> Saved
+        </span>
+        <span className={styles.visuallyHidden} role="status">
+          {saved.shown ? 'Saved' : ''}
+        </span>
+      </header>
+      <div className={styles.form}>
         <Card title="Timer">
           <Field
             label="Ask About Idle Time After (Minutes)"
             hint="When you come back after this long away, Stint asks whether to keep the time. 0 turns it off."
+            error={errors.idleMinutes}
           >
-            <input type="number" step={1} value={idle} onChange={(e) => setIdle(e.target.value)} />
+            <input {...numberProps('idleMinutes', idle, setIdle)} />
           </Field>
           <Field
             label="Remind Me When a Timer Has Run For (Hours)"
             hint="A notification in case you forgot to stop it. 0 turns it off."
+            error={errors.nudgeHours}
           >
-            <input
-              type="number"
-              step={1}
-              value={nudge}
-              onChange={(e) => setNudge(e.target.value)}
-            />
+            <input {...numberProps('nudgeHours', nudge, setNudge)} />
           </Field>
         </Card>
         <Card title="Calendar and Money">
           <div className={formStyles.row}>
             <div className={formStyles.grow}>
-              <Field label="Week Starts On">
+              <Field label="Week Starts On" error={errors.weekStartsOn}>
                 <Select
                   value={weekStart}
                   options={weekdays.map((name, day) => ({ value: day, label: name }))}
                   onChange={(day) => {
                     setWeekStart(day as WeekStartDay)
-                    setSaved(false)
+                    save('weekStartsOn', day as WeekStartDay)
                   }}
                 />
               </Field>
             </div>
             <div className={formStyles.grow}>
-              <Field label="Default Currency for New Clients">
+              <Field label="Default Currency for New Clients" error={errors.defaultCurrency}>
                 <Select
                   value={currency}
                   options={currencies.map((c) => ({ value: c, label: c }))}
                   onChange={(c) => {
                     setCurrency(c)
-                    setSaved(false)
+                    save('defaultCurrency', c)
                   }}
                 />
               </Field>
@@ -124,6 +145,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
               <Field
                 label="Round Billed Time"
                 hint="Applies when you bill. The log and totals always show actual time."
+                error={errors.billingRoundingMinutes}
               >
                 <Select
                   value={roundingMinutes}
@@ -133,12 +155,12 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
                   }))}
                   onChange={(m) => {
                     setRoundingMinutes(m)
-                    setSaved(false)
+                    save('billingRoundingMinutes', m)
                   }}
                 />
               </Field>
             </div>
-            <Field label="Direction">
+            <Field label="Direction" error={errors.billingRoundingMode}>
               <Select
                 className={styles.direction}
                 value={roundingMode}
@@ -149,12 +171,16 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
                 ]}
                 onChange={(mode) => {
                   setRoundingMode(mode as RoundingMode)
-                  setSaved(false)
+                  save('billingRoundingMode', mode as RoundingMode)
                 }}
               />
             </Field>
           </div>
-          <Field label="Round" hint={ROUNDING_SCOPE_HINTS[roundingScope]}>
+          <Field
+            label="Round"
+            hint={ROUNDING_SCOPE_HINTS[roundingScope]}
+            error={errors.billingRoundingScope}
+          >
             <Select
               value={roundingScope}
               disabled={roundingMinutes === 0}
@@ -165,7 +191,7 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
               ]}
               onChange={(scope) => {
                 setRoundingScope(scope as RoundingScope)
-                setSaved(false)
+                save('billingRoundingScope', scope as RoundingScope)
               }}
             />
           </Field>
@@ -182,28 +208,33 @@ export function SettingsView({ preferences, projects, clients, onSave }: Setting
             clients={clients}
             onChange={(next) => {
               setFavorites(next)
-              setSaved(false)
+              save('favorites', next)
             }}
           />
-        </Card>
-        {error && (
-          <p className={formStyles.error} role="alert">
-            {error}
-          </p>
-        )}
-        <div className={formStyles.actions}>
-          {saved && (
-            <span className={styles.saved} role="status">
-              Saved
-            </span>
+          {errors.favorites && (
+            <p className={formStyles.error} role="alert">
+              {errors.favorites}
+            </p>
           )}
-          <Button type="submit" variant="primary" disabled={saving}>
-            Save Settings
-          </Button>
-        </div>
-      </form>
+        </Card>
+      </div>
     </section>
   )
+}
+
+/** "Saved" beside the heading for a couple of seconds after each save. */
+function useSavedFlash() {
+  const [shown, setShown] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(timer.current), [])
+  return {
+    shown,
+    show: () => {
+      setShown(true)
+      clearTimeout(timer.current)
+      timer.current = setTimeout(() => setShown(false), 2000)
+    },
+  }
 }
 
 function FavoritePickers(props: {

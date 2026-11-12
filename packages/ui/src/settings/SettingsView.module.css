@@ -7,6 +7,12 @@
   gap: var(--space-4);
 }
 
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
 .heading {
   margin: 0;
   font-size: var(--text-xl);
@@ -19,10 +25,25 @@
   gap: var(--space-4);
 }
 
+/* Fades in beside the heading after each save, then out again. */
 .saved {
-  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.saved[data-shown] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saved {
+    transition: none;
+  }
 }
 
 .intro {
@@ -58,4 +79,13 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   text-align: right;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
