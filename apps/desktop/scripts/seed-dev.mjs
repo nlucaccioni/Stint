@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Fills the development database ("Stint Dev" folder) with sample clients,
-// projects, about eight weeks of sessions, and a couple of billing batches.
-// Never touches the real "Stint" folder.
+// Fills a development database with sample clients, projects, about eight weeks
+// of sessions, and a few billing batches. (No running timer: Stint stops any it
+// finds at launch.) Never touches the real
+// "Stint" folder.
 //
-//   pnpm seed            seed an empty dev database
-//   pnpm seed --reset    wipe the dev database first, then seed
+//   pnpm seed                  seed an empty dev database ("Stint Dev" folder)
+//   pnpm seed --reset          wipe the dev database first, then seed
+//   pnpm seed --demo --reset   the "Stint Demo" folder instead (README screenshots;
+//                              run it with STINT_DEV_DATA="Stint Demo" pnpm dev)
 //
-// Run `pnpm dev` once first so the database and its schema exist, and quit the
-// app before seeding so it reloads the new data.
+// Run the app once on that folder first so the database and its schema exist, and
+// quit it before seeding so it reloads the new data.
 import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-const SCHEMA_VERSION = 4
+const SCHEMA_VERSION = 6
 const HOUR = 3_600_000
 const MINUTE = 60_000
 const DAY = 24 * HOUR
@@ -25,10 +28,10 @@ const appData =
     : process.platform === 'darwin'
       ? join(homedir(), 'Library', 'Application Support')
       : (process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'))
-const dir = join(appData, 'Stint Dev')
+const dir = join(appData, process.argv.includes('--demo') ? 'Stint Demo' : 'Stint Dev')
 const dbPath = join(dir, 'stint.db')
 
-if (!existsSync(dbPath)) fail(`No dev database at ${dbPath}. Run \`pnpm dev\` once first.`)
+if (!existsSync(dbPath)) fail(`No database at ${dbPath}. Run the app on that folder once first.`)
 
 const deviceId = JSON.parse(readFileSync(join(dir, 'device.json'), 'utf8')).deviceId
 const db = new DatabaseSync(dbPath)
@@ -127,10 +130,14 @@ const projects = [
 const clientRows = {}
 const projectRows = {}
 
+/** Keys in catalog order, in the format migration 5 gives existing rows. */
+const sortKey = (i) => `a${String(i + 1).padStart(6, '0')}`
+
 function seed() {
-  for (const c of clients) {
+  for (const [i, c] of clients.entries()) {
     const row = {
       ...sync(),
+      sort_key: sortKey(i),
       name: c.name,
       color: c.color,
       hourly_rate_cents: c.rate,
@@ -140,9 +147,10 @@ function seed() {
     insert('clients', row)
     clientRows[c.key] = { ...row, ...c }
   }
-  for (const p of projects) {
+  for (const [i, p] of projects.entries()) {
     const row = {
       ...sync(),
+      sort_key: sortKey(i),
       client_id: clientRows[p.client].id,
       name: p.name,
       hourly_rate_cents: p.rate ?? null,
@@ -188,6 +196,8 @@ function seed() {
   ]
 
   const sessions = []
+  // Today's sessions stop an hour ago, leaving room to start a timer.
+  const lastEnd = now - HOUR
   const weeks = 8
   const firstDay = today - weeks * 7 * DAY
   for (let day = firstDay; day <= today; day += DAY) {
@@ -203,7 +213,7 @@ function seed() {
       const key = pick(active(week))
       const length = (30 + Math.floor(rand() * 10) * 15) * MINUTE
       const end = t + length
-      if (day === today && end > now) break
+      if (day === today && end > lastEnd) break
       sessions.push({ key, start: t, end, note: pick(notes[key]), manual: rand() < 0.15 })
       t = end + (15 + Math.floor(rand() * 4) * 15) * MINUTE
     }
@@ -222,6 +232,7 @@ function seed() {
   }
 
   // ---- Billing: Northwind paid two months back, Fern billed last month ----
+  // Rounded up to 15 minutes on each project's total, like the default setting.
 
   const monthStart = (offset) => {
     const d = new Date(today)
@@ -245,8 +256,9 @@ function seed() {
       billed_at: billedAt,
       paid_at: b.paid ? billedAt + 12 * DAY : null,
       note: '',
-      rounding_minutes: 0,
+      rounding_minutes: 15,
       rounding_mode: 'up',
+      rounding_scope: 'project',
     }
     insert('billing_batches', row)
     return { ...b, id: row.id }
@@ -282,6 +294,20 @@ function seed() {
      VALUES ('favorites', ?, ?, ?, ?, NULL)
      ON CONFLICT (id) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
   ).run(JSON.stringify(favorites), now, now, deviceId)
+
+  // ---- Settings: round billed time up to 15 minutes per project's total -----
+
+  for (const [id, value] of [
+    ['billingRoundingMinutes', 15],
+    ['billingRoundingMode', 'up'],
+    ['billingRoundingScope', 'project'],
+  ]) {
+    db.prepare(
+      `INSERT INTO preferences (id, value, created_at, updated_at, device_id, deleted_at)
+       VALUES (?, ?, ?, ?, ?, NULL)
+       ON CONFLICT (id) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    ).run(id, JSON.stringify(value), now, now, deviceId)
+  }
 
   return { sessions: sessions.length, batches: batches.length }
 }

@@ -51,7 +51,15 @@ import { createSecureWindow, loadRenderer } from './windows'
 // Where the database and settings live. Dev runs use a separate folder so testing
 // never touches real time data. This must be set before anything else reads it.
 // macOS: ~/Library/Application Support/Stint   Windows: %APPDATA%\Stint
-app.setPath('userData', join(app.getPath('appData'), app.isPackaged ? 'Stint' : 'Stint Dev'))
+// A dev run can use another folder (STINT_DEV_DATA="Stint Demo", for the README
+// screenshots); its single-instance lock is separate, so it runs beside the usual one.
+app.setPath(
+  'userData',
+  join(
+    app.getPath('appData'),
+    app.isPackaged ? 'Stint' : (process.env.STINT_DEV_DATA ?? 'Stint Dev'),
+  ),
+)
 
 // Two copies of Stint writing to one database would conflict, so only allow one.
 // A second launch just focuses the existing window.
