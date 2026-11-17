@@ -2,17 +2,23 @@
 
 A local-first desktop time tracker for freelance work, for macOS and Windows.
 
+![Stint's Projects view, with a timer running on a client's project](docs/screenshots/projects.png)
+
 - Start, stop, and switch timers per client and project, from the app, the menu bar / tray, or global shortcuts.
 - Nine favorite slots and a quick switcher palette to jump between projects from any app.
 - Session log with editing: fix times, move, split, add manual entries. Overlaps are flagged.
 - Totals by day, week, month, or custom range, grouped by client and project, with amounts per currency.
-- Billing batches: bill a client's time with an invoice reference, mark it paid, and see what's outstanding. Billed time is locked and keeps the rate it was billed at. Optional rounding.
+- Billing batches: bill a client's time, or some of its projects, with an invoice reference, mark it paid, and see what's outstanding. Billed time is locked and keeps the rate it was billed at. Optional rounding, which you can change per batch.
 - Idle detection (including sleep and screen lock) and a reminder for long-running timers.
 - CSV export of any date range.
 - Logitech MX Keypad plugin: one-press project keys, a live "Now Running" key, and totals. See [plugins/logi-keypad](plugins/logi-keypad/README.md).
 - Works fully offline. Your data lives in a SQLite database on your machine.
 
-> Stint is in early development, with a placeholder visual design. Sync between devices is planned; see [SPEC.md](SPEC.md).
+> Stint is in early development. Sync between devices is planned; see [SPEC.md](SPEC.md).
+
+| Time                                                                             | Totals                                                                     | Billing                                                                            |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| ![The Time tab: this week's sessions, grouped by day](docs/screenshots/time.png) | ![Totals for last week by client and project](docs/screenshots/totals.png) | ![A billing batch, with what was billed per project](docs/screenshots/billing.png) |
 
 ## Install
 
@@ -40,6 +46,8 @@ pnpm build        # build installers for the current platform
 ```
 
 Your data lives in `stint.db` in the app data folder: `~/Library/Application Support/Stint` on macOS, `%APPDATA%\Stint` on Windows. `pnpm dev` uses a separate `Stint Dev` folder so development never touches real data.
+
+The README screenshots use sample data in a third folder, `Stint Demo`. To retake them, run the app on it once (`STINT_DEV_DATA="Stint Demo" pnpm dev`) and quit, fill it with `pnpm --filter @stint/desktop seed --demo --reset`, then run it again. See [scripts/seed-dev.mjs](apps/desktop/scripts/seed-dev.mjs).
 
 ## Repository layout
 
