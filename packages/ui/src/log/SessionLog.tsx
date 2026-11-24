@@ -250,16 +250,18 @@ export function SessionLog(props: SessionLogProps) {
         ) : (
           <div className={styles.bulk} role="group" aria-label="Selected Sessions">
             <span className={styles.selectedCount}>{selected.length} Selected</span>
+            {/* Each is off when it wouldn't change anything: all the ticked
+                time is already billable (or already non-billable). */}
             <Button
               size="sm"
-              disabled={busy}
+              disabled={busy || selected.every((s) => s.billable)}
               onClick={() => void act(() => props.onUpdateMany(ids(), { billable: true }))}
             >
               Make Billable
             </Button>
             <Button
               size="sm"
-              disabled={busy}
+              disabled={busy || selected.every((s) => !s.billable)}
               onClick={() => void act(() => props.onUpdateMany(ids(), { billable: false }))}
             >
               Make Non-Billable
