@@ -2,7 +2,9 @@
 // Drag to tick: press on a row's box and move over other rows to give them the
 // same state (ticked or not) as the first one got. Ends wherever the pointer is
 // let go. Used by the Time tab and the billing session lists.
-import { useEffect, useRef, type MouseEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, type ChangeEvent, type MouseEvent, type PointerEvent } from 'react'
+
+export type DragTick = ReturnType<typeof useDragTick>
 
 export function useDragTick(
   isTicked: (id: string) => boolean,
@@ -35,12 +37,23 @@ export function useDragTick(
       if (dragTo.current !== null) tick(id, dragTo.current)
     },
     /**
-     * On the checkbox: a pointer press already ticked it (see start), and the
-     * click that follows would undo that. Keyboard (Space) clicks have no detail
-     * and still toggle through onChange.
+     * The checkbox's own handlers. A pointer press already ticked it (see start),
+     * so the click that follows the release must do nothing: the browser would
+     * toggle the box back, and React would report that as a change, leaving the
+     * box drawn ticked while the row wasn't. A mouse or touch click has a click
+     * count (detail); a keyboard click (Space) has none, and toggles as usual.
      */
-    onClick(e: MouseEvent) {
-      if (e.detail > 0) e.preventDefault()
+    checkbox(id: string) {
+      const fromPointer = (e: { nativeEvent: Event }) =>
+        (e.nativeEvent as globalThis.MouseEvent).detail > 0
+      return {
+        onClick(e: MouseEvent) {
+          if (fromPointer(e)) e.preventDefault()
+        },
+        onChange(e: ChangeEvent<HTMLInputElement>) {
+          if (!fromPointer(e)) tick(id, e.target.checked)
+        },
+      }
     },
   }
 }

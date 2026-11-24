@@ -215,11 +215,10 @@ export function CreateBatchDialog(props: CreateBatchDialogProps) {
                 onPointerEnter={() => drag.enter(s.id)}
                 before={
                   <SessionTick
+                    id={s.id}
                     label="Include"
                     checked={!excluded.has(s.id)}
-                    onToggle={(on) => toggle(s.id, on)}
-                    onPointerDown={(e) => drag.start(s.id, e)}
-                    onClick={drag.onClick}
+                    drag={drag}
                   />
                 }
               />

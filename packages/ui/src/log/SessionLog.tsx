@@ -319,8 +319,7 @@ export function SessionLog(props: SessionLogProps) {
                       <CheckInput
                         aria-label={`Select ${project?.name ?? 'session'}`}
                         checked={ticked.has(s.id)}
-                        onClick={drag.onClick}
-                        onChange={(e) => tick(s.id, e.target.checked)}
+                        {...drag.checkbox(s.id)}
                       />
                     )}
                   </span>

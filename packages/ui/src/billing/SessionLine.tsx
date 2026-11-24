@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import type { MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { formatClock, sessionDuration, toLocalParts, type Project, type Session } from '@stint/core'
 import { CheckInput } from '../components/Field'
+import type { DragTick } from '../components/useDragTick'
 import { formatDay } from './format'
 import styles from './BillingView.module.css'
 
@@ -42,19 +43,17 @@ export function SessionLine(props: {
  * padded box ticks it, and dragging over other rows gives them the same state.
  */
 export function SessionTick(props: {
+  id: string
   checked: boolean
   label: string
-  onToggle: (on: boolean) => void
-  onPointerDown: (e: PointerEvent) => void
-  onClick: (e: MouseEvent) => void
+  drag: DragTick
 }) {
   return (
-    <span className={styles.tick} onPointerDown={props.onPointerDown}>
+    <span className={styles.tick} onPointerDown={(e) => props.drag.start(props.id, e)}>
       <CheckInput
         aria-label={props.label}
         checked={props.checked}
-        onClick={props.onClick}
-        onChange={(e) => props.onToggle(e.target.checked)}
+        {...props.drag.checkbox(props.id)}
       />
     </span>
   )

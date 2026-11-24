@@ -341,15 +341,7 @@ function AddSessions(props: {
             zone={props.zone}
             now={props.now}
             onPointerEnter={() => drag.enter(s.id)}
-            before={
-              <SessionTick
-                label="Add"
-                checked={picked.has(s.id)}
-                onToggle={(on) => pick(s.id, on)}
-                onPointerDown={(e) => drag.start(s.id, e)}
-                onClick={drag.onClick}
-              />
-            }
+            before={<SessionTick id={s.id} label="Add" checked={picked.has(s.id)} drag={drag} />}
           />
         ))}
       </ul>
